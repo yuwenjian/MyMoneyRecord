@@ -1,0 +1,183 @@
+/* StatisticsPage 特定样式 */
+.statistics-container {
+  padding: 20px;
+  padding-bottom: 40px;
+}
+
+.stats-card {
+  background-color: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.stats-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-value.positive {
+  color: var(--primary-green);
+}
+
+.stat-value.negative {
+  color: var(--primary-red);
+}
+
+.chart-container {
+  background-color: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  min-height: 200px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state::before {
+  content: "📊";
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.date-range-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.date-range-item {
+  flex: 0 1 auto;
+  min-width: 140px;
+  max-width: 200px;
+}
+
+.date-range-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.filter-btn-stat {
+  padding: 12px 24px;
+  background-color: var(--primary-red);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.filter-btn-stat:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.history-table-container {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  background-color: var(--white);
+}
+
+.history-table thead {
+  background-color: var(--bg-card);
+}
+
+.history-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.history-table td {
+  padding: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.history-table tbody tr:hover {
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.history-table .profit-positive {
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+.history-table .profit-negative {
+  color: var(--primary-red);
+  font-weight: 600;
+}
+
+.back-icon-btn {
+  background: var(--white);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.back-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+

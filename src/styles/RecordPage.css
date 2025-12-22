@@ -1,0 +1,42 @@
+/* RecordPage 特定样式 */
+.date-statistics-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.date-input-compact {
+  flex: 1;
+  min-width: 0;
+}
+
+.statistics-btn-compact {
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  background-color: var(--white);
+  color: var(--primary-red);
+  border: 2px solid var(--primary-red);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.statistics-btn-compact:hover {
+  background-color: var(--primary-red);
+  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.statistics-btn-compact:active {
+  transform: translateY(0);
+}
+
+.adjustment-amount-input.show {
+  display: block;
+}
+

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计分析</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .statistics-container {
+            padding: 20px;
+            padding-bottom: 40px;
+        }
+
+        .stats-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stats-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-value.positive {
+            color: var(--primary-green);
+        }
+
+        .stat-value.negative {
+            color: var(--primary-red);
+        }
+
+        .chart-container {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            min-height: 200px;
+        }
+
+        .back-icon-btn {
+            background: var(--white);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .back-icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state::before {
+            content: "📊";
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .date-range-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .date-range-item {
+            flex: 0 1 auto;
+            min-width: 140px;
+            max-width: 200px;
+        }
+
+        .date-range-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .filter-btn-stat {
+            padding: 12px 24px;
+            background-color: var(--primary-red);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .filter-btn-stat:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        #trendChart {
+            width: 100% !important;
+            height: 400px !important;
+        }
+
+        .history-table-container {
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+            background-color: var(--white);
+        }
+
+        .history-table thead {
+            background-color: var(--bg-card);
+        }
+
+        .history-table th {
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .history-table td {
+            padding: 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .history-table tbody tr:hover {
+            background-color: rgba(231, 76, 60, 0.05);
+        }
+
+        .history-table .profit-positive {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .history-table .profit-negative {
+            color: var(--primary-red);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部标题栏 -->
+        <header class="app-header">
+            <button class="back-icon-btn" onclick="window.location.href='index.html'">‹</button>
+            <h1>统计分析</h1>
+        </header>
+
+        <main class="app-main">
+            <div class="statistics-container">
+                <!-- 日期范围选择 -->
+                <div class="stats-card">
+                    <h2 class="stats-title">日期范围</h2>
+                    <div class="date-range-wrapper">
+                        <div class="date-range-item">
+                            <label style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; display: block;">开始日期</label>
+                            <input type="text" id="startDate" class="form-input" placeholder="请选择开始日期" readonly>
+                        </div>
+                        <div class="date-range-item">
+                            <label style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; display: block;">结束日期</label>
+                            <input type="text" id="endDate" class="form-input" placeholder="请选择结束日期" readonly>
+                        </div>
+                        <div class="date-range-buttons">
+                            <button id="filterBtn" class="filter-btn-stat">筛选</button>
+                            <button id="resetBtn" class="filter-btn-stat" style="background-color: var(--white); color: var(--primary-red); border: 2px solid var(--primary-red);">重置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 账户资产统计 -->
+                <div class="stats-card">
+                    <h2 class="stats-title">账户资产</h2>
+                    <div class="stat-item">
+                        <span class="stat-label">当前股票账户总资产</span>
+                        <span class="stat-value" id="currentStockAsset">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">当前基金账户总资产</span>
+                        <span class="stat-value" id="currentFundAsset">--</span>
+                    </div>
+                </div>
+
+                <!-- 盈亏统计 -->
+                <div class="stats-card">
+                    <h2 class="stats-title">盈亏统计</h2>
+                    <div class="stat-item">
+                        <span class="stat-label">股票盈亏资金</span>
+                        <span class="stat-value" id="stockProfitLoss">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">基金盈亏资金</span>
+                        <span class="stat-value" id="fundProfitLoss">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总盈亏</span>
+                        <span class="stat-value" id="totalProfitLoss">--</span>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="chart-container">
+                    <h2 class="stats-title">对比趋势图</h2>
+                    <canvas id="trendChart" style="max-height: 400px;"></canvas>
+                    <div id="chartPlaceholder" class="empty-state" style="display: none;">
+                        暂无数据，请先添加记录
+                    </div>
+                </div>
+
+                <!-- 历史记录列表 -->
+                <div class="stats-card">
+                    <h2 class="stats-title">历史记录</h2>
+                    <div class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>类型</th>
+                                    <th>总资产</th>
+                                    <th>总市值</th>
+                                    <th>上证指数</th>
+                                    <th>当日盈亏</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="statistics.js"></script>
+</body>
+</html>
+
