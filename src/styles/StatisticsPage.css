@@ -53,15 +53,15 @@
 /* 日期范围选择区域布局 */
 .date-range-wrapper {
   display: flex;
-  flex-direction: row; /* 改为行布局 */
-  flex-wrap: wrap;    /* 允许在小屏幕换行 */
+  flex-direction: row;
+  flex-wrap: wrap;    /* PC端允许换行，移动端通过媒体查询控制 */
   gap: 12px;
   align-items: flex-start;
 }
 
 .date-range-item {
-  flex: 1;            /* 平分空间 */
-  min-width: 140px;   /* 最小宽度，防止太窄 */
+  flex: 1;
+  min-width: 140px;   /* PC端最小宽度 */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -71,7 +71,7 @@
   display: flex;
   gap: 12px;
   margin-top: 8px;
-  width: 100%;        /* 按钮占满一行 */
+  width: 100%;
 }
 
 .filter-btn-stat {
@@ -209,19 +209,21 @@
 .dashboard-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 16px;  /* PC端正常间距 */
   margin-bottom: 20px;
 }
 
 .dashboard-card {
   background: linear-gradient(135deg, var(--primary-red) 0%, #c0392b 100%);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 16px;  /* PC端正常圆角 */
+  padding: 20px;  /* PC端正常内边距 */
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 16px;  /* PC端正常间距 */
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
   color: var(--white);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .today-profit-card {
@@ -230,12 +232,20 @@
 }
 
 .dashboard-icon {
-  font-size: 48px;
+  font-size: 48px;  /* PC端正常大小 */
   opacity: 0.9;
+  flex-shrink: 0;
+  width: 56px;  /* PC端正常尺寸 */
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-content {
   flex: 1;
+  min-width: 0;  /* 允许内容缩小 */
+  overflow: hidden;  /* 防止溢出 */
 }
 
 .dashboard-label {
@@ -245,8 +255,10 @@
 }
 
 .dashboard-value {
-  font-size: 24px;
+  font-size: 24px;  /* PC端正常大小 */
   font-weight: 700;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .dashboard-value.positive {
@@ -320,17 +332,62 @@
   text-align: right;
 }
 
+/* 移动端优化 */
 @media (max-width: 600px) {
+  /* 日期范围在移动端保持同一行 */
+  .date-range-wrapper {
+    flex-wrap: nowrap;  /* 移动端不换行 */
+  }
+  
+  .date-range-item {
+    flex: 1;
+    min-width: 0;  /* 允许缩小 */
+  }
+  
+  .date-range-item .form-label {
+    font-size: 13px;
+  }
+  
+  .new-picker-input {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  
+  .date-range-buttons {
+    gap: 8px;
+    flex-wrap: nowrap;  /* 按钮不换行 */
+  }
+  
+  .filter-btn-stat {
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  
+  /* 仪表盘卡片在移动端保持两列布局，但调整尺寸 */
   .dashboard-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;  /* 保持两列 */
+    gap: 8px;  /* 更小的间距 */
+  }
+  
+  .dashboard-card {
+    padding: 12px;  /* 减小内边距 */
+    gap: 10px;  /* 减小图标和内容间距 */
+    border-radius: 12px;  /* 稍小的圆角 */
   }
   
   .dashboard-icon {
-    font-size: 36px;
+    font-size: 32px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .dashboard-label {
+    font-size: 12px;
+    margin-bottom: 4px;
   }
   
   .dashboard-value {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 
