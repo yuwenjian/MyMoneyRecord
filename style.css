@@ -5,15 +5,87 @@
 }
 
 :root {
+    /* 浅色主题 */
     --bg-dark: #1a2332;
-    --bg-card: #f5f5f5;
-    --text-primary: #333333;
-    --text-secondary: #666666;
-    --primary-green: #50c878;
+    --bg-card: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6c757d;
+    --text-tertiary: #adb5bd;
+    
+    /* 主题色 - 使用渐变和柔和配色 */
     --primary-red: #e74c3c;
-    --border-color: #e0e0e0;
+    --primary-red-light: #ff6b6b;
+    --primary-red-dark: #c0392b;
+    --primary-red-gradient: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    
+    --primary-green: #50c878;
+    --primary-green-light: #6bcf89;
+    --primary-green-dark: #45a049;
+    --primary-green-gradient: linear-gradient(135deg, #50c878 0%, #45a049 100%);
+    
+    /* 盈利/亏损颜色 - 更明显的区分 */
+    --profit-color: #10b981;
+    --profit-color-light: #34d399;
+    --profit-color-dark: #059669;
+    --profit-bg: rgba(16, 185, 129, 0.1);
+    
+    --loss-color: #ef4444;
+    --loss-color-light: #f87171;
+    --loss-color-dark: #dc2626;
+    --loss-bg: rgba(239, 68, 68, 0.1);
+    
+    --border-color: #e5e7eb;
+    --border-color-light: #f3f4f6;
     --white: #ffffff;
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    
+    /* 阴影系统 - 更微妙的层次 */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* 圆角系统 */
+    --radius-sm: 4px;
+    --radius: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    /* 间距系统 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing: 12px;
+    --spacing-md: 16px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+}
+
+/* 暗色模式 */
+[data-theme="dark"] {
+    --bg-dark: #0f172a;
+    --bg-card: #1e293b;
+    --bg-secondary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    
+    --border-color: #334155;
+    --border-color-light: #475569;
+    
+    --profit-color: #10b981;
+    --profit-color-light: #34d399;
+    --profit-bg: rgba(16, 185, 129, 0.2);
+    
+    --loss-color: #ef4444;
+    --loss-color-light: #f87171;
+    --loss-bg: rgba(239, 68, 68, 0.2);
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 
 html, body {
@@ -42,6 +114,7 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-container {
@@ -51,6 +124,7 @@ body {
     min-height: 100%;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.3s ease;
 }
 
 /* 顶部标题栏 */
@@ -116,14 +190,21 @@ body {
     padding-bottom: 40px;
 }
 
-/* 表单卡片 */
+/* 表单卡片 - 优化设计 */
 .form-card {
     background-color: var(--bg-card);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
     overflow: visible;
+    border: 1px solid var(--border-color-light);
+    transition: all 0.3s ease;
+}
+
+.form-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .form-row {

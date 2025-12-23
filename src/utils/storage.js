@@ -12,14 +12,21 @@ export async function getRecords() {
     
     return results.map(item => {
       const investmentType = item.get('investmentType')
+      const totalAsset = item.get('totalAsset')
+      const totalMarketValue = item.get('totalMarketValue')
+      const shanghaiIndex = item.get('shanghaiIndex')
+      
       return {
         date: item.get('date'),
-        totalAsset: item.get('totalAsset'),
+        // 确保 totalAsset 是数字类型
+        totalAsset: totalAsset !== null && totalAsset !== undefined ? parseFloat(totalAsset) : 0,
         // 只有股票类型才返回总市值，基金类型返回 null
-        totalMarketValue: investmentType === 'stock' ? item.get('totalMarketValue') : null,
+        totalMarketValue: investmentType === 'stock' && totalMarketValue !== null && totalMarketValue !== undefined 
+          ? parseFloat(totalMarketValue) 
+          : null,
         investmentType: investmentType,
-        shanghaiIndex: item.get('shanghaiIndex'),
-        notes: item.get('notes'),
+        shanghaiIndex: shanghaiIndex !== null && shanghaiIndex !== undefined ? parseFloat(shanghaiIndex) : null,
+        notes: item.get('notes') || '',
         objectId: item.id,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt
@@ -37,19 +44,25 @@ export async function saveRecord(record) {
       throw new Error('LeanCloud 未正确初始化，AV 对象不存在')
     }
     
-    const { date, totalAsset, totalMarketValue, investmentType, shanghaiIndex, notes } = record
-    
-    // 查询该日期和投资类型的记录（同一日期可以有不同的投资类型记录）
-    const query = new AV.Query(TABLE_NAME)
-    query.equalTo('date', date)
-    query.equalTo('investmentType', investmentType)
-    const existing = await query.first()
+    const { date, totalAsset, totalMarketValue, investmentType, shanghaiIndex, notes, objectId } = record
     
     let MoneyRecord
-    if (existing) {
-      MoneyRecord = AV.Object.createWithoutData(TABLE_NAME, existing.id)
+    
+    // 如果提供了 objectId，说明是更新现有记录
+    if (objectId) {
+      MoneyRecord = AV.Object.createWithoutData(TABLE_NAME, objectId)
     } else {
-      MoneyRecord = new AV.Object(TABLE_NAME)
+      // 否则查询该日期和投资类型的记录（同一日期可以有不同的投资类型记录）
+      const query = new AV.Query(TABLE_NAME)
+      query.equalTo('date', date)
+      query.equalTo('investmentType', investmentType)
+      const existing = await query.first()
+      
+      if (existing) {
+        MoneyRecord = AV.Object.createWithoutData(TABLE_NAME, existing.id)
+      } else {
+        MoneyRecord = new AV.Object(TABLE_NAME)
+      }
     }
     
     MoneyRecord.set('date', date)
@@ -110,14 +123,18 @@ export async function getAdjustments() {
     query.ascending('date')
     const results = await query.find()
     
-    return results.map(item => ({
-      id: item.id,
-      date: item.get('date'),
-      amount: item.get('amount'),
-      notes: item.get('notes'),
-      investmentType: item.get('investmentType') || null,
-      createdAt: item.createdAt
-    }))
+    return results.map(item => {
+      const amount = item.get('amount')
+      return {
+        id: item.id,
+        date: item.get('date'),
+        // 确保 amount 是数字类型
+        amount: amount !== null && amount !== undefined ? parseFloat(amount) : 0,
+        notes: item.get('notes') || '',
+        investmentType: item.get('investmentType') || null,
+        createdAt: item.createdAt
+      }
+    })
   } catch (error) {
     return []
   }
