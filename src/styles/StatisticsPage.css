@@ -4,6 +4,35 @@
   padding-bottom: 40px;
 }
 
+/* 返回按钮样式 - 适中尺寸 */
+.back-icon-btn {
+  background: var(--white);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 26px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.back-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: var(--primary-red);
+  color: var(--white);
+}
+
+.back-icon-btn:active {
+  transform: translateY(0);
+}
+
 .stats-card {
   background-color: var(--bg-card);
   border-radius: 16px;
