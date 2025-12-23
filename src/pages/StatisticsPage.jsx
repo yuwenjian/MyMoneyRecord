@@ -43,6 +43,18 @@ function StatisticsPage() {
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+
+  // 自定义输入组件，防止手机端弹出键盘
+  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
+    <input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      readOnly
+      className="new-picker-input"
+    />
+  ));
+
   const [stats, setStats] = useState({
     currentStockAsset: '--',
     currentFundAsset: '--',
@@ -52,6 +64,7 @@ function StatisticsPage() {
   })
   const [chartData, setChartData] = useState(null)
   const [historyData, setHistoryData] = useState([])
+  const [isFullScreen, setIsFullScreen] = useState(false)
 
   useEffect(() => {
     const initDates = async () => {
@@ -364,7 +377,7 @@ function StatisticsPage() {
                   onChange={(date) => setStartDate(dayjs(date).format('YYYY-MM-DD'))}
                   dateFormat="yyyy年MM月dd日"
                   locale="zh-CN"
-                  className="new-picker-input"
+                  customInput={<CustomInput />}
                   wrapperClassName="new-picker-wrapper"
                 />
               </div>
@@ -375,7 +388,7 @@ function StatisticsPage() {
                   onChange={(date) => setEndDate(dayjs(date).format('YYYY-MM-DD'))}
                   dateFormat="yyyy年MM月dd日"
                   locale="zh-CN"
-                  className="new-picker-input"
+                  customInput={<CustomInput />}
                   wrapperClassName="new-picker-wrapper"
                 />
               </div>
@@ -441,7 +454,17 @@ function StatisticsPage() {
 
           {/* 历史记录列表 */}
           <div className="stats-card">
-            <h2 className="stats-title">历史记录</h2>
+            <div className="stats-header-with-action">
+              <h2 className="stats-title">历史记录</h2>
+              <button 
+                className="expand-btn" 
+                onClick={() => setIsFullScreen(true)}
+                title="全屏查看"
+                aria-label="全屏查看表格"
+              >
+                <span className="expand-icon">⛶</span>
+              </button>
+            </div>
             <div className="history-table-container">
               <table className="history-table">
                 <thead>
@@ -481,6 +504,59 @@ function StatisticsPage() {
           </div>
         </div>
       </main>
+
+      {/* 全屏表格弹出层 */}
+      {isFullScreen && (
+        <div className="fullscreen-overlay" onClick={(e) => {
+          // 点击遮罩层关闭全屏
+          if (e.target === e.currentTarget) {
+            setIsFullScreen(false)
+          }
+        }}>
+          <div className="fullscreen-content">
+            <div className="fullscreen-header">
+              <h2>历史记录详情</h2>
+              <button className="close-fullscreen" onClick={() => setIsFullScreen(false)}>✕ 关闭</button>
+            </div>
+            <div className="fullscreen-table-wrapper">
+              <table className="history-table fullscreen-table">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>总资产</th>
+                    <th>总市值</th>
+                    <th>上证指数</th>
+                    <th>当日盈亏</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyData.length > 0 ? (
+                    historyData.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.date}</td>
+                        <td>{item.type}</td>
+                        <td>{item.totalAsset}</td>
+                        <td>{item.totalMarketValue}</td>
+                        <td>{item.shanghaiIndex}</td>
+                        <td className={item.profitClass}>{item.dailyProfitLoss}</td>
+                        <td>{item.notes}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
+                        暂无记录
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

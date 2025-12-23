@@ -31,6 +31,18 @@ function RecordPage() {
     notes: ''
   })
 
+  // 自定义输入组件，防止手机端弹出键盘
+  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
+    <input
+      value={value}
+      onClick={onClick}
+      ref={ref}
+      readOnly
+      className="new-picker-input"
+      placeholder="请选择日期"
+    />
+  ));
+
   const handleDateChange = (date) => {
     if (date) {
       const formattedDate = dayjs(date).format('YYYY-MM-DD')
@@ -138,10 +150,9 @@ function RecordPage() {
                 onChange={handleDateChange}
                 dateFormat="yyyy年MM月dd日"
                 locale="zh-CN"
-                className="new-picker-input"
+                customInput={<CustomInput />}
                 wrapperClassName="new-picker-wrapper"
                 popperClassName="new-calendar-popper"
-                readOnly={false}
               />
             </div>
             <button

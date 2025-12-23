@@ -100,13 +100,273 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.back-icon-btn {
-  background: var(--white);
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: var(--shadow);
+/* 历史记录标题带按钮 */
+.stats-header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
 }
+
+.stats-header-with-action .stats-title {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.expand-btn {
+  background: var(--primary-red);
+  border: none;
+  color: var(--white);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  min-width: 40px;
+  height: 36px;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.expand-btn:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.expand-btn:active {
+  transform: scale(0.95);
+}
+
+.expand-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* 全屏遮罩层 */
+.fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-dark);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 支持横屏全屏展示 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.fullscreen-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.fullscreen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.fullscreen-header h2 {
+  font-size: 18px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.close-fullscreen {
+  background: var(--primary-red);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.close-fullscreen:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.close-fullscreen:active {
+  transform: scale(0.95);
+}
+
+.fullscreen-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* 确保在横屏时能够充分利用空间 */
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.fullscreen-table-wrapper .history-table {
+  width: 100%;
+  min-width: 100%;
+  font-size: 14px;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+.fullscreen-table-wrapper .history-table th {
+  padding: 14px 12px;
+  font-size: 13px;
+  background-color: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.fullscreen-table-wrapper .history-table td {
+  padding: 12px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* 横屏优化 - 充分利用横向空间 */
+@media screen and (orientation: landscape) {
+  .fullscreen-content {
+    padding: 12px 24px;
+  }
+  
+  .fullscreen-header {
+    margin-bottom: 12px;
+  }
+  
+  .fullscreen-header h2 {
+    font-size: 20px;
+  }
+  
+  .fullscreen-table-wrapper {
+    padding: 0;
+  }
+  
+  .fullscreen-table-wrapper .history-table {
+    font-size: 16px;
+    width: 100%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th {
+    padding: 18px 16px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  
+  .fullscreen-table-wrapper .history-table td {
+    padding: 16px;
+    font-size: 15px;
+  }
+  
+  /* 确保表格列能够充分利用横向空间 */
+  .fullscreen-table-wrapper .history-table {
+    table-layout: fixed;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(1),
+  .fullscreen-table-wrapper .history-table td:nth-child(1) {
+    width: 12%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(2),
+  .fullscreen-table-wrapper .history-table td:nth-child(2) {
+    width: 8%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(3),
+  .fullscreen-table-wrapper .history-table td:nth-child(3) {
+    width: 18%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(4),
+  .fullscreen-table-wrapper .history-table td:nth-child(4) {
+    width: 18%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(5),
+  .fullscreen-table-wrapper .history-table td:nth-child(5) {
+    width: 12%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(6),
+  .fullscreen-table-wrapper .history-table td:nth-child(6) {
+    width: 15%;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(7),
+  .fullscreen-table-wrapper .history-table td:nth-child(7) {
+    width: 17%;
+  }
+}
+
+/* 移动端竖屏优化 */
+@media screen and (max-width: 600px) and (orientation: portrait) {
+  .fullscreen-header h2 {
+    font-size: 16px;
+  }
+  
+  .close-fullscreen {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .fullscreen-table-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+  
+  .fullscreen-table-wrapper .history-table {
+    font-size: 12px;
+    min-width: 700px; /* 确保在竖屏下也能横向滚动查看所有列 */
+  }
+  
+  .fullscreen-table-wrapper .history-table th,
+  .fullscreen-table-wrapper .history-table td {
+    padding: 10px 8px;
+  }
+}
+
+/* 全屏表格特殊样式 */
+.fullscreen-table {
+  background: #fff;
+}
+
+.fullscreen-table thead {
+  background-color: var(--bg-card);
+}
+
+.fullscreen-table tbody tr:hover {
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+.fullscreen-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.fullscreen-table tbody tr:nth-child(even):hover {
+  background-color: rgba(231, 76, 60, 0.08);
+}
+
