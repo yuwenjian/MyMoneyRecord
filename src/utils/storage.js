@@ -10,17 +10,21 @@ export async function getRecords() {
     query.ascending('date')
     const results = await query.find()
     
-    return results.map(item => ({
-      date: item.get('date'),
-      totalAsset: item.get('totalAsset'),
-      totalMarketValue: item.get('totalMarketValue'),
-      investmentType: item.get('investmentType'),
-      shanghaiIndex: item.get('shanghaiIndex'),
-      notes: item.get('notes'),
-      objectId: item.id,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt
-    }))
+    return results.map(item => {
+      const investmentType = item.get('investmentType')
+      return {
+        date: item.get('date'),
+        totalAsset: item.get('totalAsset'),
+        // 只有股票类型才返回总市值，基金类型返回 null
+        totalMarketValue: investmentType === 'stock' ? item.get('totalMarketValue') : null,
+        investmentType: investmentType,
+        shanghaiIndex: item.get('shanghaiIndex'),
+        notes: item.get('notes'),
+        objectId: item.id,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      }
+    })
   } catch (error) {
     return []
   }
@@ -35,8 +39,10 @@ export async function saveRecord(record) {
     
     const { date, totalAsset, totalMarketValue, investmentType, shanghaiIndex, notes } = record
     
+    // 查询该日期和投资类型的记录（同一日期可以有不同的投资类型记录）
     const query = new AV.Query(TABLE_NAME)
     query.equalTo('date', date)
+    query.equalTo('investmentType', investmentType)
     const existing = await query.first()
     
     let MoneyRecord
@@ -48,8 +54,12 @@ export async function saveRecord(record) {
     
     MoneyRecord.set('date', date)
     MoneyRecord.set('totalAsset', totalAsset)
-    if (totalMarketValue !== null && totalMarketValue !== undefined) {
+    // 只有股票类型才设置总市值，基金类型不设置或删除该字段
+    if (investmentType === 'stock' && totalMarketValue !== null && totalMarketValue !== undefined) {
       MoneyRecord.set('totalMarketValue', totalMarketValue)
+    } else if (investmentType === 'fund') {
+      // 如果是基金类型，删除 totalMarketValue 字段（如果存在）
+      MoneyRecord.unset('totalMarketValue')
     }
     MoneyRecord.set('investmentType', investmentType)
     if (shanghaiIndex !== null && shanghaiIndex !== undefined) {
@@ -62,7 +72,7 @@ export async function saveRecord(record) {
     return {
       date,
       totalAsset,
-      totalMarketValue,
+      totalMarketValue: investmentType === 'stock' ? totalMarketValue : null,
       investmentType,
       shanghaiIndex,
       notes: notes || '',
@@ -73,11 +83,14 @@ export async function saveRecord(record) {
   }
 }
 
-// 删除记录
-export async function deleteRecord(date) {
+// 删除记录（根据日期和投资类型）
+export async function deleteRecord(date, investmentType) {
   try {
     const query = new AV.Query(TABLE_NAME)
     query.equalTo('date', date)
+    if (investmentType) {
+      query.equalTo('investmentType', investmentType)
+    }
     const record = await query.first()
     
     if (record) {
@@ -102,6 +115,7 @@ export async function getAdjustments() {
       date: item.get('date'),
       amount: item.get('amount'),
       notes: item.get('notes'),
+      investmentType: item.get('investmentType') || null,
       createdAt: item.createdAt
     }))
   } catch (error) {
@@ -112,11 +126,14 @@ export async function getAdjustments() {
 // 保存加减仓记录
 export async function saveAdjustment(adjustment) {
   try {
-    const { date, amount, notes } = adjustment
+    const { date, amount, notes, investmentType } = adjustment
     
-    // 删除该日期已有的加减仓记录
+    // 删除该日期和投资类型已有的加减仓记录
     const query = new AV.Query('Adjustment')
     query.equalTo('date', date)
+    if (investmentType) {
+      query.equalTo('investmentType', investmentType)
+    }
     const existing = await query.find()
     
     if (existing.length > 0) {
@@ -133,6 +150,9 @@ export async function saveAdjustment(adjustment) {
     Adjustment.set('date', date)
     Adjustment.set('amount', amount)
     Adjustment.set('notes', notes || '')
+    if (investmentType) {
+      Adjustment.set('investmentType', investmentType)
+    }
     
     await Adjustment.save()
     
@@ -140,7 +160,8 @@ export async function saveAdjustment(adjustment) {
       id: Adjustment.id,
       date,
       amount,
-      notes: notes || ''
+      notes: notes || '',
+      investmentType: investmentType || null
     }
   } catch (error) {
     throw error
@@ -158,11 +179,14 @@ export async function deleteAdjustment(id) {
   }
 }
 
-// 删除指定日期的加减仓记录
-export async function deleteAdjustmentByDate(date) {
+// 删除指定日期的加减仓记录（可指定投资类型）
+export async function deleteAdjustmentByDate(date, investmentType) {
   try {
     const query = new AV.Query('Adjustment')
     query.equalTo('date', date)
+    if (investmentType) {
+      query.equalTo('investmentType', investmentType)
+    }
     const existing = await query.find()
     if (existing.length > 0) {
       await AV.Object.destroyAll(existing)
@@ -173,8 +197,14 @@ export async function deleteAdjustmentByDate(date) {
   }
 }
 
-// 格式化日期
+// 格式化日期（处理时区问题）
 export function formatDate(dateString) {
+  // 如果已经是 YYYY-MM-DD 格式，直接返回
+  if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString
+  }
+  
+  // 如果是 Date 对象或其他格式，使用本地时间
   const date = new Date(dateString)
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')

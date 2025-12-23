@@ -4,9 +4,9 @@ export function calculateDailyProfitLoss(record, prevRecord, adjustments) {
     return 0 // 第一条记录没有盈亏
   }
 
-  // 获取当天的加减仓金额
+  // 获取当天相同投资类型的加减仓金额
   const dayAdjustments = adjustments
-    .filter(a => a.date === record.date)
+    .filter(a => a.date === record.date && a.investmentType === record.investmentType)
     .reduce((sum, a) => sum + a.amount, 0)
 
   // 每日盈亏金额 = 今日总资产 - 加仓金额 + 减仓的金额 - 上个交易日记录总资产

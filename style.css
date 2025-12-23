@@ -29,6 +29,7 @@ body {
     margin: 0 auto;
     background-color: var(--bg-dark);
     min-height: 100vh;
+    overflow: visible;
 }
 
 /* 顶部标题栏 */
@@ -101,6 +102,7 @@ body {
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: var(--shadow);
+    overflow: visible;
 }
 
 .form-row {
@@ -139,6 +141,10 @@ body {
     display: flex;
     gap: 12px;
     align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    position: relative;
 }
 
 .date-input-compact {

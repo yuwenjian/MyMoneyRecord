@@ -1,17 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import flatpickr from 'flatpickr'
-import 'flatpickr/dist/l10n/zh'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import zhCN from 'date-fns/locale/zh-CN'
+import toast from 'react-hot-toast'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+import 'dayjs/locale/zh-cn'
 import { saveRecord, saveAdjustment, deleteAdjustmentByDate } from '../utils/storage'
+import 'react-datepicker/dist/react-datepicker.css'
 import '../styles/RecordPage.css'
+
+// 注册中文语言包
+registerLocale('zh-CN', zhCN)
+// 配置 dayjs
+dayjs.extend(customParseFormat)
+dayjs.locale('zh-cn')
 
 function RecordPage() {
   const navigate = useNavigate()
-  const dateInputRef = useRef(null)
-  const flatpickrInstanceRef = useRef(null)
 
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: dayjs().format('YYYY-MM-DD'),
     investmentType: 'stock',
     totalAsset: '',
     totalMarketValue: '',
@@ -22,27 +31,12 @@ function RecordPage() {
     notes: ''
   })
 
-  useEffect(() => {
-    if (dateInputRef.current) {
-      flatpickrInstanceRef.current = flatpickr(dateInputRef.current, {
-        locale: 'zh',
-        dateFormat: 'Y年m月d日',
-        defaultDate: new Date(),
-        onChange: function(selectedDates) {
-          if (selectedDates[0]) {
-            const dateValue = selectedDates[0].toISOString().split('T')[0]
-            setFormData(prev => ({ ...prev, date: dateValue }))
-          }
-        }
-      })
+  const handleDateChange = (date) => {
+    if (date) {
+      const formattedDate = dayjs(date).format('YYYY-MM-DD')
+      setFormData(prev => ({ ...prev, date: formattedDate }))
     }
-
-    return () => {
-      if (flatpickrInstanceRef.current) {
-        flatpickrInstanceRef.current.destroy()
-      }
-    }
-  }, [])
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -54,17 +48,17 @@ function RecordPage() {
             adjustmentAmountAdd, adjustmentAmountReduce, shanghaiIndex, notes } = formData
 
     if (!totalAsset || !date) {
-      alert('请填写总资产和日期')
+      toast.error('请填写总资产和日期')
       return
     }
 
     if (parseFloat(totalAsset) <= 0) {
-      alert('总资产必须大于0')
+      toast.error('总资产必须大于0')
       return
     }
 
     if (investmentType === 'stock' && (!totalMarketValue || parseFloat(totalMarketValue) <= 0)) {
-      alert('请填写总市值')
+      toast.error('请填写总市值')
       return
     }
 
@@ -74,10 +68,12 @@ function RecordPage() {
         : parseFloat(adjustmentAmountReduce)
       
       if (!amount || amount === 0) {
-        alert('请填写加减仓金额')
+        toast.error('请填写加减仓金额')
         return
       }
     }
+    
+    const loadingToast = toast.loading('正在保存...')
     
     try {
       const record = {
@@ -98,17 +94,18 @@ function RecordPage() {
           amount: adjustmentType === 'add' 
             ? parseFloat(adjustmentAmountAdd) 
             : -parseFloat(adjustmentAmountReduce),
-          notes: notes || ''
+          notes: notes || '',
+          investmentType: investmentType
         }
         await saveAdjustment(adjustment)
       } else {
-        // 如果选择无操作，删除该日期的加减仓记录（如果存在）
-        await deleteAdjustmentByDate(date)
+        // 如果选择无操作，删除该日期和投资类型的加减仓记录（如果存在）
+        await deleteAdjustmentByDate(date, investmentType)
       }
 
       // 清空表单
       setFormData({
-        date: new Date().toISOString().split('T')[0],
+        date: dayjs().format('YYYY-MM-DD'),
         investmentType: 'stock',
         totalAsset: '',
         totalMarketValue: '',
@@ -119,13 +116,9 @@ function RecordPage() {
         notes: ''
       })
 
-      if (flatpickrInstanceRef.current) {
-        flatpickrInstanceRef.current.setDate(new Date(), false)
-      }
-
-      alert('记录已保存')
+      toast.success('记录已保存', { id: loadingToast })
     } catch (error) {
-      alert(`保存失败: ${error.message || error.toString()}`)
+      toast.error(`保存失败: ${error.message || error.toString()}`, { id: loadingToast })
     }
   }
 
@@ -137,24 +130,26 @@ function RecordPage() {
 
       <main className="app-main">
         <div className="form-card">
-          {/* 日期 */}
-          <div className="form-row">
-            <label className="form-label">日期</label>
-            <div className="date-statistics-wrapper">
-              <input
-                ref={dateInputRef}
-                type="text"
-                className="form-input date-input-compact"
-                placeholder="请选择日期"
-                readOnly
+          <div className="new-date-section">
+            <div className="date-field">
+              <label className="form-label">日期</label>
+              <DatePicker
+                selected={dayjs(formData.date).toDate()}
+                onChange={handleDateChange}
+                dateFormat="yyyy年MM月dd日"
+                locale="zh-CN"
+                className="new-picker-input"
+                wrapperClassName="new-picker-wrapper"
+                popperClassName="new-calendar-popper"
+                readOnly={false}
               />
-              <button
-                className="statistics-btn-compact"
-                onClick={() => navigate('/statistics')}
-              >
-                统计分析
-              </button>
             </div>
+            <button
+              className="new-stats-btn"
+              onClick={() => navigate('/statistics')}
+            >
+              统计分析
+            </button>
           </div>
 
           {/* 投资类型 */}

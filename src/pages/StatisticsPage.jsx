@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Line } from 'react-chartjs-2'
 import {
@@ -11,11 +11,18 @@ import {
   Tooltip,
   Legend
 } from 'chart.js'
-import flatpickr from 'flatpickr'
-import 'flatpickr/dist/l10n/zh'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import zhCN from 'date-fns/locale/zh-CN'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+import 'dayjs/locale/zh-cn'
 import { getRecords, getAdjustments, formatDate, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
+import 'react-datepicker/dist/react-datepicker.css'
 import '../styles/StatisticsPage.css'
+
+// 注册中文语言包
+registerLocale('zh-CN', zhCN)
 
 ChartJS.register(
   CategoryScale,
@@ -27,12 +34,12 @@ ChartJS.register(
   Legend
 )
 
+// 配置 dayjs
+dayjs.extend(customParseFormat)
+dayjs.locale('zh-cn')
+
 function StatisticsPage() {
   const navigate = useNavigate()
-  const startDateRef = useRef(null)
-  const endDateRef = useRef(null)
-  const startDatePickerRef = useRef(null)
-  const endDatePickerRef = useRef(null)
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -47,51 +54,19 @@ function StatisticsPage() {
   const [historyData, setHistoryData] = useState([])
 
   useEffect(() => {
-    const initDatePickers = async () => {
+    const initDates = async () => {
       const records = await getRecords()
       if (records.length > 0) {
         const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
         const firstDate = sortedRecords[0].date
         const lastDate = sortedRecords[sortedRecords.length - 1].date
         
-        // 初始化日期选择器
-        if (startDateRef.current && endDateRef.current) {
-          startDatePickerRef.current = flatpickr(startDateRef.current, {
-            locale: 'zh',
-            dateFormat: 'Y年m月d日',
-            defaultDate: new Date(firstDate),
-            onChange: function(selectedDates) {
-              if (selectedDates[0]) {
-                const dateValue = selectedDates[0].toISOString().split('T')[0]
-                setStartDate(dateValue)
-              }
-            }
-          })
-          
-          endDatePickerRef.current = flatpickr(endDateRef.current, {
-            locale: 'zh',
-            dateFormat: 'Y年m月d日',
-            defaultDate: new Date(lastDate),
-            onChange: function(selectedDates) {
-              if (selectedDates[0]) {
-                const dateValue = selectedDates[0].toISOString().split('T')[0]
-                setEndDate(dateValue)
-              }
-            }
-          })
-
-          setStartDate(firstDate)
-          setEndDate(lastDate)
-        }
+        setStartDate(firstDate)
+        setEndDate(lastDate)
       }
     }
 
-    initDatePickers()
-
-    return () => {
-      if (startDatePickerRef.current) startDatePickerRef.current.destroy()
-      if (endDatePickerRef.current) endDatePickerRef.current.destroy()
-    }
+    initDates()
   }, [])
 
   useEffect(() => {
@@ -132,19 +107,23 @@ function StatisticsPage() {
     let fundProfitLoss = 0
 
     filteredRecords.forEach((record) => {
-      const recordIndex = sortedRecords.findIndex(r => r.date === record.date)
+      // 查找相同投资类型的前一条记录（日期小于当前记录日期）
+      const sameTypeRecords = sortedRecords.filter(r => r.investmentType === record.investmentType)
       let actualPrevRecord = null
       
+      // 找到当前记录在同类型记录中的位置
+      const recordIndex = sameTypeRecords.findIndex(r => r.date === record.date && r.objectId === record.objectId)
+      
       if (recordIndex > 0) {
-        for (let i = recordIndex - 1; i >= 0; i--) {
-          const prev = sortedRecords[i]
-          if (!startDate || prev.date >= startDate) {
-            actualPrevRecord = prev
+        // 查找前一条同类型记录
+        actualPrevRecord = sameTypeRecords[recordIndex - 1]
+      } else if (recordIndex === -1) {
+        // 如果找不到当前记录（可能因为过滤），查找日期小于当前记录日期的最近一条同类型记录
+        for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
+          if (sameTypeRecords[i].date < record.date) {
+            actualPrevRecord = sameTypeRecords[i]
             break
           }
-        }
-        if (!actualPrevRecord && recordIndex > 0) {
-          actualPrevRecord = sortedRecords[recordIndex - 1]
         }
       }
 
@@ -251,19 +230,23 @@ function StatisticsPage() {
     const sortedFilteredRecords = [...filteredRecords].sort((a, b) => new Date(b.date) - new Date(a.date))
     
     const history = sortedFilteredRecords.map((record) => {
-      const recordIndex = allRecords.findIndex(r => r.date === record.date)
+      // 查找相同投资类型的前一条记录（日期小于当前记录日期）
+      const sameTypeRecords = allRecords.filter(r => r.investmentType === record.investmentType)
       let actualPrevRecord = null
       
+      // 找到当前记录在同类型记录中的位置
+      const recordIndex = sameTypeRecords.findIndex(r => r.date === record.date && r.objectId === record.objectId)
+      
       if (recordIndex > 0) {
-        for (let i = recordIndex - 1; i >= 0; i--) {
-          const prev = allRecords[i]
-          if (!startDate || prev.date >= startDate) {
-            actualPrevRecord = prev
+        // 查找前一条同类型记录
+        actualPrevRecord = sameTypeRecords[recordIndex - 1]
+      } else if (recordIndex === -1) {
+        // 如果找不到当前记录，查找日期小于当前记录日期的最近一条同类型记录
+        for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
+          if (sameTypeRecords[i].date < record.date) {
+            actualPrevRecord = sameTypeRecords[i]
             break
           }
-        }
-        if (!actualPrevRecord && recordIndex > 0) {
-          actualPrevRecord = allRecords[recordIndex - 1]
         }
       }
 
@@ -291,15 +274,20 @@ function StatisticsPage() {
       const firstDate = sortedRecords[0].date
       const lastDate = sortedRecords[sortedRecords.length - 1].date
       
-      if (startDatePickerRef.current) {
-        startDatePickerRef.current.setDate(new Date(firstDate), false)
-      }
-      if (endDatePickerRef.current) {
-        endDatePickerRef.current.setDate(new Date(lastDate), false)
-      }
-      
       setStartDate(firstDate)
       setEndDate(lastDate)
+    }
+  }
+
+  const handleStartDateChange = (date, dateString) => {
+    if (dateString) {
+      setStartDate(dateString)
+    }
+  }
+
+  const handleEndDateChange = (date, dateString) => {
+    if (dateString) {
+      setEndDate(dateString)
     }
   }
 
@@ -370,34 +358,31 @@ function StatisticsPage() {
             <h2 className="stats-title">日期范围</h2>
             <div className="date-range-wrapper">
               <div className="date-range-item">
-                <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
-                  开始日期
-                </label>
-                <input
-                  ref={startDateRef}
-                  type="text"
-                  className="form-input"
-                  placeholder="请选择开始日期"
-                  readOnly
+                <label className="form-label">开始日期</label>
+                <DatePicker
+                  selected={startDate ? dayjs(startDate).toDate() : null}
+                  onChange={(date) => setStartDate(dayjs(date).format('YYYY-MM-DD'))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="zh-CN"
+                  className="new-picker-input"
+                  wrapperClassName="new-picker-wrapper"
                 />
               </div>
               <div className="date-range-item">
-                <label style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
-                  结束日期
-                </label>
-                <input
-                  ref={endDateRef}
-                  type="text"
-                  className="form-input"
-                  placeholder="请选择结束日期"
-                  readOnly
+                <label className="form-label">结束日期</label>
+                <DatePicker
+                  selected={endDate ? dayjs(endDate).toDate() : null}
+                  onChange={(date) => setEndDate(dayjs(date).format('YYYY-MM-DD'))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="zh-CN"
+                  className="new-picker-input"
+                  wrapperClassName="new-picker-wrapper"
                 />
               </div>
               <div className="date-range-buttons">
                 <button className="filter-btn-stat" onClick={loadStatistics}>筛选</button>
                 <button
-                  className="filter-btn-stat"
-                  style={{ backgroundColor: 'var(--white)', color: 'var(--primary-red)', border: '2px solid var(--primary-red)' }}
+                  className="filter-btn-stat reset-btn"
                   onClick={handleReset}
                 >
                   重置
