@@ -25,6 +25,10 @@ import { exportToExcel, exportToCSV } from '../utils/export'
 import { calculateMonthlyStats, calculateYearlyStats, getAvailablePeriods } from '../utils/periodStats'
 import { calculatePeriodStats } from '../utils/timeComparison'
 import { aggregateByPeriod, calculateMovingAverage, predictTrend } from '../utils/chartUtils'
+import { debounce, throttle } from '../utils/debounce'
+import { SkeletonCard, SkeletonChart, SkeletonTable, SkeletonStatCard } from '../components/SkeletonLoader'
+import { EmptyState } from '../components/EmptyState'
+import { TrendIndicator, PercentTrendIndicator } from '../components/TrendIndicator'
 import toast from 'react-hot-toast'
 import 'react-datepicker/dist/react-datepicker.css'
 import '../styles/StatisticsPage.css'
@@ -94,6 +98,14 @@ function StatisticsPage() {
   const [chartType, setChartType] = useState('line') // 'line', 'bar', 'pie'
   const [chartPeriod, setChartPeriod] = useState('day') // 'day', 'week', 'month', 'year'
   const [showMovingAverage, setShowMovingAverage] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isChartCollapsed, setIsChartCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 600
+    }
+    return false
+  })
 
   useEffect(() => {
     const initDates = async () => {
@@ -105,63 +117,108 @@ function StatisticsPage() {
         
         setStartDate(firstDate)
         setEndDate(lastDate)
+      } else {
+        // 如果没有记录，设置默认日期为今天
+        const today = dayjs().format('YYYY-MM-DD')
+        setStartDate(today)
+        setEndDate(today)
       }
     }
 
     initDates()
   }, [])
 
+  // 防抖版本的loadStatistics
+  const debouncedLoadStatistics = React.useMemo(
+    () => debounce(() => {
+      loadStatistics()
+    }, 300),
+    []
+  )
+
   useEffect(() => {
-    loadStatistics()
+    if (startDate && endDate) {
+      debouncedLoadStatistics()
+    }
     loadPeriodStats()
-  }, [startDate, endDate, periodView, selectedPeriod, chartType, chartPeriod, showMovingAverage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, periodView, selectedPeriod, chartType, chartPeriod, showMovingAverage, historyFilter])
+
+  // 监听窗口大小变化（节流）
+  useEffect(() => {
+    const handleResize = throttle(() => {
+      setIsMobile(window.innerWidth <= 600)
+    }, 200)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // 加载周期统计
   const loadPeriodStats = async () => {
-    const records = await getRecords()
-    const adjustments = await getAdjustments()
-    
-    if (records.length === 0) {
-      setPeriodStats(null)
-      setAvailablePeriods({ months: [], years: [] })
-      return
-    }
+    try {
+      const records = await getRecords()
+      const adjustments = await getAdjustments()
 
-    const periods = getAvailablePeriods(records)
-    setAvailablePeriods(periods)
-
-    // 如果没有选择周期，默认选择最新的
-    if (!selectedPeriod) {
-      if (periodView === 'month' && periods.months.length > 0) {
-        setSelectedPeriod(periods.months[periods.months.length - 1])
-        return
-      } else if (periodView === 'year' && periods.years.length > 0) {
-        setSelectedPeriod(periods.years[0].toString())
+      if (records.length === 0) {
+        setPeriodStats(null)
+        setAvailablePeriods({ months: [], years: [] })
         return
       }
-    }
 
-    if (!selectedPeriod) {
+      const periods = getAvailablePeriods(records)
+      setAvailablePeriods(periods)
+
+      // 如果没有选择周期，默认选择最新的
+      if (!selectedPeriod) {
+        if (periodView === 'month' && periods.months.length > 0) {
+          setSelectedPeriod(periods.months[periods.months.length - 1])
+          return
+        } else if (periodView === 'year' && periods.years.length > 0) {
+          setSelectedPeriod(periods.years[0].toString())
+          return
+        }
+      }
+
+      if (!selectedPeriod) {
+        setPeriodStats(null)
+        return
+      }
+
+      let stats = null
+      if (periodView === 'month' && selectedPeriod) {
+        const [year, month] = selectedPeriod.split('-').map(Number)
+        stats = calculateMonthlyStats(records, adjustments, year, month)
+      } else if (periodView === 'year' && selectedPeriod) {
+        stats = calculateYearlyStats(records, adjustments, parseInt(selectedPeriod))
+      }
+
+      setPeriodStats(stats)
+    } catch (error) {
+      console.error('加载周期统计失败:', error)
       setPeriodStats(null)
-      return
+      toast.error('加载周期统计失败')
     }
-
-    let stats = null
-    if (periodView === 'month' && selectedPeriod) {
-      const [year, month] = selectedPeriod.split('-').map(Number)
-      stats = calculateMonthlyStats(records, adjustments, year, month)
-    } else if (periodView === 'year' && selectedPeriod) {
-      stats = calculateYearlyStats(records, adjustments, parseInt(selectedPeriod))
-    }
-
-    setPeriodStats(stats)
   }
 
   const loadStatistics = async () => {
-    const records = await getRecords()
-    const adjustments = await getAdjustments()
+    setIsLoading(true)
+    try {
+      const records = await getRecords()
+      const adjustments = await getAdjustments()
 
-    if (records.length === 0) return
+      if (records.length === 0) {
+        setStats({
+          currentStockAsset: formatCurrency(0),
+          currentFundAsset: formatCurrency(0),
+          stockProfitLoss: formatCurrency(0, true),
+          fundProfitLoss: formatCurrency(0, true),
+          totalProfitLoss: formatCurrency(0, true)
+        })
+        setChartData(null)
+        setHistoryData([])
+        setIsLoading(false)
+        return
+      }
 
     const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
     
@@ -253,6 +310,12 @@ function StatisticsPage() {
     
     // 更新历史记录
     updateHistoryTable(filteredRecords, sortedRecords, adjustments)
+    } catch (error) {
+      console.error('加载统计数据失败:', error)
+      toast.error('加载数据失败，请稍后重试')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const updateChart = (filteredRecords, allRecords, adjustments) => {
@@ -827,7 +890,7 @@ function StatisticsPage() {
                 <DatePicker
                   selected={startDate ? dayjs(startDate).toDate() : null}
                   onChange={(date) => setStartDate(dayjs(date).format('YYYY-MM-DD'))}
-                  dateFormat="yyyy年MM月dd日"
+                  dateFormat={isMobile ? "MM/dd" : "yyyy年MM月dd日"}
                   locale="zh-CN"
                   customInput={<CustomInput />}
                   wrapperClassName="new-picker-wrapper"
@@ -838,7 +901,7 @@ function StatisticsPage() {
                 <DatePicker
                   selected={endDate ? dayjs(endDate).toDate() : null}
                   onChange={(date) => setEndDate(dayjs(date).format('YYYY-MM-DD'))}
-                  dateFormat="yyyy年MM月dd日"
+                  dateFormat={isMobile ? "MM/dd" : "yyyy年MM月dd日"}
                   locale="zh-CN"
                   customInput={<CustomInput />}
                   wrapperClassName="new-picker-wrapper"
@@ -857,34 +920,45 @@ function StatisticsPage() {
           </div>
 
           {/* 仪表盘 */}
-          <div className="dashboard-section">
-            <div className="dashboard-card total-asset-card">
-              <div className="dashboard-icon">💰</div>
-              <div className="dashboard-content">
-                <div className="dashboard-label">总资产</div>
-                <div className="dashboard-value">
-                  {(() => {
-                    const stock = parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
-                    const fund = parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
-                    return formatCurrency(stock + fund)
-                  })()}
+          {isLoading ? (
+            <div className="dashboard-section">
+              <SkeletonStatCard />
+              <SkeletonStatCard />
+            </div>
+          ) : (
+            <div className="dashboard-section">
+              <div className="dashboard-card total-asset-card">
+                <div className="dashboard-icon">💰</div>
+                <div className="dashboard-content">
+                  <div className="dashboard-label">总资产</div>
+                  <div className="dashboard-value">
+                    {(() => {
+                      const stock = parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
+                      const fund = parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
+                      return formatCurrency(stock + fund)
+                    })()}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="dashboard-card today-profit-card">
+                <div className="dashboard-icon">📊</div>
+                <div className="dashboard-content">
+                  <div className="dashboard-label">今日盈亏</div>
+                  <div className={`dashboard-value ${(() => {
+                    const total = parseFloat(stats.totalProfitLoss.replace(/,/g, '')) || 0
+                    return total >= 0 ? 'positive' : 'negative'
+                  })()}`}>
+                    <TrendIndicator 
+                      value={stats.totalProfitLoss} 
+                      showArrow={true} 
+                      showSign={false}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="dashboard-card today-profit-card">
-              <div className="dashboard-icon">📊</div>
-              <div className="dashboard-content">
-                <div className="dashboard-label">今日盈亏</div>
-                <div className={`dashboard-value ${(() => {
-                  const total = parseFloat(stats.totalProfitLoss.replace(/,/g, '')) || 0
-                  return total >= 0 ? 'positive' : 'negative'
-                })()}`}>
-                  {stats.totalProfitLoss}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* 持仓分布 */}
           <div className="stats-card">
@@ -947,24 +1021,42 @@ function StatisticsPage() {
           {/* 盈亏统计 */}
           <div className="stats-card">
             <h2 className="stats-title">盈亏统计 ({startDate} 至 {endDate})</h2>
-            <div className="stat-item">
-              <span className="stat-label">股票盈亏资金</span>
-              <span className={`stat-value ${parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'positive' : 'negative'}`}>
-                {stats.stockProfitLoss}
-              </span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">基金盈亏资金</span>
-              <span className={`stat-value ${parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'positive' : 'negative'}`}>
-                {stats.fundProfitLoss}
-              </span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">总盈亏</span>
-              <span className={`stat-value ${parseFloat(stats.totalProfitLoss.replace(/,/g, '')) >= 0 ? 'positive' : 'negative'}`}>
-                {stats.totalProfitLoss}
-              </span>
-            </div>
+            {isLoading ? (
+              <SkeletonCard />
+            ) : (
+              <>
+                <div className="stat-item">
+                  <span className="stat-label">股票盈亏资金</span>
+                  <span className="stat-value">
+                    <TrendIndicator 
+                      value={stats.stockProfitLoss} 
+                      showArrow={true} 
+                      showSign={true}
+                    />
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">基金盈亏资金</span>
+                  <span className="stat-value">
+                    <TrendIndicator 
+                      value={stats.fundProfitLoss} 
+                      showArrow={true} 
+                      showSign={true}
+                    />
+                  </span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总盈亏</span>
+                  <span className="stat-value">
+                    <TrendIndicator 
+                      value={stats.totalProfitLoss} 
+                      showArrow={true} 
+                      showSign={false}
+                    />
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 月度/年度汇总统计 */}
@@ -1358,29 +1450,45 @@ function StatisticsPage() {
           </div>
 
           {/* 图表区域 */}
-          <div className="chart-container">
+          <div className={`chart-container ${isChartCollapsed ? 'collapsed' : ''}`}>
             <div className="chart-header">
               <h2 className="stats-title">对比趋势图 (盈亏百分比)</h2>
               <div className="chart-controls">
+                <button
+                  type="button"
+                  className="chart-collapse-btn"
+                  onClick={() => setIsChartCollapsed(v => !v)}
+                  aria-expanded={!isChartCollapsed}
+                  aria-controls="comparison-chart-panel"
+                  title={isChartCollapsed ? '展开图表' : '收起图表'}
+                >
+                  {isChartCollapsed ? '展开' : '收起'}
+                </button>
                 <div className="chart-type-toggle">
                   <button
+                    type="button"
                     className={`chart-type-btn ${chartType === 'line' ? 'active' : ''}`}
                     onClick={() => setChartType('line')}
                     title="折线图"
+                    aria-label="切换为折线图"
                   >
                     📈
                   </button>
                   <button
+                    type="button"
                     className={`chart-type-btn ${chartType === 'bar' ? 'active' : ''}`}
                     onClick={() => setChartType('bar')}
                     title="柱状图"
+                    aria-label="切换为柱状图"
                   >
                     📊
                   </button>
                   <button
+                    type="button"
                     className={`chart-type-btn ${chartType === 'pie' ? 'active' : ''}`}
                     onClick={() => setChartType('pie')}
                     title="饼图"
+                    aria-label="切换为饼图"
                   >
                     🥧
                   </button>
@@ -1389,26 +1497,34 @@ function StatisticsPage() {
                   <>
                     <div className="chart-period-toggle">
                       <button
+                        type="button"
                         className={`chart-period-btn ${chartPeriod === 'day' ? 'active' : ''}`}
                         onClick={() => setChartPeriod('day')}
+                        aria-label="切换为日"
                       >
                         日
                       </button>
                       <button
+                        type="button"
                         className={`chart-period-btn ${chartPeriod === 'week' ? 'active' : ''}`}
                         onClick={() => setChartPeriod('week')}
+                        aria-label="切换为周"
                       >
                         周
                       </button>
                       <button
+                        type="button"
                         className={`chart-period-btn ${chartPeriod === 'month' ? 'active' : ''}`}
                         onClick={() => setChartPeriod('month')}
+                        aria-label="切换为月"
                       >
                         月
                       </button>
                       <button
+                        type="button"
                         className={`chart-period-btn ${chartPeriod === 'year' ? 'active' : ''}`}
                         onClick={() => setChartPeriod('year')}
+                        aria-label="切换为年"
                       >
                         年
                       </button>
@@ -1427,15 +1543,23 @@ function StatisticsPage() {
                 )}
               </div>
             </div>
-            {chartData ? (
-              <div style={{ height: '400px' }}>
-                {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
-                {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
-                {chartType === 'pie' && <Pie data={chartData} options={pieChartOptions} />}
-              </div>
-            ) : (
-              <div className="empty-state">暂无数据，请先添加记录</div>
-            )}
+            <div
+              id="comparison-chart-panel"
+              className="chart-panel"
+              aria-hidden={isChartCollapsed}
+            >
+              {isChartCollapsed ? null : isLoading ? (
+                <SkeletonChart />
+              ) : chartData ? (
+                <div style={{ height: '400px' }}>
+                  {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
+                  {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
+                  {chartType === 'pie' && <Pie data={chartData} options={pieChartOptions} />}
+                </div>
+              ) : (
+                <EmptyState type="chart" />
+              )}
+            </div>
           </div>
 
           {/* 历史记录列表 */}
@@ -1504,7 +1628,12 @@ function StatisticsPage() {
                   </button>
                 </div>
               )}
-              <table className="history-table">
+              {isLoading ? (
+                <SkeletonTable />
+              ) : historyData.length === 0 ? (
+                <EmptyState type="history" />
+              ) : (
+                <table className="history-table">
                 <thead>
                   <tr>
                     <th style={{ width: '40px' }}>
@@ -1575,7 +1704,9 @@ function StatisticsPage() {
                             <td>{item.totalAsset}</td>
                             <td>{item.totalMarketValue}</td>
                             <td>{item.shanghaiIndex}</td>
-                            <td className={item.profitClass}>{item.dailyProfitLoss}</td>
+                            <td className={item.profitClass}>
+                              <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
+                            </td>
                             <td className={item.adjustmentClass}>{item.adjustmentAmount}</td>
                             <td>{item.notes}</td>
                             <td>
@@ -1601,14 +1732,18 @@ function StatisticsPage() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan="10" className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
-                          {historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
+                        <td colSpan="10" style={{ textAlign: 'center', padding: '40px' }}>
+                          <EmptyState 
+                            type="history" 
+                            message={historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
+                          />
                         </td>
                       </tr>
                     )
                   })()}
                 </tbody>
               </table>
+              )}
             </div>
           </div>
         </div>

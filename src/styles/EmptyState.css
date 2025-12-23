@@ -1,0 +1,82 @@
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  min-height: 300px;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  opacity: 0.6;
+  animation: empty-state-pulse 2s ease-in-out infinite;
+}
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.empty-state-message {
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.empty-state-action {
+  margin-top: 20px;
+}
+
+.empty-state-action button {
+  padding: 12px 24px;
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.empty-state-action button:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+@keyframes empty-state-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* 暗色模式 */
+[data-theme="dark"] {
+  .empty-state-icon {
+    color: var(--text-secondary);
+  }
+  
+  .empty-state-title {
+    color: var(--text-primary);
+  }
+  
+  .empty-state-message {
+    color: var(--text-secondary);
+  }
+}
+

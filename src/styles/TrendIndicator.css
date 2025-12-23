@@ -1,0 +1,51 @@
+/* 趋势指示器样式 */
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: inherit;
+}
+
+.trend-icon {
+  font-size: 0.9em;
+  flex-shrink: 0;
+}
+
+.trend-indicator.positive {
+  color: var(--profit-color);
+}
+
+.trend-indicator.negative {
+  color: var(--loss-color);
+}
+
+.trend-indicator.neutral {
+  color: var(--text-secondary);
+}
+
+.trend-icon.up {
+  color: var(--profit-color);
+}
+
+.trend-icon.down {
+  color: var(--loss-color);
+}
+
+.trend-icon.neutral {
+  color: var(--text-secondary);
+}
+
+/* 动画效果 */
+.trend-icon {
+  transition: transform 0.3s ease;
+}
+
+.trend-indicator.positive:hover .trend-icon.up {
+  transform: translateY(-2px);
+}
+
+.trend-indicator.negative:hover .trend-icon.down {
+  transform: translateY(2px);
+}
+
