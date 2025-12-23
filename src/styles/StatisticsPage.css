@@ -426,13 +426,14 @@
 
 /* 移动端优化 */
 @media (max-width: 600px) {
-  /* 日期范围在移动端保持同一行 */
+  /* 日期范围：开始/结束同一行，按钮自动换到下一行（避免把输入挤成细条） */
   .date-range-wrapper {
-    flex-wrap: nowrap;  /* 移动端不换行 */
+    flex-wrap: wrap;  /* 允许换行，用 flex-basis 控制布局 */
+    gap: 8px;
   }
   
   .date-range-item {
-    flex: 1;
+    flex: 1 1 calc(50% - 4px);
     min-width: 0;  /* 允许缩小 */
     gap: 6px;  /* 减小间距 */
   }
@@ -458,6 +459,9 @@
   }
   
   .date-range-buttons {
+    flex: 0 0 100%;
+    width: 100%;
+    order: 3;
     gap: 8px;
     flex-wrap: nowrap;  /* 按钮不换行 */
   }
