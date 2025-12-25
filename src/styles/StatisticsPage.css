@@ -815,7 +815,7 @@
   flex-direction: column;
   padding: 15px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: hidden;  /* 防止整体滚动，只让表格区域滚动 */
 }
 
 .fullscreen-header {
@@ -824,7 +824,7 @@
   align-items: center;
   margin-bottom: 15px;
   color: #fff;
-  flex-shrink: 0;
+  flex-shrink: 0;  /* 头部不缩小 */
 }
 
 .fullscreen-header h2 {
@@ -843,6 +843,32 @@
   font-weight: 600;
   transition: all 0.2s;
   white-space: nowrap;
+}
+
+.close-fullscreen:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.close-fullscreen:active {
+  transform: scale(0.98);
+}
+
+/* 全屏筛选按钮组 */
+.fullscreen-filter-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-shrink: 0;  /* 筛选按钮不缩小 */
+}
+
+/* 表格包装器 - 核心滚动容器 */
+.fullscreen-table-wrapper {
+  flex: 1;  /* 占据剩余所有空间 */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;  /* 关键：允许 flex 子元素缩小 */
+  overflow: hidden;  /* 容器本身不滚动 */
 }
 
 .close-fullscreen:hover {
@@ -1561,7 +1587,11 @@
   align-items: center;
   justify-content: center;
   min-width: 44px;
+  min-height: 44px;  /* 增加最小高度，确保触摸区域足够大 */
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;  /* 优化触摸响应 */
+  user-select: none;  /* 防止长按选中文字 */
+  -webkit-user-select: none;
 }
 
 .chart-fullscreen-btn:hover {
@@ -1574,6 +1604,8 @@
 
 .chart-fullscreen-btn:active {
   transform: translateY(0);
+  background: var(--primary-red);  /* 移动端点击时立即显示反馈 */
+  color: var(--white);
 }
 
 /* 全屏容器样式 */

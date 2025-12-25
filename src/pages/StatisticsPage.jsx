@@ -161,39 +161,25 @@ function StatisticsPage() {
   // 全屏切换函数
   const toggleFullScreen = async () => {
     const chartContainer = document.getElementById('chart-fullscreen-container')
-    if (!chartContainer) return
+    if (!chartContainer) {
+      console.warn('找不到图表容器')
+      return
+    }
 
     try {
-      if (!document.fullscreenElement) {
-        // 进入全屏
-        if (chartContainer.requestFullscreen) {
-          await chartContainer.requestFullscreen()
-        } else if (chartContainer.webkitRequestFullscreen) {
-          await chartContainer.webkitRequestFullscreen()
-        } else if (chartContainer.mozRequestFullScreen) {
-          await chartContainer.mozRequestFullScreen()
-        } else if (chartContainer.msRequestFullscreen) {
-          await chartContainer.msRequestFullscreen()
-        }
-        
-        // 尝试横屏
-        try {
-          if (screen.orientation && screen.orientation.lock) {
-            await screen.orientation.lock('landscape')
+      // 如果已经是全屏状态，退出全屏
+      if (isChartFullScreen) {
+        // 尝试退出浏览器全屏
+        if (document.fullscreenElement) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen()
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen()
+          } else if (document.mozCancelFullScreen) {
+            await document.mozCancelFullScreen()
+          } else if (document.msExitFullscreen) {
+            await document.msExitFullscreen()
           }
-        } catch (err) {
-          console.log('无法锁定屏幕方向:', err)
-        }
-      } else {
-        // 退出全屏
-        if (document.exitFullscreen) {
-          await document.exitFullscreen()
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen()
-        } else if (document.mozCancelFullScreen) {
-          await document.mozCancelFullScreen()
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen()
         }
         
         // 解锁屏幕方向
@@ -204,10 +190,56 @@ function StatisticsPage() {
         } catch (err) {
           console.log('无法解锁屏幕方向:', err)
         }
+        
+        // 手动更新状态（移动端可能不触发 fullscreenchange 事件）
+        setIsChartFullScreen(false)
+        return
       }
+
+      // 进入全屏状态
+      setIsChartFullScreen(true)
+      
+      // 尝试使用浏览器全屏 API（桌面端和部分移动端支持）
+      let fullscreenSuccess = false
+      try {
+        if (chartContainer.requestFullscreen) {
+          await chartContainer.requestFullscreen()
+          fullscreenSuccess = true
+        } else if (chartContainer.webkitRequestFullscreen) {
+          await chartContainer.webkitRequestFullscreen()
+          fullscreenSuccess = true
+        } else if (chartContainer.mozRequestFullScreen) {
+          await chartContainer.mozRequestFullScreen()
+          fullscreenSuccess = true
+        } else if (chartContainer.msRequestFullscreen) {
+          await chartContainer.msRequestFullscreen()
+          fullscreenSuccess = true
+        }
+      } catch (err) {
+        console.log('浏览器全屏 API 不可用，使用 CSS 全屏模式:', err)
+        // 移动端通常会到这里，但状态已经设置，CSS 会生效
+      }
+      
+      // 尝试横屏（无论是否成功进入浏览器全屏）
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape')
+        }
+      } catch (err) {
+        console.log('无法锁定屏幕方向:', err)
+      }
+      
+      // 如果浏览器全屏失败，显示提示
+      if (!fullscreenSuccess) {
+        console.log('使用 CSS 伪全屏模式')
+      }
+      
     } catch (err) {
       console.error('全屏切换失败:', err)
-      toast.error('全屏功能不可用')
+      // 即使出错，也保持状态切换（CSS 全屏模式）
+      if (!isChartFullScreen) {
+        setIsChartFullScreen(true)
+      }
     }
   }
 
@@ -1519,45 +1551,87 @@ function StatisticsPage() {
                   <button
                     type="button"
                     className="chart-fullscreen-btn"
-                    onClick={() => {
+                    onClick={async () => {
                       const container = document.getElementById('comparison-chart-fullscreen-container')
-                      if (!container) return
+                      if (!container) {
+                        console.warn('找不到对比图表容器')
+                        return
+                      }
                       
-                      if (!document.fullscreenElement) {
-                        if (container.requestFullscreen) {
-                          container.requestFullscreen()
-                        } else if (container.webkitRequestFullscreen) {
-                          container.webkitRequestFullscreen()
-                        } else if (container.mozRequestFullScreen) {
-                          container.mozRequestFullScreen()
-                        } else if (container.msRequestFullscreen) {
-                          container.msRequestFullscreen()
+                      try {
+                        // 如果已经是全屏状态，退出全屏
+                        if (isComparisonFullScreen) {
+                          // 尝试退出浏览器全屏
+                          if (document.fullscreenElement) {
+                            if (document.exitFullscreen) {
+                              await document.exitFullscreen()
+                            } else if (document.webkitExitFullscreen) {
+                              await document.webkitExitFullscreen()
+                            } else if (document.mozCancelFullScreen) {
+                              await document.mozCancelFullScreen()
+                            } else if (document.msExitFullscreen) {
+                              await document.msExitFullscreen()
+                            }
+                          }
+                          
+                          // 解锁屏幕方向
+                          try {
+                            if (screen.orientation && screen.orientation.unlock) {
+                              screen.orientation.unlock()
+                            }
+                          } catch (err) {
+                            console.log('无法解锁屏幕方向:', err)
+                          }
+                          
+                          // 手动更新状态（移动端可能不触发 fullscreenchange 事件）
+                          setIsComparisonFullScreen(false)
+                          return
                         }
+
+                        // 进入全屏状态
                         setIsComparisonFullScreen(true)
                         
-                        // 尝试横屏
+                        // 尝试使用浏览器全屏 API（桌面端和部分移动端支持）
+                        let fullscreenSuccess = false
+                        try {
+                          if (container.requestFullscreen) {
+                            await container.requestFullscreen()
+                            fullscreenSuccess = true
+                          } else if (container.webkitRequestFullscreen) {
+                            await container.webkitRequestFullscreen()
+                            fullscreenSuccess = true
+                          } else if (container.mozRequestFullScreen) {
+                            await container.mozRequestFullScreen()
+                            fullscreenSuccess = true
+                          } else if (container.msRequestFullscreen) {
+                            await container.msRequestFullscreen()
+                            fullscreenSuccess = true
+                          }
+                        } catch (err) {
+                          console.log('浏览器全屏 API 不可用，使用 CSS 全屏模式:', err)
+                          // 移动端通常会到这里，但状态已经设置，CSS 会生效
+                        }
+                        
+                        // 尝试横屏（无论是否成功进入浏览器全屏）
                         try {
                           if (screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(() => {})
+                            await screen.orientation.lock('landscape')
                           }
-                        } catch (err) {}
-                      } else {
-                        if (document.exitFullscreen) {
-                          document.exitFullscreen()
-                        } else if (document.webkitExitFullscreen) {
-                          document.webkitExitFullscreen()
-                        } else if (document.mozCancelFullScreen) {
-                          document.mozCancelFullScreen()
-                        } else if (document.msExitFullscreen) {
-                          document.msExitFullscreen()
+                        } catch (err) {
+                          console.log('无法锁定屏幕方向:', err)
                         }
-                        setIsComparisonFullScreen(false)
                         
-                        try {
-                          if (screen.orientation && screen.orientation.unlock) {
-                            screen.orientation.unlock()
-                          }
-                        } catch (err) {}
+                        // 如果浏览器全屏失败，显示提示
+                        if (!fullscreenSuccess) {
+                          console.log('对比图表使用 CSS 伪全屏模式')
+                        }
+                        
+                      } catch (err) {
+                        console.error('对比图表全屏切换失败:', err)
+                        // 即使出错，也保持状态切换（CSS 全屏模式）
+                        if (!isComparisonFullScreen) {
+                          setIsComparisonFullScreen(true)
+                        }
                       }
                     }}
                     title={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
