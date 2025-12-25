@@ -351,7 +351,6 @@ function RecordPage() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
-                  capture="environment"
                   multiple
                 />
                 <div className="upload-icon">
