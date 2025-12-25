@@ -17,8 +17,12 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import 'dayjs/locale/zh-cn'
-import { getRecords, getAdjustments, formatDate, formatCurrency, saveRecord, deleteRecord } from '../utils/storage'
+import { getRecords, getAdjustments, formatDate, formatCurrency, saveRecord, deleteRecord, getProfitTargets } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
+import { getTargetProgress } from '../utils/targetCalculations'
+import { ProgressBar } from '../components/ProgressBar'
+import { Fireworks } from '../components/Fireworks'
+import { TargetSettings } from '../components/TargetSettings'
 import { exportToExcel, exportToCSV } from '../utils/export'
 import { calculateMonthlyStats, calculateYearlyStats, getAvailablePeriods } from '../utils/periodStats'
 import { calculatePeriodStats } from '../utils/timeComparison'
@@ -91,6 +95,11 @@ function StatisticsPage() {
     }
     return false
   })
+  const [profitTargets, setProfitTargets] = useState([])
+  const [targetProgresses, setTargetProgresses] = useState([])
+  const [showTargetSettings, setShowTargetSettings] = useState(false)
+  const [showFireworks, setShowFireworks] = useState(false)
+  const [achievedTargets, setAchievedTargets] = useState(new Set())
 
   useEffect(() => {
     const initDates = async () => {
@@ -400,11 +409,49 @@ function StatisticsPage() {
     
     // 更新历史记录
     updateHistoryTable(filteredRecords, sortedRecords, adjustments)
+    
+    // 加载目标进度
+    await loadTargetProgresses(records, adjustments)
     } catch (error) {
       console.error('加载统计数据失败:', error)
       toast.error('加载数据失败，请稍后重试')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 加载目标进度
+  const loadTargetProgresses = async (records, adjustments) => {
+    try {
+      const targets = await getProfitTargets()
+      setProfitTargets(targets)
+      
+      const progresses = targets.map(target => 
+        getTargetProgress(target, records, adjustments)
+      )
+      setTargetProgresses(progresses)
+      
+      // 检查是否有新达成的目标
+      const newlyAchieved = new Set()
+      progresses.forEach(progress => {
+        const key = `${progress.investmentType}-${progress.period}`
+        if (progress.isAchieved && !achievedTargets.has(key)) {
+          newlyAchieved.add(key)
+        }
+      })
+      
+      // 如果有新达成的目标，显示烟花
+      if (newlyAchieved.size > 0) {
+        setShowFireworks(true)
+        setAchievedTargets(prev => {
+          const updated = new Set(prev)
+          newlyAchieved.forEach(key => updated.add(key))
+          return updated
+        })
+        setTimeout(() => setShowFireworks(false), 3000) // 3秒后关闭烟花
+      }
+    } catch (error) {
+      console.error('加载目标进度失败:', error)
     }
   }
 
@@ -1190,7 +1237,9 @@ function StatisticsPage() {
               </div>
               
               <div className="dashboard-card today-profit-card">
-                <div className="dashboard-icon">📊</div>
+                <div className="dashboard-icon">
+                  <img src="/assets/images/jijin_white.png" alt="总盈亏" />
+                </div>
                 <div className="dashboard-content">
                   <div className="dashboard-label">总盈亏</div>
                   <div className={`dashboard-value ${(() => {
@@ -1207,6 +1256,47 @@ function StatisticsPage() {
               </div>
             </div>
           )}
+
+          {/* 收益目标进度 */}
+          <div className="stats-card">
+            <div className="stats-header-with-action">
+              <h2 className="stats-title">收益目标进度</h2>
+              <button
+                className="settings-btn"
+                onClick={() => setShowTargetSettings(true)}
+                title="设置目标"
+              >
+                <img src="/assets/images/shezhi.png" alt="设置" />
+              </button>
+            </div>
+            {targetProgresses.length > 0 ? (
+              <div className="target-progress-list">
+                {targetProgresses.map((progress) => {
+                  const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
+                  const periodLabel = 
+                    progress.period === 'week' ? '每周' :
+                    progress.period === 'month' ? '每月' : '每年'
+                  const label = `${typeLabel} - ${periodLabel}`
+                  
+                  return (
+                    <div key={`${progress.investmentType}-${progress.period}`} className="target-progress-item">
+                      <ProgressBar
+                        percentage={progress.percentage}
+                        isAchieved={progress.isAchieved}
+                        label={label}
+                        actualValue={formatCurrency(progress.actualProfit, true)}
+                        targetValue={formatCurrency(progress.targetAmount)}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="empty-targets">
+                <p>暂无收益目标，点击右上角 ⚙️ 按钮设置目标</p>
+              </div>
+            )}
+          </div>
 
           {/* 持仓分布 */}
           <div className="stats-card">
@@ -1481,7 +1571,9 @@ function StatisticsPage() {
             <div className="comparison-stats-grid">
               <div className="comparison-item stock-comparison">
                 <div className="comparison-header">
-                  <span className="comparison-icon">📈</span>
+                  <span className="comparison-icon">
+                    <img src="/assets/images/gupiao.png" alt="股票" />
+                  </span>
                   <span className="comparison-title">股票</span>
                 </div>
                 <div className="comparison-content">
@@ -1511,7 +1603,9 @@ function StatisticsPage() {
               </div>
               <div className="comparison-item fund-comparison">
                 <div className="comparison-header">
-                  <span className="comparison-icon">📊</span>
+                  <span className="comparison-icon">
+                    <img src="/assets/images/jijin.png" alt="基金" />
+                  </span>
                   <span className="comparison-title">基金</span>
                 </div>
                 <div className="comparison-content">
@@ -2220,6 +2314,22 @@ function StatisticsPage() {
           onCancel={() => setEditingRecord(null)}
         />
       )}
+
+      {/* 烟花动画 */}
+      <Fireworks 
+        show={showFireworks} 
+        onComplete={() => setShowFireworks(false)}
+      />
+
+      {/* 目标设置弹窗 */}
+      {showTargetSettings && (
+        <TargetSettings
+          onClose={() => setShowTargetSettings(false)}
+          onUpdate={() => {
+            loadStatistics()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -2306,7 +2416,12 @@ function EditRecordModal({ record, onSave, onCancel }) {
                   checked={formData.investmentType === 'stock'}
                   onChange={handleInputChange}
                 />
-                <span className="radio-icon stock-icon">📈</span>
+                <span className="radio-icon stock-icon">
+                  <img 
+                    src={formData.investmentType === 'stock' ? '/assets/images/gupiao_white.png' : '/assets/images/gupiao.png'} 
+                    alt="股票" 
+                  />
+                </span>
                 <span className="radio-label">股票</span>
               </label>
               <label className="radio-option">
@@ -2317,7 +2432,12 @@ function EditRecordModal({ record, onSave, onCancel }) {
                   checked={formData.investmentType === 'fund'}
                   onChange={handleInputChange}
                 />
-                <span className="radio-icon fund-icon">📊</span>
+                <span className="radio-icon fund-icon">
+                  <img 
+                    src={formData.investmentType === 'fund' ? '/assets/images/jijin_white.png' : '/assets/images/jijin.png'} 
+                    alt="基金" 
+                  />
+                </span>
                 <span className="radio-label">基金</span>
               </label>
             </div>

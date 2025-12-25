@@ -238,3 +238,122 @@ export function formatCurrency(amount, showSign = false) {
   const sign = showSign ? (amount >= 0 ? '+' : '') : ''
   return sign + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
+
+// ========== 收益目标管理 ==========
+
+// 获取所有收益目标
+export async function getProfitTargets() {
+  try {
+    const query = new AV.Query('ProfitTarget')
+    query.ascending('investmentType')
+    query.ascending('period')
+    const results = await query.find()
+    
+    return results.map(item => ({
+      objectId: item.id,
+      investmentType: item.get('investmentType'),
+      period: item.get('period'), // 'week', 'month', 'year'
+      targetAmount: parseFloat(item.get('targetAmount')) || 0,
+      periodStartDate: item.get('periodStartDate'), // 周期开始日期
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }))
+  } catch (error) {
+    console.error('获取收益目标失败:', error)
+    return []
+  }
+}
+
+// 保存收益目标
+export async function saveProfitTarget(target) {
+  try {
+    if (!AV || !AV.Query || !AV.Object) {
+      throw new Error('LeanCloud 未正确初始化，AV 对象不存在')
+    }
+
+    const { investmentType, period, targetAmount, periodStartDate, objectId } = target
+    
+    // 验证必填字段
+    if (!investmentType || !period || targetAmount === undefined || targetAmount === null) {
+      throw new Error('缺少必填字段：investmentType、period、targetAmount')
+    }
+
+    // 验证投资类型
+    if (investmentType !== 'stock' && investmentType !== 'fund') {
+      throw new Error('investmentType 必须是 "stock" 或 "fund"')
+    }
+
+    // 验证周期
+    if (period !== 'week' && period !== 'month' && period !== 'year') {
+      throw new Error('period 必须是 "week"、"month" 或 "year"')
+    }
+
+    // 验证目标金额
+    const amount = parseFloat(targetAmount)
+    if (isNaN(amount) || amount < 0) {
+      throw new Error('targetAmount 必须是有效的正数')
+    }
+    
+    let TargetRecord
+    
+    if (objectId) {
+      // 更新现有目标
+      TargetRecord = AV.Object.createWithoutData('ProfitTarget', objectId)
+    } else {
+      // 检查是否已存在相同类型和周期的目标
+      const query = new AV.Query('ProfitTarget')
+      query.equalTo('investmentType', investmentType)
+      query.equalTo('period', period)
+      const existing = await query.first()
+      
+      if (existing) {
+        TargetRecord = AV.Object.createWithoutData('ProfitTarget', existing.id)
+      } else {
+        TargetRecord = new AV.Object('ProfitTarget')
+      }
+    }
+    
+    TargetRecord.set('investmentType', investmentType)
+    TargetRecord.set('period', period)
+    TargetRecord.set('targetAmount', amount)
+    
+    // 只有周目标才设置周期开始日期
+    if (period === 'week' && periodStartDate) {
+      TargetRecord.set('periodStartDate', periodStartDate)
+    } else if (period === 'week' && !periodStartDate) {
+      // 如果周目标没有提供开始日期，删除该字段（使用默认值）
+      TargetRecord.unset('periodStartDate')
+    } else {
+      // 非周目标不设置周期开始日期
+      TargetRecord.unset('periodStartDate')
+    }
+    
+    const saved = await TargetRecord.save()
+    
+    return {
+      objectId: saved.id,
+      investmentType,
+      period,
+      targetAmount: amount,
+      periodStartDate: (period === 'week' && periodStartDate) ? periodStartDate : null,
+      createdAt: saved.createdAt,
+      updatedAt: saved.updatedAt
+    }
+  } catch (error) {
+    console.error('保存收益目标失败:', error)
+    const errorMessage = error.message || error.toString() || '未知错误'
+    throw new Error(`保存失败: ${errorMessage}`)
+  }
+}
+
+// 删除收益目标
+export async function deleteProfitTarget(objectId) {
+  try {
+    const target = AV.Object.createWithoutData('ProfitTarget', objectId)
+    await target.destroy()
+    return true
+  } catch (error) {
+    console.error('删除收益目标失败:', error)
+    throw error
+  }
+}

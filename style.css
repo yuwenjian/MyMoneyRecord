@@ -348,11 +348,11 @@ body {
 }
 
 .radio-option input[type="radio"]:checked + .radio-icon {
-    background-color: var(--primary-red);
+    background-color: transparent;  /* 选中时图标容器透明 */
 }
 
 .radio-option:has(input[type="radio"]:checked) .radio-icon {
-    background-color: var(--white);
+    background-color: transparent;  /* 选中时图标容器透明，让图标可见 */
 }
 
 .radio-option input[type="radio"]:checked ~ .radio-label {
@@ -371,6 +371,18 @@ body {
     background-color: var(--bg-card);
     transition: all 0.2s ease;
     flex-shrink: 0;
+}
+
+.radio-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* 选中状态下的图标样式 - 使用白色版本图标，无需filter */
+.radio-option:has(input[type="radio"]:checked) .radio-icon img {
+    /* 图标已切换为白色版本，无需额外处理 */
 }
 
 .radio-label {

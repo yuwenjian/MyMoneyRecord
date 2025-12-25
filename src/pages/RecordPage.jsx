@@ -306,16 +306,16 @@ function RecordPage() {
       <main className="app-main">
         {/* 今日概览卡片 */}
         <div className="today-overview-section">
-          <div className="overview-card total-card">
+          <div className="overview-card total-card no-click">
             <div className="overview-icon">
-              <FiDollarSign />
+              <img src="/assets/images/zhichan.png" alt="总资产" />
             </div>
             <div className="overview-content">
               <div className="overview-label">总资产</div>
               <div className="overview-value-large">{todayOverview.totalAsset}</div>
             </div>
           </div>
-          <div className="overview-card profit-card">
+          <div className="overview-card profit-card no-click">
             <div className="overview-icon">
               {parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? (
                 <FiTrendingUp />
@@ -453,7 +453,12 @@ function RecordPage() {
                   checked={formData.investmentType === 'stock'}
                   onChange={handleInputChange}
                 />
-                <span className="radio-icon stock-icon">📈</span>
+                <span className="radio-icon stock-icon">
+                  <img 
+                    src={formData.investmentType === 'stock' ? '/assets/images/gupiao_white.png' : '/assets/images/gupiao.png'} 
+                    alt="股票" 
+                  />
+                </span>
                 <span className="radio-label">股票</span>
               </label>
               <label className="radio-option">
@@ -464,7 +469,12 @@ function RecordPage() {
                   checked={formData.investmentType === 'fund'}
                   onChange={handleInputChange}
                 />
-                <span className="radio-icon fund-icon">📊</span>
+                <span className="radio-icon fund-icon">
+                  <img 
+                    src={formData.investmentType === 'fund' ? '/assets/images/jijin_white.png' : '/assets/images/jijin.png'} 
+                    alt="基金" 
+                  />
+                </span>
                 <span className="radio-label">基金</span>
               </label>
             </div>

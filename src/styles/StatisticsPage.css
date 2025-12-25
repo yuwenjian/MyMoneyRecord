@@ -378,6 +378,13 @@
   justify-content: center;
 }
 
+.dashboard-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .dashboard-content {
   flex: 1;
   min-width: 0;  /* 允许内容缩小 */
@@ -1352,6 +1359,27 @@
 
 .comparison-icon {
   font-size: 20px;  /* 移动端更小的图标 */
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.comparison-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* 移动端优化 */
+@media (max-width: 600px) {
+  .comparison-icon {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .comparison-title {
@@ -1796,6 +1824,90 @@
   10% { opacity: 1; }
   90% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* ========== 收益目标进度样式 ========== */
+
+.target-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.target-progress-item {
+  padding: 15px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.settings-btn {
+  background: transparent;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.settings-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  display: block;
+}
+
+.settings-btn:hover {
+  background: transparent;
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.settings-btn:active {
+  transform: translateY(0);
+  opacity: 0.6;
+}
+
+.empty-targets {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+/* 移动端优化 */
+@media (max-width: 600px) {
+  .target-progress-list {
+    gap: 15px;
+  }
+
+  .target-progress-item {
+    padding: 12px;
+  }
+
+  .settings-btn {
+    padding: 6px 10px;
+    font-size: 14px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .settings-btn img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .empty-targets {
+    padding: 30px 15px;
+    font-size: 13px;
+  }
 }
 
 /* ============================================

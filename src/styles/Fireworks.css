@@ -1,0 +1,73 @@
+.fireworks-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.fireworks-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.firework-particle {
+  position: absolute;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+  pointer-events: none;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+.fireworks-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10001;
+  animation: messageAppear 0.5s ease-out;
+}
+
+.celebration-text {
+  font-size: 48px;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.8),
+    0 0 20px rgba(255, 215, 0, 0.6),
+    0 0 30px rgba(255, 215, 0, 0.4);
+  animation: textPulse 1s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes messageAppear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes textPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 移动端优化 */
+@media (max-width: 600px) {
+  .celebration-text {
+    font-size: 32px;
+  }
+}
+
