@@ -1,7 +1,7 @@
-/* 统计页面样式 - 重新设计 */
+/* 统计页面样式 - 移动端 APP 设计规范 */
 .statistics-container {
-  padding: 20px;
-  padding-bottom: 40px;
+  padding: 0;  /* 和屏幕无间距，最大化利用屏幕空间 */
+  padding-bottom: 5px;
 }
 
 /* 统计卡片网格布局 */
@@ -49,19 +49,21 @@
 
 .stats-card {
   background-color: var(--bg-card);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow);
+  border-radius: 12px;  /* 移动端稍小的圆角 */
+  padding: 14px;  /* 移动端更紧凑的内边距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);  /* 移动端更轻的阴影 */
+  position: relative;  /* 确保日期选择器可以正确定位 */
+  overflow: visible;  /* 允许日期选择器弹出 */
 }
 
 .stats-title {
-  font-size: 18px;
+  font-size: 15px;  /* 移动端稍小的标题 */
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin-bottom: 12px;  /* 移动端更小的间距 */
   border-bottom: 2px solid var(--border-color);
-  padding-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 /* 可访问性：键盘焦点样式 */
@@ -70,48 +72,56 @@
   outline-offset: 2px;
 }
 
-/* 日期范围选择区域布局 */
+/* 日期范围选择区域布局 - 移动端 APP 设计规范 */
 .date-range-wrapper {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;    /* PC端允许换行，移动端通过媒体查询控制 */
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;  /* 移动端更小的间距 */
   align-items: flex-start;
+  position: relative;  /* 确保日期选择器可以正确定位 */
+  overflow: visible;  /* 允许日期选择器弹出 */
+  z-index: 1;  /* 确保在其他元素之上 */
 }
 
 .date-range-item {
   flex: 1;
-  min-width: 140px;   /* PC端最小宽度 */
+  min-width: 0;  /* 移动端允许缩小 */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;  /* 移动端更小的间距 */
+  position: relative;  /* 确保日期选择器可以正确定位 */
+  z-index: 10;  /* 确保在其他元素之上 */
 }
 
 .date-range-item .form-label {
-  font-size: 14px;
+  font-size: 12px;  /* 移动端更小的标签 */
   color: var(--text-secondary);
-  white-space: nowrap;  /* 防止标签换行 */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .date-range-buttons {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 10px;  /* 移动端更小的间距 */
+  margin-top: 6px;
   width: 100%;
 }
 
 .filter-btn-stat {
   flex: 1;
-  height: 44px;
-  min-height: 44px;
+  height: 40px;  /* 移动端稍小的高度 */
+  min-height: 40px;
   background-color: var(--primary-red);
   color: var(--white);
   border: none;
   border-radius: 8px;
+  font-size: 14px;  /* 移动端标准按钮字体 */
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .reset-btn {
@@ -138,18 +148,51 @@
   height: 36px;
 }
 
-/* 输入框统一 */
+/* 输入框统一 - 移动端 APP 设计规范 */
 .new-picker-input {
   width: 100%;
-  height: 44px;
+  height: 40px;  /* 移动端稍小的高度 */
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0 12px;
+  padding: 0 10px;  /* 移动端更紧凑的内边距 */
   box-sizing: border-box;
-  font-size: 14px;
-  white-space: nowrap;  /* 防止日期文字换行 */
+  font-size: 13px;  /* 移动端标准输入字体 */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 统计项样式 - 移动端 APP 设计规范 */
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;  /* 移动端更紧凑的内边距 */
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 13px;  /* 移动端更小的标签字体 */
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex: 1;
+  margin-right: 12px;
+}
+
+.stat-value {
+  font-size: 14px;  /* 移动端更小的数值字体 */
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;  /* 确保一行显示 */
+  overflow: visible;  /* 允许溢出，确保完整显示 */
+  text-overflow: clip;  /* 不省略，完整显示 */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.1px;
 }
 
 /* 盈亏样式 */
@@ -158,23 +201,23 @@
 
 .chart-container {
   background-color: var(--bg-card);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  min-height: 300px;
+  border-radius: 12px;  /* 移动端稍小的圆角 */
+  padding: 14px;  /* 移动端更紧凑的内边距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
+  min-height: 250px;  /* 移动端更小的高度 */
 }
 
 .chart-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;  /* 移动端更小的间距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
 }
 
 .chart-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;  /* 移动端更小的间距 */
   align-items: center;
 }
 
@@ -235,14 +278,15 @@
 }
 
 .chart-type-btn {
-  padding: 8px 12px;
+  padding: 6px 10px;  /* 移动端更紧凑的内边距 */
   border: 1px solid var(--border-color);
   border-radius: 6px;
   background: var(--white);
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: 16px;  /* 移动端更小的图标字体 */
   cursor: pointer;
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .chart-type-btn:hover {
@@ -256,12 +300,12 @@
   color: var(--white);
 }
 
-/* 仪表盘样式 */
+/* 仪表盘样式 - 移动端 APP 设计规范 */
 .dashboard-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;  /* PC端正常间距 */
-  margin-bottom: 20px;
+  gap: 10px;  /* 移动端更小的间距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
 }
 
 /* 图表区域：可折叠/展开 */
@@ -307,12 +351,12 @@
 
 .dashboard-card {
   background: linear-gradient(135deg, var(--primary-red) 0%, #c0392b 100%);
-  border-radius: 16px;  /* PC端正常圆角 */
-  padding: 20px;  /* PC端正常内边距 */
+  border-radius: 12px;  /* 移动端稍小的圆角 */
+  padding: 12px;  /* 移动端更紧凑的内边距 */
   display: flex;
   align-items: center;
-  gap: 16px;  /* PC端正常间距 */
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  gap: 10px;  /* 移动端更小的间距 */
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.25);  /* 移动端更轻的阴影 */
   color: var(--white);
   min-width: 0;
   overflow: hidden;
@@ -324,11 +368,11 @@
 }
 
 .dashboard-icon {
-  font-size: 48px;  /* PC端正常大小 */
+  font-size: 28px;  /* 移动端更小的图标 */
   opacity: 0.9;
   flex-shrink: 0;
-  width: 56px;  /* PC端正常尺寸 */
-  height: 56px;
+  width: 36px;  /* 移动端更小的尺寸 */
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -341,35 +385,59 @@
 }
 
 .dashboard-label {
-  font-size: 14px;
+  font-size: 11px;  /* 移动端更小的标签 */
   opacity: 0.9;
-  margin-bottom: 8px;
+  margin-bottom: 4px;  /* 移动端更小的间距 */
+  line-height: 1.2;
 }
 
 .dashboard-value {
-  font-size: 24px;  /* PC端正常大小 */
+  font-size: 16px;  /* 移动端更小的数值，确保完整显示 */
   font-weight: 700;
-  word-break: break-all;
-  overflow-wrap: break-word;
+  white-space: nowrap;  /* 确保一行显示 */
+  overflow: visible;  /* 允许溢出，确保完整显示 */
+  text-overflow: clip;  /* 不省略，完整显示 */
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;  /* 稍微紧凑的字母间距 */
+  max-width: 100%;  /* 确保不超出容器 */
 }
 
 .dashboard-value.positive {
-  color: #fff;
+  color: #fff;  /* 保持白色 */
 }
 
 .dashboard-value.negative {
-  color: #ffcccc;
+  color: #fff;  /* 统一使用白色，确保清晰可见 */
 }
 
-/* 持仓分布 */
+/* 今日盈亏卡片（实际显示总盈亏）的数值需要更高对比度 */
+.today-profit-card .dashboard-value {
+  color: #fff !important;  /* 强制使用白色，确保在绿色背景上清晰可见 */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);  /* 增强文字阴影，提高可读性 */
+  font-weight: 700;  /* 加粗字体 */
+}
+
+/* 确保 TrendIndicator 组件在绿色卡片上也是白色 */
+.today-profit-card .trend-indicator {
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.today-profit-card .trend-icon {
+  color: #fff !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* 持仓分布 - 移动端 APP 设计规范 */
 .position-distribution {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;  /* 移动端更小的间距 */
 }
 
 .distribution-item {
-  padding: 16px;
+  padding: 12px;  /* 移动端更紧凑的内边距 */
   background: var(--bg-card);
   border-radius: 8px;
   border: 1px solid var(--border-color);
@@ -379,34 +447,34 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;  /* 移动端更小的间距 */
 }
 
 .distribution-label {
-  font-size: 16px;
+  font-size: 14px;  /* 移动端更小的字体 */
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .distribution-percent {
-  font-size: 18px;
+  font-size: 15px;  /* 移动端更小的字体 */
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .distribution-bar {
   width: 100%;
-  height: 24px;
+  height: 20px;  /* 移动端更小的进度条高度 */
   background: var(--border-color);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 6px;  /* 移动端更小的间距 */
 }
 
 .distribution-bar-fill {
   height: 100%;
-  border-radius: 12px;
-  transition: width 0.3s ease;
+  border-radius: 10px;
+  transition: width 0.2s ease;  /* 移动端更快的过渡 */
 }
 
 .stock-fill {
@@ -418,7 +486,7 @@
 }
 
 .distribution-value {
-  font-size: 18px;
+  font-size: 15px;  /* 移动端更小的字体 */
   font-weight: 600;
   color: var(--text-primary);
   text-align: right;
@@ -456,6 +524,8 @@
   .new-picker-wrapper {
     width: 100%;
     min-width: 0;  /* 允许缩小 */
+    position: relative;
+    z-index: 10;
   }
   
   .date-range-buttons {
@@ -478,24 +548,86 @@
   }
   
   .dashboard-card {
-    padding: 12px;  /* 减小内边距 */
-    gap: 10px;  /* 减小图标和内容间距 */
-    border-radius: 12px;  /* 稍小的圆角 */
+    padding: 10px;  /* 移动端更紧凑的内边距 */
+    gap: 8px;  /* 移动端更小的间距 */
+    border-radius: 10px;  /* 移动端更小的圆角 */
   }
   
   .dashboard-icon {
-    font-size: 32px;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;  /* 移动端更小的图标 */
+    width: 32px;  /* 移动端更小的尺寸 */
+    height: 32px;
   }
   
   .dashboard-label {
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 10px;  /* 移动端更小的标签 */
+    margin-bottom: 3px;
   }
   
   .dashboard-value {
-    font-size: 18px;
+    font-size: 14px;  /* 移动端更小的数值，确保完整显示 */
+  }
+  
+  /* 统计项在移动端的优化 */
+  .stat-item {
+    padding: 8px 0;  /* 移动端更紧凑的内边距 */
+  }
+  
+  .stat-label {
+    font-size: 12px;  /* 移动端更小的标签 */
+  }
+  
+  .stat-value {
+    font-size: 13px;  /* 移动端更小的数值 */
+  }
+  
+  /* 持仓分布在移动端的优化 */
+  .distribution-item {
+    padding: 10px;  /* 移动端更紧凑的内边距 */
+  }
+  
+  .distribution-label {
+    font-size: 13px;  /* 移动端更小的字体 */
+  }
+  
+  .distribution-percent {
+    font-size: 14px;  /* 移动端更小的字体 */
+  }
+  
+  .distribution-value {
+    font-size: 14px;  /* 移动端更小的字体 */
+  }
+  
+  /* 图表控制在移动端的优化 */
+  .chart-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .chart-controls {
+    gap: 6px;
+  }
+  
+  .chart-type-btn {
+    padding: 5px 8px;
+    font-size: 14px;
+  }
+  
+  .chart-period-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  
+  /* 统计卡片在移动端的优化 */
+  .stats-card {
+    padding: 12px;  /* 移动端更紧凑的内边距 */
+    margin-bottom: 10px;
+  }
+  
+  .stats-title {
+    font-size: 14px;  /* 移动端更小的标题 */
+    margin-bottom: 10px;
+    padding-bottom: 5px;
   }
 }
 
@@ -510,9 +642,10 @@
 }
 
 .history-table th, .history-table td {
-  padding: 12px;
+  padding: 10px 8px;  /* 移动端更紧凑的内边距 */
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  font-size: 13px;  /* 移动端更小的字体 */
 }
 
 /* 盈亏和加减仓样式 */
@@ -536,16 +669,16 @@
   font-weight: 500;
 }
 
-/* 历史记录标题带按钮 */
+/* 历史记录标题带按钮 - 移动端 APP 设计规范 */
 .stats-header-with-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;  /* 移动端更小的间距 */
   border-bottom: 2px solid var(--border-color);
-  padding-bottom: 10px;
+  padding-bottom: 8px;  /* 移动端更小的间距 */
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;  /* 移动端更小的间距 */
 }
 
 .stats-header-with-action .stats-title {
@@ -570,16 +703,18 @@
 }
 
 .filter-type-btn {
-  padding: 6px 14px;
+  padding: 8px 12px;  /* 移动端更紧凑的内边距 */
+  min-height: 36px;  /* 移动端标准触摸目标 */
   border: 1px solid var(--border-color);
   border-radius: 6px;
   background: var(--white);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 13px;  /* 移动端标准字体 */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .filter-type-btn:hover {
@@ -607,16 +742,18 @@
 }
 
 .export-btn {
-  padding: 6px 12px;
+  padding: 8px 12px;  /* 移动端更紧凑的内边距 */
+  min-height: 36px;  /* 移动端标准触摸目标 */
   border: 1px solid var(--primary-green);
   border-radius: 6px;
   background: var(--white);
   color: var(--primary-green);
-  font-size: 12px;
+  font-size: 12px;  /* 移动端标准字体 */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .export-btn:hover {
@@ -691,20 +828,19 @@
 }
 
 .fullscreen-header h2 {
-  font-size: 18px;
-  margin: 0;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .close-fullscreen {
+  padding: 8px 16px;
   background: var(--primary-red);
   color: #fff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
   transition: all 0.2s;
   white-space: nowrap;
 }
@@ -714,29 +850,13 @@
   transform: scale(1.05);
 }
 
-.close-fullscreen:active {
-  transform: scale(0.95);
-}
-
-.fullscreen-table-wrapper {
-  flex: 1;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  /* 确保在横屏时能够充分利用空间 */
-  min-height: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 全屏模式下的筛选按钮组 */
+/* 全屏模式下的筛选器 */
 .fullscreen-filter-group {
   display: flex;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 12px 15px;
   background: var(--bg-card);
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
   border-radius: 8px 8px 0 0;
@@ -837,124 +957,108 @@
   
   .fullscreen-table-wrapper .history-table th {
     padding: 18px 16px;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
   }
   
   .fullscreen-table-wrapper .history-table td {
-    padding: 16px;
+    padding: 14px 16px;
     font-size: 15px;
   }
-  
-  /* 确保表格列能够充分利用横向空间 */
-  .fullscreen-table-wrapper .history-table {
-    table-layout: fixed;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(1),
-  .fullscreen-table-wrapper .history-table td:nth-child(1) {
-    width: 12%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(2),
-  .fullscreen-table-wrapper .history-table td:nth-child(2) {
-    width: 8%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(3),
-  .fullscreen-table-wrapper .history-table td:nth-child(3) {
-    width: 18%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(4),
-  .fullscreen-table-wrapper .history-table td:nth-child(4) {
-    width: 18%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(5),
-  .fullscreen-table-wrapper .history-table td:nth-child(5) {
-    width: 12%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(6),
-  .fullscreen-table-wrapper .history-table td:nth-child(6) {
-    width: 15%;
-  }
-  
-  .fullscreen-table-wrapper .history-table th:nth-child(7),
-  .fullscreen-table-wrapper .history-table td:nth-child(7) {
-    width: 17%;
-  }
-}
-
-/* 移动端竖屏优化 */
-@media screen and (max-width: 600px) and (orientation: portrait) {
-  .fullscreen-header h2 {
-    font-size: 16px;
-  }
-  
-  .close-fullscreen {
-    padding: 8px 16px;
-    font-size: 13px;
-  }
-  
-  .fullscreen-table-wrapper {
-    overflow-x: auto;
-    overflow-y: auto;
-  }
-  
-  .fullscreen-table-wrapper .history-table {
-    font-size: 12px;
-    min-width: 700px; /* 确保在竖屏下也能横向滚动查看所有列 */
-  }
-  
-  .fullscreen-table-wrapper .history-table th,
-  .fullscreen-table-wrapper .history-table td {
-    padding: 10px 8px;
-  }
-}
-
-/* 全屏表格特殊样式 */
-.fullscreen-table {
-  background: #fff;
-}
-
-.fullscreen-table thead {
-  background-color: var(--bg-card);
-}
-
-.fullscreen-table tbody tr:hover {
-  background-color: rgba(231, 76, 60, 0.05);
-}
-
-.fullscreen-table tbody tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-.fullscreen-table tbody tr:nth-child(even):hover {
-  background-color: rgba(231, 76, 60, 0.08);
 }
 
 /* 批量操作栏 */
 .batch-actions-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--primary-red);
-  color: var(--white);
-  border-radius: 8px 8px 0 0;
-  margin-bottom: 0;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  gap: 8px;
 }
 
 .batch-actions-bar span {
-  flex: 1;
-  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
-.batch-delete-btn,
+.batch-delete-btn {
+  padding: 6px 12px;
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.batch-delete-btn:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
 .batch-cancel-btn {
-  padding: 6px 16px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.batch-cancel-btn:hover {
+  border-color: var(--primary-red);
+  color: var(--primary-red);
+}
+
+/* 编辑记录模态框 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-cancel-btn, .modal-save-btn {
+  flex: 1;
+  padding: 10px 20px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -963,166 +1067,152 @@
   transition: all 0.2s;
 }
 
-.batch-delete-btn {
+.modal-cancel-btn {
   background: var(--white);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-cancel-btn:hover {
+  border-color: var(--primary-red);
   color: var(--primary-red);
 }
 
-.batch-delete-btn:hover {
-  background: #f0f0f0;
-}
-
-.batch-cancel-btn {
-  background: transparent;
+.modal-save-btn {
+  background: var(--primary-red);
   color: var(--white);
-  border: 1px solid var(--white);
 }
 
-.batch-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+.modal-save-btn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
-/* 表格行选中状态 */
-.row-selected {
-  background-color: rgba(231, 76, 60, 0.1) !important;
+/* 移动端模态框适配 */
+@media (max-width: 600px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+    max-height: 85vh;
+  }
+  
+  .modal-content h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
 }
 
-/* 操作按钮 */
+/* 历史记录表格：移动端横向滚动提示 */
+@media screen and (max-width: 600px) and (orientation: portrait) {
+  .history-table-container {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+  
+  /* 滚动提示 */
+  .history-table-container::after {
+    content: '← 滑动查看更多 →';
+    display: block;
+    text-align: center;
+    padding: 8px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    background: rgba(231, 76, 60, 0.05);
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .fullscreen-table-wrapper .history-table th:nth-child(1),
+  .fullscreen-table-wrapper .history-table td:nth-child(1) {
+    width: 8%; /* Checkbox */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(2),
+  .fullscreen-table-wrapper .history-table td:nth-child(2) {
+    width: 12%; /* Date */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(3),
+  .fullscreen-table-wrapper .history-table td:nth-child(3) {
+    width: 8%; /* Type */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(4),
+  .fullscreen-table-wrapper .history-table td:nth-child(4) {
+    width: 15%; /* Total Asset */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(5),
+  .fullscreen-table-wrapper .history-table td:nth-child(5) {
+    width: 15%; /* Total Market Value */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(6),
+  .fullscreen-table-wrapper .history-table td:nth-child(6) {
+    width: 10%; /* Shanghai Index */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(7),
+  .fullscreen-table-wrapper .history-table td:nth-child(7) {
+    width: 10%; /* Adjustment */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(8),
+  .fullscreen-table-wrapper .history-table td:nth-child(8) {
+    width: 10%; /* Daily P/L */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(9),
+  .fullscreen-table-wrapper .history-table td:nth-child(9) {
+    width: 12%; /* Notes */
+  }
+  .fullscreen-table-wrapper .history-table th:nth-child(10),
+  .fullscreen-table-wrapper .history-table td:nth-child(10) {
+    width: 10%; /* Actions */
+  }
+}
+
+/* 操作按钮样式 */
 .action-buttons {
   display: flex;
   gap: 8px;
 }
 
-.edit-btn,
-.delete-btn {
-  padding: 4px 12px;
+.edit-btn, .delete-btn {
+  padding: 4px 10px;
   border: none;
   border-radius: 4px;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
 }
 
 .edit-btn {
-  background: var(--primary-green);
-  color: var(--white);
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
 }
 
 .edit-btn:hover {
-  background: #45a049;
+  background: #1890ff;
+  color: var(--white);
+  transform: scale(1.05);
 }
 
 .delete-btn {
-  background: var(--primary-red);
-  color: var(--white);
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--primary-red);
 }
 
 .delete-btn:hover {
-  background: #c0392b;
-}
-
-/* 编辑模态框 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 4000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.modal-content {
-  background: var(--white);
-  border-radius: 16px;
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.edit-form {
-  padding: 20px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
-}
-
-.modal-actions .cancel-btn,
-.modal-actions .save-btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.modal-actions .cancel-btn {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.modal-actions .cancel-btn:hover {
-  background: var(--border-color);
-}
-
-.modal-actions .save-btn {
   background: var(--primary-red);
   color: var(--white);
+  transform: scale(1.05);
 }
 
-.modal-actions .save-btn:hover {
-  background: #c0392b;
+/* 行选中状态 */
+.history-table tr.row-selected {
+  background: rgba(231, 76, 60, 0.05);
 }
 
 /* 周期汇总统计样式 */
@@ -1132,15 +1222,17 @@
 }
 
 .period-toggle-btn {
-  padding: 6px 14px;
+  padding: 8px 12px;  /* 移动端更紧凑的内边距 */
+  min-height: 36px;  /* 移动端标准触摸目标 */
   border: 1px solid var(--border-color);
   border-radius: 6px;
   background: var(--white);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 13px;  /* 移动端标准字体 */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .period-toggle-btn:hover {
@@ -1156,18 +1248,20 @@
 }
 
 .period-selector {
-  margin-bottom: 16px;
+  margin-bottom: 12px;  /* 移动端更小的间距 */
 }
 
 .period-select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 12px;  /* 移动端标准内边距 */
+  min-height: 40px;  /* 移动端标准触摸目标 */
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;  /* 移动端标准字体 */
   background: var(--white);
   color: var(--text-primary);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .period-select:focus {
@@ -1179,22 +1273,22 @@
 .period-stats-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;  /* 移动端更小的间距 */
 }
 
 .period-stats-section {
-  padding: 16px;
+  padding: 12px;  /* 移动端更紧凑的内边距 */
   background: var(--bg-card);
   border-radius: 8px;
   border: 1px solid var(--border-color);
 }
 
 .period-stats-subtitle {
-  font-size: 16px;
+  font-size: 14px;  /* 移动端更小的标题 */
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 10px;  /* 移动端更小的间距 */
+  padding-bottom: 6px;  /* 移动端更小的间距 */
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -1202,13 +1296,13 @@
 .comparison-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 10px;  /* 移动端更小的间距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
 }
 
 .comparison-item {
-  padding: 16px;
-  border-radius: 12px;
+  padding: 12px;  /* 移动端更紧凑的内边距 */
+  border-radius: 10px;  /* 移动端稍小的圆角 */
   border: 2px solid var(--border-color);
   background: var(--white);
 }
@@ -1224,18 +1318,18 @@
 .comparison-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  gap: 6px;  /* 移动端更小的间距 */
+  margin-bottom: 12px;  /* 移动端更小的间距 */
+  padding-bottom: 8px;  /* 移动端更小的间距 */
   border-bottom: 2px solid var(--border-color);
 }
 
 .comparison-icon {
-  font-size: 24px;
+  font-size: 20px;  /* 移动端更小的图标 */
 }
 
 .comparison-title {
-  font-size: 18px;
+  font-size: 15px;  /* 移动端更小的标题 */
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1243,7 +1337,7 @@
 .comparison-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;  /* 移动端更小的间距 */
 }
 
 .comparison-stat {
@@ -1253,14 +1347,17 @@
 }
 
 .comparison-label {
-  font-size: 14px;
+  font-size: 13px;  /* 移动端更小的标签 */
   color: var(--text-secondary);
 }
 
 .comparison-value {
-  font-size: 16px;
+  font-size: 14px;  /* 移动端更小的数值 */
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;  /* 确保一行显示 */
+  overflow: visible;  /* 允许溢出，确保完整显示 */
+  text-overflow: clip;  /* 不省略，完整显示 */
 }
 
 .comparison-value.positive {
@@ -1289,17 +1386,17 @@
 }
 
 .comparison-period-group {
-  padding: 16px;
+  padding: 12px;  /* 移动端更紧凑的内边距 */
   background: var(--bg-card);
   border-radius: 8px;
   border: 1px solid var(--border-color);
 }
 
 .comparison-period-title {
-  font-size: 16px;
+  font-size: 14px;  /* 移动端更小的标题 */
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 10px;  /* 移动端更小的间距 */
 }
 
 .comparison-date-inputs {
@@ -1320,16 +1417,18 @@
 }
 
 .comparison-btn {
-  padding: 12px 24px;
+  padding: 10px 20px;  /* 移动端更紧凑的内边距 */
+  min-height: 40px;  /* 移动端标准触摸目标 */
   background: var(--primary-red);
   color: var(--white);
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 14px;  /* 移动端标准按钮字体 */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   align-self: flex-start;
+  -webkit-tap-highlight-color: transparent;  /* 移动端去除点击高亮 */
 }
 
 .comparison-btn:hover {
@@ -1371,27 +1470,75 @@
   font-size: 14px;
 }
 
-.comparison-stats-table tbody tr:hover {
-  background: rgba(231, 76, 60, 0.05);
+.comparison-stats-table td.positive {
+  color: var(--primary-green);
+  font-weight: 600;
 }
 
-.comparison-stats-table td:first-child {
-  text-align: left;
-  font-weight: 500;
+.comparison-stats-table td.negative {
+  color: var(--primary-red);
+  font-weight: 600;
 }
 
-@media (max-width: 600px) {
-  .comparison-date-inputs {
-    grid-template-columns: 1fr;
-  }
-  
-  .comparison-stats-table {
-    font-size: 12px;
-  }
-  
-  .comparison-stats-table th,
-  .comparison-stats-table td {
-    padding: 8px;
-  }
+/* 暗色模式 */
+[data-theme="dark"] {
+  --bg-dark: #1a2332;
+  --bg-card: #2a3b4c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --border-color: #444;
+  --border-color-light: #3a4a5b;
+  --white: #3a4a5b; /* For elements that were white in light mode */
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --bg-toast: #333;
+  --text-toast: #fff;
 }
 
+/* 原生日期选择器样式 - 移动端最佳体验 */
+.native-date-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text-primary);
+  font-family: inherit;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.native-date-input:focus {
+  outline: none;
+  border-color: var(--primary-red);
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+.native-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: opacity(0.6);
+}
+
+.native-date-input::-webkit-calendar-picker-indicator:hover {
+  filter: opacity(1);
+}
+
+/* 暗色模式下的日期选择器 */
+[data-theme="dark"] .native-date-input {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .native-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.6);
+}
+
+[data-theme="dark"] .native-date-input::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) opacity(1);
+}

@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DatePicker, { registerLocale } from 'react-datepicker'
-import zhCN from 'date-fns/locale/zh-CN'
 import toast from 'react-hot-toast'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import 'dayjs/locale/zh-cn'
-import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiPieChart } from 'react-icons/fi'
+import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiPieChart, FiCamera, FiX } from 'react-icons/fi'
 import { saveRecord, saveAdjustment, deleteAdjustmentByDate, getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
-import 'react-datepicker/dist/react-datepicker.css'
+import { recognizeAccountData, recognizeMultipleImages } from '../utils/ocr'
 import '../styles/RecordPage.css'
 
-// 注册中文语言包
-registerLocale('zh-CN', zhCN)
 // 配置 dayjs
 dayjs.extend(customParseFormat)
 dayjs.locale('zh-cn')
@@ -39,23 +35,14 @@ function RecordPage() {
     fundAsset: '--'
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState([])
+  const [isRecognizing, setIsRecognizing] = useState(false)
+  const [imagePreviews, setImagePreviews] = useState([])
 
-  // 自定义输入组件，防止手机端弹出键盘
-  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
-    <input
-      value={value}
-      onClick={onClick}
-      ref={ref}
-      readOnly
-      className="new-picker-input"
-      placeholder="请选择日期"
-    />
-  ));
-
-  // 加载今日概览
+  // 加载今日概览（当日期或投资类型改变时）
   useEffect(() => {
     loadTodayOverview()
-  }, [])
+  }, [formData.date, formData.investmentType])
 
   const loadTodayOverview = async () => {
     try {
@@ -79,6 +66,16 @@ function RecordPage() {
       const todayRecords = sortedRecords.filter(r => r.date === today)
       const todayStockRecord = todayRecords.find(r => r.investmentType === 'stock')
       const todayFundRecord = todayRecords.find(r => r.investmentType === 'fund')
+      
+      // 🆕 自动填充今日上证指数（如果已有记录）
+      const todayWithShanghaiIndex = todayRecords.find(r => r.shanghaiIndex)
+      if (todayWithShanghaiIndex && todayWithShanghaiIndex.shanghaiIndex) {
+        setFormData(prev => ({
+          ...prev,
+          shanghaiIndex: todayWithShanghaiIndex.shanghaiIndex.toString()
+        }))
+        console.log('✅ 自动填充今日上证指数:', todayWithShanghaiIndex.shanghaiIndex)
+      }
       
       // 获取最新记录
       const latestStockRecord = sortedRecords.filter(r => r.investmentType === 'stock')
@@ -116,16 +113,109 @@ function RecordPage() {
     }
   }
 
-  const handleDateChange = (date) => {
-    if (date) {
-      const formattedDate = dayjs(date).format('YYYY-MM-DD')
-      setFormData(prev => ({ ...prev, date: formattedDate }))
-    }
-  }
-
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  // 处理图片上传（支持多张）
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+
+    // 验证文件类型和大小
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} 不是图片文件`)
+        return false
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} 大小超过10MB`)
+        return false
+      }
+      return true
+    })
+
+    if (validFiles.length === 0) return
+
+    // 添加到已上传列表
+    const newImages = [...uploadedImages, ...validFiles]
+    setUploadedImages(newImages)
+    
+    // 生成预览
+    const newPreviews = []
+    validFiles.forEach((file, index) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        newPreviews.push({
+          url: event.target.result,
+          name: file.name,
+          id: Date.now() + index
+        })
+        if (newPreviews.length === validFiles.length) {
+          setImagePreviews(prev => [...prev, ...newPreviews])
+        }
+      }
+      reader.readAsDataURL(file)
+    })
+
+    // 清空文件输入，允许重新选择相同文件
+    e.target.value = ''
+  }
+
+  // 批量识别所有图片
+  const recognizeAllImages = async () => {
+    if (uploadedImages.length === 0) {
+      toast.error('请先上传图片')
+      return
+    }
+
+    setIsRecognizing(true)
+    const loadingToast = toast.loading(`正在识别 ${uploadedImages.length} 张图片...`)
+
+    try {
+      const result = await recognizeMultipleImages(uploadedImages, formData.investmentType)
+
+      if (result.success && result.hasValidData) {
+        // 自动填充识别到的数据
+        const { data } = result
+        setFormData(prev => ({
+          ...prev,
+          totalAsset: data.totalAsset ? data.totalAsset.toString() : prev.totalAsset,
+          totalMarketValue: data.totalMarketValue ? data.totalMarketValue.toString() : prev.totalMarketValue,
+          shanghaiIndex: data.shanghaiIndex ? data.shanghaiIndex.toString() : prev.shanghaiIndex
+        }))
+
+        const fields = []
+        if (data.totalAsset) fields.push('总资产')
+        if (data.totalMarketValue) fields.push('总市值')
+        if (data.shanghaiIndex) fields.push('上证指数')
+
+        toast.success(`识别成功！已自动填写: ${fields.join('、')}`, { id: loadingToast })
+      } else {
+        toast.error('未识别到有效数据，请手动输入', { id: loadingToast })
+      }
+    } catch (error) {
+      console.error('批量识别错误:', error)
+      toast.error('识别失败，请手动输入', { id: loadingToast })
+    } finally {
+      setIsRecognizing(false)
+    }
+  }
+
+  // 删除指定图片
+  const removeImage = (indexToRemove) => {
+    setUploadedImages(prev => prev.filter((_, index) => index !== indexToRemove))
+    setImagePreviews(prev => prev.filter((_, index) => index !== indexToRemove))
+  }
+
+  // 清除所有图片
+  const clearAllImages = () => {
+    setUploadedImages([])
+    setImagePreviews([])
+    // 清空文件输入
+    const fileInput = document.getElementById('image-upload')
+    if (fileInput) fileInput.value = ''
   }
 
   const handleSave = async () => {
@@ -243,17 +333,105 @@ function RecordPage() {
         </div>
 
         <div className="form-card">
+          {/* 图片上传区域 */}
+          <div className="image-upload-section">
+            <div className="upload-header">
+              <label className="form-label">
+                <FiCamera style={{ marginRight: '6px' }} />
+                智能识别 {imagePreviews.length > 0 && `(已上传 ${imagePreviews.length} 张)`}
+              </label>
+              <span className="upload-hint">可上传多张图片分别识别</span>
+            </div>
+            
+            {imagePreviews.length === 0 ? (
+              <label className="upload-box" htmlFor="image-upload">
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  capture="environment"
+                  multiple
+                />
+                <div className="upload-icon">
+                  <FiCamera size={32} />
+                </div>
+                <div className="upload-text">点击上传或拍照</div>
+                <div className="upload-subtext">支持多张图片，JPG、PNG 等格式</div>
+              </label>
+            ) : (
+              <div className="images-container">
+                {/* 图片预览网格 */}
+                <div className="images-grid">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={preview.id || index} className="image-preview-item">
+                      <img src={preview.url} alt={`预览${index + 1}`} className="preview-thumbnail" />
+                      <button
+                        type="button"
+                        className="remove-image-btn"
+                        onClick={() => removeImage(index)}
+                        title="移除图片"
+                      >
+                        <FiX />
+                      </button>
+                      <div className="image-number">{index + 1}</div>
+                    </div>
+                  ))}
+                  
+                  {/* 添加更多按钮 */}
+                  <label className="add-more-box" htmlFor="image-upload">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }}
+                      capture="environment"
+                      multiple
+                    />
+                    <FiCamera size={24} />
+                    <span>添加</span>
+                  </label>
+                </div>
+
+                {/* 操作按钮 */}
+                <div className="images-actions">
+                  <button
+                    type="button"
+                    className="recognize-all-btn"
+                    onClick={recognizeAllImages}
+                    disabled={isRecognizing}
+                  >
+                    {isRecognizing ? '识别中...' : `识别全部 (${imagePreviews.length}张)`}
+                  </button>
+                  <button
+                    type="button"
+                    className="clear-all-btn"
+                    onClick={clearAllImages}
+                  >
+                    清除全部
+                  </button>
+                </div>
+
+                {isRecognizing && (
+                  <div className="recognizing-status">
+                    <div className="recognizing-spinner-small"></div>
+                    <span>正在识别图片数据...</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="new-date-section">
             <div className="date-field">
               <label className="form-label">日期</label>
-              <DatePicker
-                selected={dayjs(formData.date).toDate()}
-                onChange={handleDateChange}
-                dateFormat="yyyy年MM月dd日"
-                locale="zh-CN"
-                customInput={<CustomInput />}
-                wrapperClassName="new-picker-wrapper"
-                popperClassName="new-calendar-popper"
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                className="native-date-input"
               />
             </div>
             <button

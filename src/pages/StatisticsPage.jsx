@@ -14,8 +14,6 @@ import {
   Legend
 } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
-import DatePicker, { registerLocale } from 'react-datepicker'
-import zhCN from 'date-fns/locale/zh-CN'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import 'dayjs/locale/zh-cn'
@@ -30,11 +28,7 @@ import { SkeletonCard, SkeletonChart, SkeletonTable, SkeletonStatCard } from '..
 import { EmptyState } from '../components/EmptyState'
 import { TrendIndicator, PercentTrendIndicator } from '../components/TrendIndicator'
 import toast from 'react-hot-toast'
-import 'react-datepicker/dist/react-datepicker.css'
 import '../styles/StatisticsPage.css'
-
-// 注册中文语言包
-registerLocale('zh-CN', zhCN)
 
 ChartJS.register(
   CategoryScale,
@@ -58,17 +52,6 @@ function StatisticsPage() {
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-
-  // 自定义输入组件，防止手机端弹出键盘
-  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
-    <input
-      value={value}
-      onClick={onClick}
-      ref={ref}
-      readOnly
-      className="new-picker-input"
-    />
-  ));
 
   const [stats, setStats] = useState({
     currentStockAsset: '--',
@@ -887,31 +870,30 @@ function StatisticsPage() {
             <div className="date-range-wrapper">
               <div className="date-range-item">
                 <label className="form-label">开始日期</label>
-                <DatePicker
-                  selected={startDate ? dayjs(startDate).toDate() : null}
-                  onChange={(date) => setStartDate(dayjs(date).format('YYYY-MM-DD'))}
-                  dateFormat={isMobile ? "MM/dd" : "yyyy年MM月dd日"}
-                  locale="zh-CN"
-                  customInput={<CustomInput />}
-                  wrapperClassName="new-picker-wrapper"
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="native-date-input"
+                  aria-label="选择开始日期"
                 />
               </div>
               <div className="date-range-item">
                 <label className="form-label">结束日期</label>
-                <DatePicker
-                  selected={endDate ? dayjs(endDate).toDate() : null}
-                  onChange={(date) => setEndDate(dayjs(date).format('YYYY-MM-DD'))}
-                  dateFormat={isMobile ? "MM/dd" : "yyyy年MM月dd日"}
-                  locale="zh-CN"
-                  customInput={<CustomInput />}
-                  wrapperClassName="new-picker-wrapper"
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="native-date-input"
+                  aria-label="选择结束日期"
                 />
               </div>
               <div className="date-range-buttons">
-                <button className="filter-btn-stat" onClick={loadStatistics}>筛选</button>
+                <button className="filter-btn-stat" onClick={loadStatistics} type="button">筛选</button>
                 <button
                   className="filter-btn-stat reset-btn"
                   onClick={handleReset}
+                  type="button"
                 >
                   重置
                 </button>
@@ -944,7 +926,7 @@ function StatisticsPage() {
               <div className="dashboard-card today-profit-card">
                 <div className="dashboard-icon">📊</div>
                 <div className="dashboard-content">
-                  <div className="dashboard-label">今日盈亏</div>
+                  <div className="dashboard-label">总盈亏</div>
                   <div className={`dashboard-value ${(() => {
                     const total = parseFloat(stats.totalProfitLoss.replace(/,/g, '')) || 0
                     return total >= 0 ? 'positive' : 'negative'
@@ -1308,31 +1290,29 @@ function StatisticsPage() {
                 <h3 className="comparison-period-title">时间段一</h3>
                 <div className="comparison-date-inputs">
                   <div className="comparison-date-item">
-                    <label>开始日期</label>
-                    <DatePicker
-                      selected={timeComparison.period1Start ? dayjs(timeComparison.period1Start).toDate() : null}
-                      onChange={(date) => setTimeComparison(prev => ({ 
+                    <label className="form-label">开始日期</label>
+                    <input
+                      type="date"
+                      value={timeComparison.period1Start}
+                      onChange={(e) => setTimeComparison(prev => ({ 
                         ...prev, 
-                        period1Start: date ? dayjs(date).format('YYYY-MM-DD') : '' 
+                        period1Start: e.target.value
                       }))}
-                      dateFormat="yyyy年MM月dd日"
-                      locale="zh-CN"
-                      customInput={<CustomInput />}
-                      wrapperClassName="new-picker-wrapper"
+                      className="native-date-input"
+                      aria-label="选择时间段一的开始日期"
                     />
                   </div>
                   <div className="comparison-date-item">
-                    <label>结束日期</label>
-                    <DatePicker
-                      selected={timeComparison.period1End ? dayjs(timeComparison.period1End).toDate() : null}
-                      onChange={(date) => setTimeComparison(prev => ({ 
+                    <label className="form-label">结束日期</label>
+                    <input
+                      type="date"
+                      value={timeComparison.period1End}
+                      onChange={(e) => setTimeComparison(prev => ({ 
                         ...prev, 
-                        period1End: date ? dayjs(date).format('YYYY-MM-DD') : '' 
+                        period1End: e.target.value
                       }))}
-                      dateFormat="yyyy年MM月dd日"
-                      locale="zh-CN"
-                      customInput={<CustomInput />}
-                      wrapperClassName="new-picker-wrapper"
+                      className="native-date-input"
+                      aria-label="选择时间段一的结束日期"
                     />
                   </div>
                 </div>
@@ -1342,37 +1322,35 @@ function StatisticsPage() {
                 <h3 className="comparison-period-title">时间段二</h3>
                 <div className="comparison-date-inputs">
                   <div className="comparison-date-item">
-                    <label>开始日期</label>
-                    <DatePicker
-                      selected={timeComparison.period2Start ? dayjs(timeComparison.period2Start).toDate() : null}
-                      onChange={(date) => setTimeComparison(prev => ({ 
+                    <label className="form-label">开始日期</label>
+                    <input
+                      type="date"
+                      value={timeComparison.period2Start}
+                      onChange={(e) => setTimeComparison(prev => ({ 
                         ...prev, 
-                        period2Start: date ? dayjs(date).format('YYYY-MM-DD') : '' 
+                        period2Start: e.target.value
                       }))}
-                      dateFormat="yyyy年MM月dd日"
-                      locale="zh-CN"
-                      customInput={<CustomInput />}
-                      wrapperClassName="new-picker-wrapper"
+                      className="native-date-input"
+                      aria-label="选择时间段二的开始日期"
                     />
                   </div>
                   <div className="comparison-date-item">
-                    <label>结束日期</label>
-                    <DatePicker
-                      selected={timeComparison.period2End ? dayjs(timeComparison.period2End).toDate() : null}
-                      onChange={(date) => setTimeComparison(prev => ({ 
+                    <label className="form-label">结束日期</label>
+                    <input
+                      type="date"
+                      value={timeComparison.period2End}
+                      onChange={(e) => setTimeComparison(prev => ({ 
                         ...prev, 
-                        period2End: date ? dayjs(date).format('YYYY-MM-DD') : '' 
+                        period2End: e.target.value
                       }))}
-                      dateFormat="yyyy年MM月dd日"
-                      locale="zh-CN"
-                      customInput={<CustomInput />}
-                      wrapperClassName="new-picker-wrapper"
+                      className="native-date-input"
+                      aria-label="选择时间段二的结束日期"
                     />
                   </div>
                 </div>
               </div>
 
-              <button className="comparison-btn" onClick={handleTimeComparison}>
+              <button className="comparison-btn" onClick={handleTimeComparison} type="button">
                 开始对比
               </button>
             </div>
@@ -1880,26 +1858,9 @@ function EditRecordModal({ record, onSave, onCancel }) {
     notes: record.notes || ''
   })
 
-  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
-    <input
-      value={value}
-      onClick={onClick}
-      ref={ref}
-      readOnly
-      className="new-picker-input"
-    />
-  ));
-
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleDateChange = (date) => {
-    if (date) {
-      const formattedDate = dayjs(date).format('YYYY-MM-DD')
-      setFormData(prev => ({ ...prev, date: formattedDate }))
-    }
   }
 
   const handleSubmit = async (e) => {
@@ -1947,13 +1908,13 @@ function EditRecordModal({ record, onSave, onCancel }) {
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-row">
             <label className="form-label">日期</label>
-            <DatePicker
-              selected={formData.date ? dayjs(formData.date).toDate() : null}
-              onChange={handleDateChange}
-              dateFormat="yyyy年MM月dd日"
-              locale="zh-CN"
-              customInput={<CustomInput />}
-              wrapperClassName="new-picker-wrapper"
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              className="native-date-input"
+              required
             />
           </div>
 
