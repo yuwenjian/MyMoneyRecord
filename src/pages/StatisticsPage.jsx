@@ -97,6 +97,7 @@ function StatisticsPage() {
   })
   const [profitTargets, setProfitTargets] = useState([])
   const [targetProgresses, setTargetProgresses] = useState([])
+  const [isTargetProgressExpanded, setIsTargetProgressExpanded] = useState(true)
   const [showTargetSettings, setShowTargetSettings] = useState(false)
   const [showFireworks, setShowFireworks] = useState(false)
   const [achievedTargets, setAchievedTargets] = useState(new Set())
@@ -1261,40 +1262,92 @@ function StatisticsPage() {
           <div className="stats-card">
             <div className="stats-header-with-action">
               <h2 className="stats-title">收益目标进度</h2>
-              <button
-                className="settings-btn"
-                onClick={() => setShowTargetSettings(true)}
-                title="设置目标"
-              >
-                <img src="/assets/images/shezhi.png" alt="设置" />
-              </button>
+              <div className="header-actions">
+                <button
+                  className="toggle-expand-btn"
+                  onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
+                  title={isTargetProgressExpanded ? "收起" : "展开"}
+                  aria-label={isTargetProgressExpanded ? "收起" : "展开"}
+                >
+                  <span className="toggle-icon">
+                    {isTargetProgressExpanded ? '▼' : '▶'}
+                  </span>
+                  <span className="toggle-text">
+                    {isTargetProgressExpanded ? '收起' : '展开'}
+                  </span>
+                </button>
+                <button
+                  className="settings-btn"
+                  onClick={() => setShowTargetSettings(true)}
+                  title="设置目标"
+                >
+                  <img src="/assets/images/shezhi.png" alt="设置" />
+                </button>
+              </div>
             </div>
-            {targetProgresses.length > 0 ? (
-              <div className="target-progress-list">
-                {targetProgresses.map((progress) => {
-                  const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
-                  const periodLabel = 
-                    progress.period === 'week' ? '每周' :
-                    progress.period === 'month' ? '每月' : '每年'
-                  const label = `${typeLabel} - ${periodLabel}`
-                  
-                  return (
-                    <div key={`${progress.investmentType}-${progress.period}`} className="target-progress-item">
-                      <ProgressBar
-                        percentage={progress.percentage}
-                        isAchieved={progress.isAchieved}
-                        label={label}
-                        actualValue={formatCurrency(progress.actualProfit, true)}
-                        targetValue={formatCurrency(progress.targetAmount)}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="empty-targets">
-                <p>暂无收益目标，点击右上角 ⚙️ 按钮设置目标</p>
-              </div>
+            {isTargetProgressExpanded && (
+              <>
+                {targetProgresses.length > 0 ? (
+                  <div className="target-progress-list">
+                    {(() => {
+                      // 按周期排序：每周、每月、每年
+                      const periodOrder = { 'week': 1, 'month': 2, 'year': 3 }
+                      // 按投资类型排序：股票、基金
+                      const typeOrder = { 'stock': 1, 'fund': 2 }
+                      
+                      // 先按周期分组
+                      const groupedByPeriod = targetProgresses.reduce((acc, progress) => {
+                        const period = progress.period
+                        if (!acc[period]) {
+                          acc[period] = []
+                        }
+                        acc[period].push(progress)
+                        return acc
+                      }, {})
+                      
+                      // 按周期顺序排序并渲染
+                      return Object.keys(groupedByPeriod)
+                        .sort((a, b) => periodOrder[a] - periodOrder[b])
+                        .map(period => {
+                          const periodLabel = 
+                            period === 'week' ? '每周' :
+                            period === 'month' ? '每月' : '每年'
+                          
+                          // 对每个周期内的进度按投资类型排序
+                          const sortedProgresses = groupedByPeriod[period]
+                            .sort((a, b) => typeOrder[a.investmentType] - typeOrder[b.investmentType])
+                          
+                          return (
+                            <div key={period} className="target-period-group">
+                              <div className="target-period-title">{periodLabel}</div>
+                              {sortedProgresses.map((progress) => {
+                                const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
+                                const label = `${typeLabel} - ${periodLabel}`
+                                
+                                return (
+                                  <div key={`${progress.investmentType}-${progress.period}`} className="target-progress-item">
+                                    <ProgressBar
+                                      percentage={progress.percentage}
+                                      isAchieved={progress.isAchieved}
+                                      label={label}
+                                      actualValue={formatCurrency(progress.actualProfit, true)}
+                                      targetValue={formatCurrency(progress.targetAmount)}
+                                      investmentType={progress.investmentType}
+                                    />
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )
+                        })
+                    })()}
+                  </div>
+                ) : (
+                  <div className="empty-targets">
+                    <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline-settings-icon" /> 按钮设置目标</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

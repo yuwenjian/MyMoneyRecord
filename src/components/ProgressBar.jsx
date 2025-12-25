@@ -8,15 +8,30 @@ import '../styles/ProgressBar.css'
  * @param {string} label - 标签文本
  * @param {string} actualValue - 实际值显示
  * @param {string} targetValue - 目标值显示
+ * @param {string} investmentType - 投资类型 'stock' 或 'fund'
  */
 export function ProgressBar({ 
   percentage, 
   isAchieved, 
   label, 
   actualValue, 
-  targetValue 
+  targetValue,
+  investmentType = 'stock'
 }) {
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100)
+  
+  // 根据投资类型设置颜色：股票红色，基金蓝色
+  const getProgressColor = () => {
+    if (isAchieved) {
+      return 'var(--profit-color)' // 达成目标时使用绿色
+    }
+    return investmentType === 'stock' ? 'var(--primary-red)' : '#3498db' // 股票红色，基金蓝色
+  }
+  
+  const progressStyle = {
+    width: `${clampedPercentage}%`,
+    backgroundColor: getProgressColor()
+  }
   
   return (
     <div className="progress-bar-container">
@@ -29,7 +44,7 @@ export function ProgressBar({
       <div className="progress-bar-wrapper">
         <div 
           className={`progress-bar-fill ${isAchieved ? 'achieved' : ''}`}
-          style={{ width: `${clampedPercentage}%` }}
+          style={progressStyle}
         >
           {clampedPercentage >= 20 && (
             <span className="progress-bar-text">

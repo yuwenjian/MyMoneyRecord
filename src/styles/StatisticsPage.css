@@ -1841,6 +1841,81 @@
   border: 1px solid var(--border-color);
 }
 
+.header-actions {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toggle-expand-btn {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.toggle-expand-btn .toggle-icon {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-primary) !important;
+  transition: color 0.2s;
+  margin-right: 4px;
+}
+
+.toggle-expand-btn .toggle-text {
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-primary) !important;
+  transition: color 0.2s;
+}
+
+.toggle-expand-btn:hover {
+  background: var(--primary-red) !important;
+  color: #fff !important;
+  border-color: var(--primary-red) !important;
+  transform: translateY(-1px);
+}
+
+.toggle-expand-btn:hover .toggle-icon,
+.toggle-expand-btn:hover .toggle-text {
+  color: #fff !important;
+}
+
+.toggle-expand-btn:active {
+  background: var(--primary-red) !important;
+  color: #fff !important;
+  border-color: var(--primary-red) !important;
+  transform: translateY(0);
+}
+
+.toggle-expand-btn:active .toggle-icon,
+.toggle-expand-btn:active .toggle-text {
+  color: #fff !important;
+}
+
+.toggle-expand-btn:focus {
+  outline: 2px solid var(--primary-red);
+  outline-offset: 2px;
+}
+
 .settings-btn {
   background: transparent;
   color: #fff;
@@ -1875,6 +1950,23 @@
   opacity: 0.6;
 }
 
+.target-period-group {
+  margin-bottom: 20px;
+}
+
+.target-period-group:last-child {
+  margin-bottom: 0;
+}
+
+.target-period-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-color);
+}
+
 .empty-targets {
   padding: 40px 20px;
   text-align: center;
@@ -1892,6 +1984,13 @@
     padding: 12px;
   }
 
+  .toggle-expand-btn {
+    padding: 5px 8px;
+    font-size: 16px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
   .settings-btn {
     padding: 6px 10px;
     font-size: 14px;
@@ -1902,6 +2001,11 @@
   .settings-btn img {
     width: 18px;
     height: 18px;
+  }
+
+  .target-period-title {
+    font-size: 15px;
+    margin-bottom: 10px;
   }
 
   .empty-targets {
