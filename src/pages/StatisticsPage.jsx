@@ -62,7 +62,9 @@ function StatisticsPage() {
   })
   const [chartData, setChartData] = useState(null)
   const [historyData, setHistoryData] = useState([])
-  const [isFullScreen, setIsFullScreen] = useState(false)
+  const [isChartFullScreen, setIsChartFullScreen] = useState(false)  // 图表全屏状态
+  const [isTableFullScreen, setIsTableFullScreen] = useState(false)  // 表格全屏状态
+  const [isComparisonFullScreen, setIsComparisonFullScreen] = useState(false)  // 对比图全屏状态
   const [historyFilter, setHistoryFilter] = useState('all') // 'all', 'stock', 'fund'
   const [editingRecord, setEditingRecord] = useState(null) // 正在编辑的记录
   const [selectedRecords, setSelectedRecords] = useState([]) // 选中的记录（用于批量删除）
@@ -135,6 +137,79 @@ function StatisticsPage() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // 监听全屏状态变化
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      const isInFullScreen = !!document.fullscreenElement
+      setIsChartFullScreen(isInFullScreen)
+    }
+    
+    document.addEventListener('fullscreenchange', handleFullScreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullScreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullScreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullScreenChange)
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullScreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullScreenChange)
+    }
+  }, [])
+
+  // 全屏切换函数
+  const toggleFullScreen = async () => {
+    const chartContainer = document.getElementById('chart-fullscreen-container')
+    if (!chartContainer) return
+
+    try {
+      if (!document.fullscreenElement) {
+        // 进入全屏
+        if (chartContainer.requestFullscreen) {
+          await chartContainer.requestFullscreen()
+        } else if (chartContainer.webkitRequestFullscreen) {
+          await chartContainer.webkitRequestFullscreen()
+        } else if (chartContainer.mozRequestFullScreen) {
+          await chartContainer.mozRequestFullScreen()
+        } else if (chartContainer.msRequestFullscreen) {
+          await chartContainer.msRequestFullscreen()
+        }
+        
+        // 尝试横屏
+        try {
+          if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape')
+          }
+        } catch (err) {
+          console.log('无法锁定屏幕方向:', err)
+        }
+      } else {
+        // 退出全屏
+        if (document.exitFullscreen) {
+          await document.exitFullscreen()
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen()
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen()
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen()
+        }
+        
+        // 解锁屏幕方向
+        try {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock()
+          }
+        } catch (err) {
+          console.log('无法解锁屏幕方向:', err)
+        }
+      }
+    } catch (err) {
+      console.error('全屏切换失败:', err)
+      toast.error('全屏功能不可用')
+    }
+  }
 
   // 加载周期统计
   const loadPeriodStats = async () => {
@@ -324,66 +399,105 @@ function StatisticsPage() {
     const stockDailyProfit = []
     const fundDailyProfit = []
 
-    // 计算每日盈亏（使用原始allRecords来计算，但按周期显示）
+    // 按日期分组，避免同一日期重复显示
+    const dateRecordsMap = new Map()
     sortedFiltered.forEach((record) => {
+      const date = record.date
+      if (!dateRecordsMap.has(date)) {
+        dateRecordsMap.set(date, { stock: null, fund: null })
+      }
+      const dateRecords = dateRecordsMap.get(date)
+      dateRecords[record.investmentType] = record
+    })
+
+    // 按日期顺序生成标签和数据
+    Array.from(dateRecordsMap.keys()).sort().forEach(date => {
       // 根据周期格式化标签
       let labelText = ''
       if (chartPeriod === 'day') {
-        labelText = formatDate(record.date)
+        labelText = formatDate(date)
       } else if (chartPeriod === 'week') {
-        const date = dayjs(record.date)
-        labelText = `${date.format('YYYY-MM-DD')}周`
+        const dateObj = dayjs(date)
+        labelText = `${dateObj.format('YYYY-MM-DD')}周`
       } else if (chartPeriod === 'month') {
-        const date = dayjs(record.date)
-        labelText = date.format('YYYY年MM月')
+        const dateObj = dayjs(date)
+        labelText = dateObj.format('YYYY年MM月')
       } else if (chartPeriod === 'year') {
-        const date = dayjs(record.date)
-        labelText = date.format('YYYY年')
+        const dateObj = dayjs(date)
+        labelText = dateObj.format('YYYY年')
       }
       labels.push(labelText)
 
-      // 先按日期排序同类型记录
-      const sameTypeRecords = allRecords
-        .filter(r => r.investmentType === record.investmentType)
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-      
-      const recordIndex = sameTypeRecords.findIndex(r => 
-        r.date === record.date && r.objectId === record.objectId
-      )
-      
-      let prevRecord = null
-      if (recordIndex > 0) {
-        prevRecord = sameTypeRecords[recordIndex - 1]
-      } else if (recordIndex === 0) {
-        // 如果是第一条记录，查找日期小于当前记录日期的最近一条同类型记录
-        for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
-          if (dayjs(sameTypeRecords[i].date).isBefore(dayjs(record.date), 'day')) {
-            prevRecord = sameTypeRecords[i]
-            break
+      const { stock, fund } = dateRecordsMap.get(date)
+
+      // 处理股票记录
+      if (stock) {
+        const sameTypeRecords = allRecords
+          .filter(r => r.investmentType === 'stock')
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+        
+        const recordIndex = sameTypeRecords.findIndex(r => 
+          r.date === stock.date && r.objectId === stock.objectId
+        )
+        
+        let prevRecord = null
+        if (recordIndex > 0) {
+          prevRecord = sameTypeRecords[recordIndex - 1]
+        } else if (recordIndex === 0) {
+          for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
+            if (dayjs(sameTypeRecords[i].date).isBefore(dayjs(stock.date), 'day')) {
+              prevRecord = sameTypeRecords[i]
+              break
+            }
           }
         }
-      }
-      
-      const dailyProfitLoss = calculateDailyProfitLoss(record, prevRecord, adjustments)
-
-      if (record.investmentType === 'stock') {
-        const currentStockAsset = record.totalAsset || 0
+        
+        const dailyProfitLoss = calculateDailyProfitLoss(stock, prevRecord, adjustments)
+        const currentStockAsset = stock.totalAsset || 0
         const stockPercent = ((currentStockAsset - initialStockAsset) / initialStockAsset) * 100
         stockCumulativeProfit.push(stockPercent)
         stockDailyProfit.push(dailyProfitLoss)
-        fundCumulativeProfit.push(null)
-        fundDailyProfit.push(null)
       } else {
-        const currentFundAsset = record.totalAsset || 0
-        const fundPercent = ((currentFundAsset - initialFundAsset) / initialFundAsset) * 100
         stockCumulativeProfit.push(null)
         stockDailyProfit.push(null)
-        fundCumulativeProfit.push(fundPercent)
-        fundDailyProfit.push(dailyProfitLoss)
       }
 
-      if (record.shanghaiIndex) {
-        const indexPercent = ((record.shanghaiIndex - initialIndex) / initialIndex) * 100
+      // 处理基金记录
+      if (fund) {
+        const sameTypeRecords = allRecords
+          .filter(r => r.investmentType === 'fund')
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+        
+        const recordIndex = sameTypeRecords.findIndex(r => 
+          r.date === fund.date && r.objectId === fund.objectId
+        )
+        
+        let prevRecord = null
+        if (recordIndex > 0) {
+          prevRecord = sameTypeRecords[recordIndex - 1]
+        } else if (recordIndex === 0) {
+          for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
+            if (dayjs(sameTypeRecords[i].date).isBefore(dayjs(fund.date), 'day')) {
+              prevRecord = sameTypeRecords[i]
+              break
+            }
+          }
+        }
+        
+        const dailyProfitLoss = calculateDailyProfitLoss(fund, prevRecord, adjustments)
+        const currentFundAsset = fund.totalAsset || 0
+        const fundPercent = ((currentFundAsset - initialFundAsset) / initialFundAsset) * 100
+        fundCumulativeProfit.push(fundPercent)
+        fundDailyProfit.push(dailyProfitLoss)
+      } else {
+        fundCumulativeProfit.push(null)
+        fundDailyProfit.push(null)
+      }
+
+      // 处理上证指数（优先使用股票记录的指数，其次是基金记录）
+      const indexRecord = stock || fund
+      if (indexRecord && indexRecord.shanghaiIndex) {
+        const indexPercent = ((indexRecord.shanghaiIndex - initialIndex) / initialIndex) * 100
         indexData.push(indexPercent)
       } else {
         indexData.push(null)
@@ -419,24 +533,24 @@ function StatisticsPage() {
         {
           label: '指数趋势',
           data: indexData,
-          borderColor: 'rgb(150, 150, 150)',
-          backgroundColor: 'rgba(150, 150, 150, 0.1)',
+          borderColor: 'rgb(33, 150, 243)',
+          backgroundColor: chartType === 'bar' ? 'rgba(33, 150, 243, 0.6)' : 'rgba(33, 150, 243, 0.1)',
           tension: chartType === 'line' ? 0.1 : 0,
           spanGaps: true
         },
         {
           label: '股票收益',
           data: stockCumulativeProfit,
-          borderColor: 'rgb(231, 76, 60)',
-          backgroundColor: chartType === 'bar' ? 'rgba(231, 76, 60, 0.6)' : 'rgba(231, 76, 60, 0.1)',
+          borderColor: 'rgb(244, 67, 54)',
+          backgroundColor: chartType === 'bar' ? 'rgba(244, 67, 54, 0.6)' : 'rgba(244, 67, 54, 0.1)',
           tension: chartType === 'line' ? 0.1 : 0,
           spanGaps: true
         },
         {
           label: '基金收益',
           data: fundCumulativeProfit,
-          borderColor: 'rgb(80, 200, 120)',
-          backgroundColor: chartType === 'bar' ? 'rgba(80, 200, 120, 0.6)' : 'rgba(80, 200, 120, 0.1)',
+          borderColor: 'rgb(255, 193, 7)',
+          backgroundColor: chartType === 'bar' ? 'rgba(255, 193, 7, 0.6)' : 'rgba(255, 193, 7, 0.1)',
           tension: chartType === 'line' ? 0.1 : 0,
           spanGaps: true
         }
@@ -450,7 +564,7 @@ function StatisticsPage() {
         datasets.push({
           label: '股票移动平均(5期)',
           data: stockMA,
-          borderColor: 'rgba(231, 76, 60, 0.5)',
+          borderColor: 'rgba(244, 67, 54, 0.5)',
           backgroundColor: 'transparent',
           borderDash: [5, 5],
           tension: 0.1,
@@ -461,7 +575,7 @@ function StatisticsPage() {
         datasets.push({
           label: '基金移动平均(5期)',
           data: fundMA,
-          borderColor: 'rgba(80, 200, 120, 0.5)',
+          borderColor: 'rgba(255, 193, 7, 0.5)',
           backgroundColor: 'transparent',
           borderDash: [5, 5],
           tension: 0.1,
@@ -764,6 +878,9 @@ function StatisticsPage() {
       legend: {
         display: true,
         position: 'top',
+        labels: {
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        }
       },
       tooltip: {
         callbacks: {
@@ -801,7 +918,16 @@ function StatisticsPage() {
         display: true,
         title: {
           display: true,
-          text: '日期'
+          text: '日期',
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        },
+        ticks: {
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          maxRotation: 45,
+          minRotation: 0,
+        },
+        grid: {
+          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
         }
       },
       y: {
@@ -810,12 +936,17 @@ function StatisticsPage() {
         position: 'left',
         title: {
           display: true,
-          text: '盈亏百分比（%）'
+          text: '盈亏百分比（%）',
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
         },
         ticks: {
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
           callback: function(value) {
             return value.toFixed(2) + '%'
           }
+        },
+        grid: {
+          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
         }
       }
     }
@@ -840,6 +971,9 @@ function StatisticsPage() {
       legend: {
         display: true,
         position: 'right',
+        labels: {
+          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        }
       },
       tooltip: {
         callbacks: {
@@ -850,6 +984,106 @@ function StatisticsPage() {
             const percentage = ((value / total) * 100).toFixed(1)
             return `${label}: ${value.toFixed(2)} (${percentage}%)`
           }
+        }
+      }
+    }
+  }
+
+  // 对比图表独立配置（基于 isComparisonFullScreen）
+  const comparisonChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0 && chartData) {
+        const element = elements[0]
+        const datasetIndex = element.datasetIndex
+        const index = element.index
+        const dataset = chartData.datasets[datasetIndex]
+        const label = chartData.labels[index]
+        const value = dataset.data[index]
+        
+        if (value !== null && value !== undefined) {
+          toast.success(`${label}: ${dataset.label} = ${value.toFixed(2)}%`, { duration: 2000 })
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.dataset.label || ''
+            if (label) {
+              label += ': '
+            }
+            if (context.parsed.y !== null) {
+              const percent = context.parsed.y
+              label += percent.toFixed(2) + '%'
+            }
+            return label
+          }
+        }
+      },
+      zoom: {
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: 'x',
+        },
+        pan: {
+          enabled: true,
+          mode: 'x',
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: '日期',
+          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        },
+        ticks: {
+          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          maxRotation: 45,
+          minRotation: 0,
+        },
+        grid: {
+          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
+        }
+      },
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: '盈亏百分比（%）',
+          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+        },
+        ticks: {
+          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          callback: function(value) {
+            return value.toFixed(2) + '%'
+          }
+        },
+        grid: {
+          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
         }
       }
     }
@@ -1209,7 +1443,9 @@ function StatisticsPage() {
 
           {/* 股票与基金收益对比分析 */}
           <div className="stats-card">
-            <h2 className="stats-title">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
+            <div className="stats-header-with-action">
+              <h2 className="stats-title">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
+            </div>
             <div className="comparison-stats-grid">
               <div className="comparison-item stock-comparison">
                 <div className="comparison-header">
@@ -1274,9 +1510,64 @@ function StatisticsPage() {
             </div>
             {/* 对比图表 */}
             {chartData && (
-              <div className="comparison-chart">
-                <div style={{ height: '300px', marginTop: '20px' }}>
-                  <Line data={chartData} options={chartOptions} />
+              <div 
+                id="comparison-chart-fullscreen-container"
+                className={`comparison-chart ${isComparisonFullScreen ? 'fullscreen' : ''}`}
+              >
+                <div className="comparison-chart-header">
+                  <h3 className="comparison-chart-title">收益趋势对比</h3>
+                  <button
+                    type="button"
+                    className="chart-fullscreen-btn"
+                    onClick={() => {
+                      const container = document.getElementById('comparison-chart-fullscreen-container')
+                      if (!container) return
+                      
+                      if (!document.fullscreenElement) {
+                        if (container.requestFullscreen) {
+                          container.requestFullscreen()
+                        } else if (container.webkitRequestFullscreen) {
+                          container.webkitRequestFullscreen()
+                        } else if (container.mozRequestFullScreen) {
+                          container.mozRequestFullScreen()
+                        } else if (container.msRequestFullscreen) {
+                          container.msRequestFullscreen()
+                        }
+                        setIsComparisonFullScreen(true)
+                        
+                        // 尝试横屏
+                        try {
+                          if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(() => {})
+                          }
+                        } catch (err) {}
+                      } else {
+                        if (document.exitFullscreen) {
+                          document.exitFullscreen()
+                        } else if (document.webkitExitFullscreen) {
+                          document.webkitExitFullscreen()
+                        } else if (document.mozCancelFullScreen) {
+                          document.mozCancelFullScreen()
+                        } else if (document.msExitFullscreen) {
+                          document.msExitFullscreen()
+                        }
+                        setIsComparisonFullScreen(false)
+                        
+                        try {
+                          if (screen.orientation && screen.orientation.unlock) {
+                            screen.orientation.unlock()
+                          }
+                        } catch (err) {}
+                      }
+                    }}
+                    title={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
+                    aria-label={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
+                  >
+                    {isComparisonFullScreen ? '🗗' : '⛶'}
+                  </button>
+                </div>
+                <div style={{ height: isComparisonFullScreen ? 'calc(100vh - 120px)' : '300px', marginTop: '20px', paddingBottom: isComparisonFullScreen ? '20px' : '0' }}>
+                  <Line data={chartData} options={comparisonChartOptions} />
                 </div>
               </div>
             )}
@@ -1428,7 +1719,10 @@ function StatisticsPage() {
           </div>
 
           {/* 图表区域 */}
-          <div className={`chart-container ${isChartCollapsed ? 'collapsed' : ''}`}>
+          <div 
+            id="chart-fullscreen-container"
+            className={`chart-container ${isChartCollapsed ? 'collapsed' : ''} ${isChartFullScreen ? 'fullscreen' : ''}`}
+          >
             <div className="chart-header">
               <h2 className="stats-title">对比趋势图 (盈亏百分比)</h2>
               <div className="chart-controls">
@@ -1441,6 +1735,15 @@ function StatisticsPage() {
                   title={isChartCollapsed ? '展开图表' : '收起图表'}
                 >
                   {isChartCollapsed ? '展开' : '收起'}
+                </button>
+                <button
+                  type="button"
+                  className="chart-fullscreen-btn"
+                  onClick={toggleFullScreen}
+                  title={isChartFullScreen ? '退出全屏' : '全屏显示'}
+                  aria-label={isChartFullScreen ? '退出全屏' : '全屏显示'}
+                >
+                  {isChartFullScreen ? '🗗' : '⛶'}
                 </button>
                 <div className="chart-type-toggle">
                   <button
@@ -1529,7 +1832,7 @@ function StatisticsPage() {
               {isChartCollapsed ? null : isLoading ? (
                 <SkeletonChart />
               ) : chartData ? (
-                <div style={{ height: '400px' }}>
+                <div style={{ height: isChartFullScreen ? '100%' : '400px' }}>
                   {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
                   {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
                   {chartType === 'pie' && <Pie data={chartData} options={pieChartOptions} />}
@@ -1585,7 +1888,7 @@ function StatisticsPage() {
                 </div>
                 <button 
                   className="expand-btn" 
-                  onClick={() => setIsFullScreen(true)}
+                  onClick={() => setIsTableFullScreen(true)}
                   title="全屏查看"
                   aria-label="全屏查看表格"
                 >
@@ -1728,17 +2031,17 @@ function StatisticsPage() {
       </main>
 
       {/* 全屏表格弹出层 */}
-      {isFullScreen && (
+      {isTableFullScreen && (
         <div className="fullscreen-overlay" onClick={(e) => {
           // 点击遮罩层关闭全屏
           if (e.target === e.currentTarget) {
-            setIsFullScreen(false)
+            setIsTableFullScreen(false)
           }
         }}>
           <div className="fullscreen-content">
             <div className="fullscreen-header">
               <h2>历史记录详情</h2>
-              <button className="close-fullscreen" onClick={() => setIsFullScreen(false)}>✕ 关闭</button>
+              <button className="close-fullscreen" onClick={() => setIsTableFullScreen(false)}>✕ 关闭</button>
             </div>
             <div className="fullscreen-table-wrapper">
               {/* 全屏模式下的筛选按钮 */}

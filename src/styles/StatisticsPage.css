@@ -1542,3 +1542,318 @@
 [data-theme="dark"] .native-date-input::-webkit-calendar-picker-indicator:hover {
   filter: invert(1) opacity(1);
 }
+
+/* ============================================
+   全屏图表样式
+   ============================================ */
+
+/* 全屏按钮样式 */
+.chart-fullscreen-btn {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 18px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chart-fullscreen-btn:hover {
+  background: var(--primary-red);
+  color: var(--white);
+  border-color: var(--primary-red);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+.chart-fullscreen-btn:active {
+  transform: translateY(0);
+}
+
+/* 全屏容器样式 */
+.chart-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #ffffff;  /* 强制白色背景 */
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;  /* 允许垂直滚动 */
+  overflow-x: hidden;  /* 禁止水平滚动 */
+  -webkit-overflow-scrolling: touch;  /* iOS 平滑滚动 */
+}
+
+/* 全屏时的图表头部 */
+.chart-container.fullscreen .chart-header {
+  margin-bottom: 20px;
+}
+
+/* 全屏时的图表面板 */
+.chart-container.fullscreen .chart-panel {
+  min-height: calc(100vh - 120px) !important;
+  height: auto !important;
+  max-height: none !important;
+  padding-bottom: 20px;
+}
+
+/* 全屏时的图表容器 */
+.chart-container.fullscreen .chart-panel > div {
+  min-height: 400px;
+  height: auto;
+}
+
+/* 全屏时隐藏收起按钮 */
+.chart-container.fullscreen .chart-collapse-btn {
+  display: none;
+}
+
+/* 全屏时的控制按钮布局优化 */
+.chart-container.fullscreen .chart-controls {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* 全屏时的标题样式 */
+.chart-container.fullscreen .stats-title {
+  font-size: 20px;
+  color: #333333;  /* 强制深色文字 */
+}
+
+/* 横屏模式优化 */
+@media screen and (orientation: landscape) {
+  .chart-container.fullscreen {
+    padding: 15px;
+  }
+
+  .chart-container.fullscreen .chart-header {
+    margin-bottom: 15px;
+  }
+
+  .chart-container.fullscreen .chart-panel {
+    min-height: calc(100vh - 100px) !important;
+    height: auto !important;
+    padding-bottom: 20px;
+  }
+
+  .chart-container.fullscreen .stats-title {
+    font-size: 18px;
+  }
+
+  .chart-container.fullscreen .chart-controls {
+    gap: 10px;
+  }
+
+  .chart-container.fullscreen .chart-type-btn,
+  .chart-container.fullscreen .chart-period-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* 移动端全屏优化 */
+@media (max-width: 600px) {
+  .chart-container.fullscreen {
+    padding: 10px;
+  }
+
+  .chart-container.fullscreen .chart-header {
+    margin-bottom: 10px;
+  }
+
+  .chart-container.fullscreen .chart-panel {
+    min-height: calc(100vh - 90px) !important;
+    height: auto !important;
+    padding-bottom: 20px;
+  }
+
+  .chart-container.fullscreen .stats-title {
+    font-size: 16px;
+  }
+
+  .chart-container.fullscreen .chart-controls {
+    gap: 8px;
+  }
+
+  .chart-fullscreen-btn {
+    padding: 6px 12px;
+    font-size: 16px;
+    min-width: 40px;
+  }
+}
+
+/* 暗色模式下的全屏样式 */
+[data-theme="dark"] .chart-container.fullscreen {
+  background: #ffffff;  /* 全屏时强制白色背景 */
+}
+
+/* 全屏时强制亮色主题 */
+.chart-container.fullscreen * {
+  color: inherit;
+}
+
+.chart-container.fullscreen .chart-type-btn,
+.chart-container.fullscreen .chart-period-btn,
+.chart-container.fullscreen .chart-collapse-btn,
+.chart-container.fullscreen .chart-fullscreen-btn {
+  background: #ffffff;
+  color: #333333;
+  border-color: #e0e0e0;
+}
+
+.chart-container.fullscreen .chart-type-btn.active,
+.chart-container.fullscreen .chart-period-btn.active {
+  background: #e74c3c;
+  color: #ffffff;
+  border-color: #e74c3c;
+}
+
+.chart-container.fullscreen .ma-toggle {
+  color: #333333;
+}
+
+[data-theme="dark"] .chart-fullscreen-btn {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .chart-fullscreen-btn:hover {
+  background: var(--primary-red);
+  color: var(--white);
+  border-color: var(--primary-red);
+}
+
+/* 全屏时的加载和空状态样式 */
+.chart-container.fullscreen .skeleton-chart,
+.chart-container.fullscreen .empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 全屏退出提示（可选） */
+.chart-container.fullscreen::before {
+  content: '按 ESC 或点击退出按钮退出全屏';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  opacity: 0;
+  animation: fadeInOut 3s ease-in-out;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ============================================
+   对比图表全屏样式
+   ============================================ */
+
+/* 对比图表头部 */
+.comparison-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.comparison-chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* 对比图表全屏容器 */
+.comparison-chart.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;  /* 允许垂直滚动 */
+  overflow-x: hidden;  /* 禁止水平滚动 */
+  -webkit-overflow-scrolling: touch;  /* iOS 平滑滚动 */
+}
+
+.comparison-chart.fullscreen .comparison-chart-header {
+  margin-bottom: 20px;
+}
+
+.comparison-chart.fullscreen .comparison-chart-title {
+  font-size: 20px;
+  color: #333333;
+}
+
+/* 横屏模式优化 */
+@media screen and (orientation: landscape) {
+  .comparison-chart.fullscreen {
+    padding: 15px;
+  }
+
+  .comparison-chart.fullscreen .comparison-chart-header {
+    margin-bottom: 15px;
+  }
+
+  .comparison-chart.fullscreen .comparison-chart-title {
+    font-size: 18px;
+  }
+}
+
+/* 移动端优化 */
+@media (max-width: 600px) {
+  .comparison-chart.fullscreen {
+    padding: 10px;
+  }
+
+  .comparison-chart.fullscreen .comparison-chart-header {
+    margin-bottom: 10px;
+  }
+
+  .comparison-chart.fullscreen .comparison-chart-title {
+    font-size: 16px;
+  }
+}
+
+/* 全屏提示 */
+.comparison-chart.fullscreen::before {
+  content: '按 ESC 或点击退出按钮退出全屏';
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  opacity: 0;
+  animation: fadeInOut 3s ease-in-out;
+  pointer-events: none;
+  z-index: 10000;
+}

@@ -40,13 +40,16 @@ export function aggregateByPeriod(records, period) {
       key = date.format('YYYY')
     }
     
-    if (!grouped[key]) {
-      grouped[key] = []
+    // 为每个周期和投资类型组合创建唯一的 key
+    const groupKey = `${key}-${record.investmentType}`
+    
+    if (!grouped[groupKey]) {
+      grouped[groupKey] = []
     }
-    grouped[key].push(record)
+    grouped[groupKey].push(record)
   })
 
-  // 对每个周期取最后一条记录（代表该周期的最终状态）
+  // 对每个周期+投资类型组合取最后一条记录（代表该周期该类型的最终状态）
   const aggregated = Object.keys(grouped).sort().map(key => {
     const periodRecords = grouped[key]
     return periodRecords[periodRecords.length - 1]
