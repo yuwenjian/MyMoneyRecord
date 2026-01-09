@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Line, Bar, Pie } from 'react-chartjs-2'
 import {
@@ -56,6 +56,16 @@ function StatisticsPage() {
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  
+  // 使用 ref 保存最新的日期值，确保 loadStatistics 使用最新的日期
+  const startDateRef = useRef('')
+  const endDateRef = useRef('')
+  
+  // 同步更新 ref
+  useEffect(() => {
+    startDateRef.current = startDate
+    endDateRef.current = endDate
+  }, [startDate, endDate])
 
   const [stats, setStats] = useState({
     currentStockAsset: '--',
@@ -105,17 +115,21 @@ function StatisticsPage() {
   useEffect(() => {
     const initDates = async () => {
       const records = await getRecords()
+      // 开始日期默认为当前年的1月1号
+      const currentYearStart = dayjs().startOf('year').format('YYYY-MM-DD')
+      
       if (records.length > 0) {
         const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
-        const firstDate = sortedRecords[0].date
         const lastDate = sortedRecords[sortedRecords.length - 1].date
         
-        setStartDate(firstDate)
+        console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${lastDate}`)
+        setStartDate(currentYearStart)
         setEndDate(lastDate)
       } else {
-        // 如果没有记录，设置默认日期为今天
+        // 如果没有记录，设置默认日期为当前年的1月1号到今天
         const today = dayjs().format('YYYY-MM-DD')
-        setStartDate(today)
+        console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${today}`)
+        setStartDate(currentYearStart)
         setEndDate(today)
       }
     }
@@ -132,8 +146,25 @@ function StatisticsPage() {
   )
 
   useEffect(() => {
-    if (startDate && endDate) {
+    // 确保日期已经初始化后再加载统计数据
+    // 检查日期格式是否正确（YYYY-MM-DD）
+    const isValidDate = (date) => {
+      if (!date) return false
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      return dateRegex.test(date)
+    }
+    
+    if (startDate && endDate && isValidDate(startDate) && isValidDate(endDate)) {
+      // 添加调试日志
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[日期变化] startDate: ${startDate}, endDate: ${endDate}`)
+      }
+      // 使用最新的 startDate 和 endDate 值
       debouncedLoadStatistics()
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[日期检查] 日期未初始化或格式不正确: startDate=${startDate}, endDate=${endDate}`)
+      }
     }
     loadPeriodStats()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,10 +332,28 @@ function StatisticsPage() {
   }
 
   const loadStatistics = async () => {
+    // 使用 ref 中的最新日期值，确保使用最新的日期
+    const currentStartDate = startDateRef.current
+    const currentEndDate = endDateRef.current
+    
     setIsLoading(true)
     try {
       const records = await getRecords()
       const adjustments = await getAdjustments()
+
+      // 调试日志：检查使用的日期范围
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[loadStatistics] 使用的日期范围: startDate=${currentStartDate}, endDate=${currentEndDate}`)
+        console.log(`[loadStatistics] state中的日期: startDate=${startDate}, endDate=${endDate}`)
+        console.log(`[loadStatistics] 当前时间: ${new Date().toISOString()}`)
+      }
+      
+      // 如果日期未设置，不执行计算
+      if (!currentStartDate || !currentEndDate) {
+        console.warn('[loadStatistics] 日期未设置，跳过计算')
+        setIsLoading(false)
+        return
+      }
 
       if (records.length === 0) {
         setStats({
@@ -322,14 +371,23 @@ function StatisticsPage() {
 
     const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
     
-    // 过滤记录
+    // 过滤记录 - 使用 ref 中的最新日期值
     let filteredRecords = sortedRecords
-    if (startDate || endDate) {
+    if (currentStartDate || currentEndDate) {
       filteredRecords = sortedRecords.filter(record => {
-        if (startDate && record.date < startDate) return false
-        if (endDate && record.date > endDate) return false
+        const recordDate = dayjs(record.date)
+        if (currentStartDate && recordDate.isBefore(dayjs(currentStartDate), 'day')) return false
+        if (currentEndDate && recordDate.isAfter(dayjs(currentEndDate), 'day')) return false
         return true
       })
+    }
+    
+    // 调试日志：检查过滤后的记录
+    if (process.env.NODE_ENV === 'development' && currentStartDate && currentEndDate) {
+      console.log(`[过滤] 日期范围: ${currentStartDate} 至 ${currentEndDate}`)
+      console.log(`[过滤] 总记录数: ${sortedRecords.length}, 过滤后记录数: ${filteredRecords.length}`)
+      const stockFiltered = filteredRecords.filter(r => r.investmentType === 'stock')
+      console.log(`[过滤] 股票记录数: ${stockFiltered.length}, 股票记录日期:`, stockFiltered.map(r => r.date))
     }
 
     // 获取当前账户总资产（按日期排序后取最新的）
@@ -351,47 +409,97 @@ function StatisticsPage() {
     let stockProfitLoss = 0
     let fundProfitLoss = 0
 
-    filteredRecords.forEach((record) => {
-      // 查找相同投资类型的前一条记录（日期小于当前记录日期）
-      // 先按日期排序同类型记录
+    // 分别处理股票和基金的盈亏计算
+    const investmentTypes = ['stock', 'fund']
+    
+    investmentTypes.forEach(investmentType => {
+      // 获取该投资类型的所有记录（按日期排序）
       const sameTypeRecords = sortedRecords
-        .filter(r => r.investmentType === record.investmentType)
+        .filter(r => r.investmentType === investmentType)
         .sort((a, b) => new Date(a.date) - new Date(b.date))
       
-      let actualPrevRecord = null
+      if (sameTypeRecords.length === 0) return
       
-      // 找到当前记录在同类型记录中的位置
-      const recordIndex = sameTypeRecords.findIndex(r => 
-        r.date === record.date && r.objectId === record.objectId
-      )
+      // 获取日期范围内该投资类型的记录
+      const filteredSameTypeRecords = filteredRecords
+        .filter(r => r.investmentType === investmentType)
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
       
-      if (recordIndex > 0) {
-        // 查找前一条同类型记录（日期小于当前记录日期）
-        actualPrevRecord = sameTypeRecords[recordIndex - 1]
-      } else if (recordIndex === -1) {
-        // 如果找不到当前记录（可能因为过滤），查找日期小于当前记录日期的最近一条同类型记录
-        for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
-          if (dayjs(sameTypeRecords[i].date).isBefore(dayjs(record.date), 'day')) {
-            actualPrevRecord = sameTypeRecords[i]
-            break
-          }
-        }
-      } else if (recordIndex === 0) {
-        // 如果是第一条记录，查找日期小于当前记录日期的最近一条同类型记录（可能在过滤范围外）
-        for (let i = sameTypeRecords.length - 1; i >= 0; i--) {
-          if (dayjs(sameTypeRecords[i].date).isBefore(dayjs(record.date), 'day')) {
-            actualPrevRecord = sameTypeRecords[i]
-            break
-          }
+      if (filteredSameTypeRecords.length === 0) return
+      
+      // 找到开始日期之前的最后一条记录作为基准
+      // 使用 ref 中的最新日期值
+      let baseRecord = null
+      if (currentStartDate) {
+        const beforeStartRecords = sameTypeRecords
+          .filter(r => dayjs(r.date).isBefore(dayjs(currentStartDate), 'day'))
+        if (beforeStartRecords.length > 0) {
+          baseRecord = beforeStartRecords[beforeStartRecords.length - 1]
         }
       }
-
-      const dailyProfitLoss = calculateDailyProfitLoss(record, actualPrevRecord, adjustments)
-
-      if (record.investmentType === 'stock') {
-        stockProfitLoss += dailyProfitLoss
-      } else if (record.investmentType === 'fund') {
-        fundProfitLoss += dailyProfitLoss
+      
+      // 如果开始日期之前没有记录，使用第一条记录作为基准（盈亏为0）
+      if (!baseRecord) {
+        baseRecord = sameTypeRecords[0]
+      }
+      
+      // 计算日期范围内每条记录的盈亏
+      // 使用与 targetCalculations.js 完全相同的逻辑
+      let tempProfitLoss = 0
+      
+      // 打印详细的日志
+      console.log(`\n========== ${investmentType === 'stock' ? '股票' : '基金'} 收益计算 (${currentStartDate} 至 ${currentEndDate}) ==========`)
+      console.log(`基准记录日期: ${baseRecord?.date}, 基准资产: ${baseRecord?.totalAsset}`)
+      console.log(`日期范围内记录数: ${filteredSameTypeRecords.length}`)
+      console.log(`日期范围内记录日期列表:`, filteredSameTypeRecords.map(r => r.date))
+      console.log(`\n开始逐条计算:`)
+      
+      filteredSameTypeRecords.forEach((record, filterIndex) => {
+        // 找到当前记录在所有同类型记录中的位置
+        const recordIndex = sameTypeRecords.findIndex(r => 
+          r.date === record.date && 
+          (r.objectId === record.objectId || (!r.objectId && !record.objectId))
+        )
+        
+        // 如果位置>0，使用前一条记录；否则使用基准记录
+        const prevRecord = recordIndex > 0 ? sameTypeRecords[recordIndex - 1] : baseRecord
+        
+        // 获取当天的加减仓金额
+        const dayAdjustments = adjustments
+          .filter(a => a.date === record.date && a.investmentType === investmentType)
+          .reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0)
+        
+        const dailyProfitLoss = calculateDailyProfitLoss(record, prevRecord, adjustments)
+        
+        // 详细日志
+        console.log(`\n记录 ${filterIndex + 1}:`)
+        console.log(`  日期: ${record.date}`)
+        console.log(`  当前资产: ${record.totalAsset}`)
+        console.log(`  前一条记录日期: ${prevRecord?.date}`)
+        console.log(`  前一条记录资产: ${prevRecord?.totalAsset}`)
+        console.log(`  当天加减仓: ${dayAdjustments.toFixed(2)}`)
+        console.log(`  每日盈亏: ${dailyProfitLoss.toFixed(2)}`)
+        console.log(`  计算公式: ${record.totalAsset} - ${dayAdjustments.toFixed(2)} - ${prevRecord?.totalAsset} = ${dailyProfitLoss.toFixed(2)}`)
+        
+        tempProfitLoss += dailyProfitLoss
+        console.log(`  累计盈亏: ${tempProfitLoss.toFixed(2)}`)
+      })
+      
+      console.log(`\n========== ${investmentType === 'stock' ? '股票' : '基金'} 最终累计盈亏: ${tempProfitLoss.toFixed(2)} ==========\n`)
+      
+      if (investmentType === 'stock') {
+        stockProfitLoss = tempProfitLoss
+      } else if (investmentType === 'fund') {
+        fundProfitLoss = tempProfitLoss
+      }
+      
+      // 调试日志
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[${investmentType}] 日期范围: ${currentStartDate} 至 ${currentEndDate}`)
+        console.log(`[${investmentType}] 基准记录: ${baseRecord?.date}, 基准资产: ${baseRecord?.totalAsset}`)
+        console.log(`[${investmentType}] 日期范围内记录数: ${filteredSameTypeRecords.length}`)
+        console.log(`[${investmentType}] 日期范围内记录日期:`, filteredSameTypeRecords.map(r => r.date))
+        console.log(`[${investmentType}] 累计盈亏: ${investmentType === 'stock' ? stockProfitLoss.toFixed(2) : fundProfitLoss.toFixed(2)}`)
       }
     })
 
@@ -787,13 +895,20 @@ function StatisticsPage() {
 
   const handleReset = async () => {
     const records = await getRecords()
+    // 开始日期默认为当前年的1月1号
+    const currentYearStart = dayjs().startOf('year').format('YYYY-MM-DD')
+    
     if (records.length > 0) {
       const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
-      const firstDate = sortedRecords[0].date
       const lastDate = sortedRecords[sortedRecords.length - 1].date
       
-      setStartDate(firstDate)
+      setStartDate(currentYearStart)
       setEndDate(lastDate)
+    } else {
+      // 如果没有记录，设置默认日期为当前年的1月1号到今天
+      const today = dayjs().format('YYYY-MM-DD')
+      setStartDate(currentYearStart)
+      setEndDate(today)
     }
   }
 

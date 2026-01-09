@@ -4,7 +4,7 @@ import { calculateDailyProfitLoss } from './calculations'
 /**
  * 获取周期的开始和结束日期
  * @param {string} period - 'week', 'month', 'year'
- * @param {string} periodStartDate - 周期开始日期（可选，用于周目标）
+ * @param {string} periodStartDate - 周期开始日期（已废弃，不再使用，总是从当前周期开始计算）
  * @returns {Object} { startDate, endDate }
  */
 export function getPeriodDates(period, periodStartDate = null) {
@@ -13,21 +13,21 @@ export function getPeriodDates(period, periodStartDate = null) {
 
   switch (period) {
     case 'week':
-      if (periodStartDate) {
-        // 使用指定的周期开始日期
-        startDate = dayjs(periodStartDate)
-        endDate = startDate.add(6, 'day') // 一周7天
-      } else {
-        // 默认使用本周一
-        startDate = today.startOf('week').add(1, 'day') // 周一
-        endDate = startDate.add(6, 'day') // 周日
-      }
+      // 从当前周的周一开始计算（忽略 periodStartDate）
+      // dayjs 的 day() 方法：0=周日, 1=周一, ..., 6=周六
+      const currentDay = today.day()
+      // 计算到本周一的天数差（如果今天是周日，则回到上周一）
+      const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay
+      startDate = today.add(daysToMonday, 'day').startOf('day')
+      endDate = startDate.add(6, 'day') // 周日
       break
     case 'month':
+      // 从当前月的1号开始计算
       startDate = today.startOf('month')
       endDate = today.endOf('month')
       break
     case 'year':
+      // 从当前年的1月1号开始计算
       startDate = today.startOf('year')
       endDate = today.endOf('year')
       break

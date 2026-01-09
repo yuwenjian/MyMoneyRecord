@@ -1,5 +1,11 @@
 import dayjs from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { calculateDailyProfitLoss } from './calculations'
+
+// 扩展 dayjs 插件
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
 
 // 计算时间段统计
 export function calculatePeriodStats(records, adjustments, startDate, endDate) {
