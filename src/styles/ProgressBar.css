@@ -48,6 +48,20 @@
   justify-content: flex-end;
   padding-right: 8px;
   min-width: 24px;
+  /* 默认颜色会被 Tailwind 类覆盖 */
+  background-color: #ef4444; /* 默认红色 */
+}
+
+.progress-bar-fill.bg-red-500 {
+  background-color: #ef4444 !important;
+}
+
+.progress-bar-fill.bg-blue-500 {
+  background-color: #3b82f6 !important;
+}
+
+.progress-bar-fill.bg-green-500 {
+  background-color: #10b981 !important;
 }
 
 .progress-bar-fill.achieved {

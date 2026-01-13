@@ -1,0 +1,38 @@
+import React from 'react'
+
+/**
+ * 统一输入框组件
+ * @param {Object} props
+ * @param {string} props.label - 标签文本
+ * @param {string} props.error - 错误信息
+ * @param {string} props.className - 额外的 CSS 类名
+ */
+export function Input({ label, error, className = '', ...props }) {
+  return (
+    <div className="w-full">
+      {label && (
+        <label className="block text-base font-semibold text-gray-800 mb-2">
+          {label}
+        </label>
+      )}
+      <input
+        className={`
+          w-full px-4 py-2.5 text-base
+          border rounded-lg
+          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+          transition-colors
+          ${error 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+            : 'border-gray-300'
+          }
+          ${className}
+        `}
+        {...props}
+      />
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{error}</p>
+      )}
+    </div>
+  )
+}
+

@@ -20,17 +20,12 @@ export function ProgressBar({
 }) {
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100)
   
-  // 根据投资类型设置颜色：股票红色，基金蓝色
-  const getProgressColor = () => {
+  // 根据投资类型设置颜色：股票红色，基金蓝色，达成目标绿色
+  const getProgressColorClass = () => {
     if (isAchieved) {
-      return 'var(--profit-color)' // 达成目标时使用绿色
+      return 'bg-green-500' // 达成目标时使用绿色
     }
-    return investmentType === 'stock' ? 'var(--primary-red)' : '#3498db' // 股票红色，基金蓝色
-  }
-  
-  const progressStyle = {
-    width: `${clampedPercentage}%`,
-    backgroundColor: getProgressColor()
+    return investmentType === 'stock' ? 'bg-red-500' : 'bg-blue-500' // 股票红色，基金蓝色
   }
   
   return (
@@ -43,8 +38,8 @@ export function ProgressBar({
       </div>
       <div className="progress-bar-wrapper">
         <div 
-          className={`progress-bar-fill ${isAchieved ? 'achieved' : ''}`}
-          style={progressStyle}
+          className={`progress-bar-fill ${isAchieved ? 'achieved' : ''} ${getProgressColorClass()}`}
+          style={{ width: `${clampedPercentage}%` }}
         >
           {clampedPercentage >= 20 && (
             <span className="progress-bar-text">
