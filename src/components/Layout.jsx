@@ -6,27 +6,12 @@ import {
   FiClock, 
   FiSettings,
   FiMenu,
-  FiX,
-  FiMoon,
-  FiSun
+  FiX
 } from 'react-icons/fi'
 
 const Layout = ({ children }) => {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme')
-    return savedTheme || 'light'
-  })
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
 
   const menuItems = [
     { path: '/', label: '概览', icon: FiHome },
@@ -54,6 +39,14 @@ const Layout = ({ children }) => {
             >
               {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
             </button>
+            <img 
+              src="/assets/images/logo.png" 
+              alt="财智追踪" 
+              className="w-8 h-8 rounded-lg object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none'
+              }}
+            />
             <h1 className="text-xl font-bold text-gray-800">财智追踪</h1>
           </div>
         </div>
@@ -74,7 +67,17 @@ const Layout = ({ children }) => {
             {/* Logo */}
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <img 
+                  src="/assets/images/logo.png" 
+                  alt="财智追踪" 
+                  className="w-10 h-10 rounded-lg object-cover"
+                  onError={(e) => {
+                    // 如果图片加载失败，显示默认图标
+                    e.target.style.display = 'none'
+                    e.target.nextSibling.style.display = 'flex'
+                  }}
+                />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center hidden">
                   <span className="text-white font-bold text-xl">M</span>
                 </div>
                 <h1 className="text-xl font-bold text-gray-800">财智追踪</h1>
@@ -106,18 +109,6 @@ const Layout = ({ children }) => {
                 )
               })}
             </nav>
-
-            {/* 主题切换按钮 */}
-            <div className="p-4 border-t border-gray-200">
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                title={theme === 'light' ? '切换到暗色模式' : '切换到浅色模式'}
-              >
-                {theme === 'light' ? <FiMoon size={20} /> : <FiSun size={20} />}
-                <span className="font-medium">{theme === 'light' ? '暗色模式' : '浅色模式'}</span>
-              </button>
-            </div>
           </div>
         </aside>
 

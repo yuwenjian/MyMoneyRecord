@@ -1,4 +1,4 @@
-import { DEEPSEEK_API_KEY, DEEPSEEK_API_URL } from '../config/deepseek'
+import { DEEPSEEK_API_KEY, DEEPSEEK_API_URL, getDeepSeekAPIKey } from '../config/deepseek'
 
 /**
  * 调用 DeepSeek API 获取 AI 分析
@@ -7,8 +7,10 @@ import { DEEPSEEK_API_KEY, DEEPSEEK_API_URL } from '../config/deepseek'
  * @returns {Promise<string>} AI 返回的分析文本
  */
 export async function callDeepSeekAPI(prompt, options = {}) {
-  if (!DEEPSEEK_API_KEY) {
-    throw new Error('DeepSeek API Key 未配置，请在 .env 文件中设置 VITE_DEEPSEEK_API_KEY')
+  // 每次调用时重新获取 API Key（支持动态更新）
+  const apiKey = getDeepSeekAPIKey()
+  if (!apiKey) {
+    throw new Error('DeepSeek API Key 未配置，请在设置页面配置 API Key')
   }
 
   try {
@@ -36,14 +38,14 @@ export async function callDeepSeekAPI(prompt, options = {}) {
       requestBody.temperature = options.temperature || 0.7
     }
     
-    const response = await fetch(DEEPSEEK_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify(requestBody)
-    })
+      const response = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(requestBody)
+      })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))

@@ -3,16 +3,12 @@ import { PageHeader, Card, Button, Input, Select } from '../components/ui'
 import toast from 'react-hot-toast'
 
 function SettingsPage() {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme')
-    return savedTheme || 'light'
-  })
-
   const [settings, setSettings] = useState({
     currency: 'CNY',
     dateFormat: 'YYYY-MM-DD',
     autoBackup: false,
-    notifications: true
+    notifications: true,
+    deepseekApiKey: ''
   })
 
   useEffect(() => {
@@ -25,18 +21,12 @@ function SettingsPage() {
         console.error('Failed to load settings:', e)
       }
     }
+    // 加载 DeepSeek API Key
+    const savedApiKey = localStorage.getItem('deepseek_api_key')
+    if (savedApiKey) {
+      setSettings(prev => ({ ...prev, deepseekApiKey: savedApiKey }))
+    }
   }, [])
-
-  useEffect(() => {
-    // 应用主题
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme)
-    toast.success('主题已切换')
-  }
 
   const handleSettingChange = (key, value) => {
     setSettings(prev => {
@@ -47,46 +37,18 @@ function SettingsPage() {
     toast.success('设置已保存')
   }
 
-  const handleExportData = async () => {
-    try {
-      // 这里应该调用数据导出功能
-      toast.success('数据导出功能开发中...')
-    } catch (error) {
-      toast.error('导出失败')
-    }
+  const handleApiKeyChange = (value) => {
+    setSettings(prev => ({ ...prev, deepseekApiKey: value }))
   }
 
-  const handleImportData = () => {
-    // 创建文件输入
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = (e) => {
-      const file = e.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          try {
-            const data = JSON.parse(event.target.result)
-            // 这里应该处理导入的数据
-            toast.success('数据导入功能开发中...')
-          } catch (error) {
-            toast.error('导入失败：文件格式错误')
-          }
-        }
-        reader.readAsText(file)
-      }
-    }
-    input.click()
-  }
-
-  const handleClearData = () => {
-    if (window.confirm('确定要清空所有数据吗？此操作不可恢复！')) {
-      localStorage.clear()
-      toast.success('数据已清空')
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
+  const handleSaveApiKey = () => {
+    const apiKey = settings.deepseekApiKey.trim()
+    if (apiKey) {
+      localStorage.setItem('deepseek_api_key', apiKey)
+      toast.success('DeepSeek API Key 已保存')
+    } else {
+      localStorage.removeItem('deepseek_api_key')
+      toast.success('DeepSeek API Key 已清除')
     }
   }
 
@@ -96,39 +58,6 @@ function SettingsPage() {
         title="系统设置"
         subtitle="管理应用设置和偏好"
       />
-
-      {/* 主题设置 */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">主题设置</h3>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => handleThemeChange('light')}
-            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-              theme === 'light'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-2">☀️</div>
-              <div className="font-medium text-gray-700">浅色模式</div>
-            </div>
-          </button>
-          <button
-            onClick={() => handleThemeChange('dark')}
-            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-              theme === 'dark'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-          >
-            <div className="text-center">
-              <div className="text-2xl mb-2">🌙</div>
-              <div className="font-medium text-gray-700">深色模式</div>
-            </div>
-          </button>
-        </div>
-      </Card>
 
       {/* 显示设置 */}
       <Card>
@@ -154,6 +83,48 @@ function SettingsPage() {
               { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' }
             ]}
           />
+        </div>
+      </Card>
+
+      {/* AI 设置 */}
+      <Card>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">AI 智能分析设置</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              DeepSeek API Key
+            </label>
+            <div className="flex space-x-2 items-start">
+              <div className="flex-1 max-w-md">
+                <Input
+                  type="password"
+                  value={settings.deepseekApiKey}
+                  onChange={(e) => handleApiKeyChange(e.target.value)}
+                  placeholder="请输入您的 DeepSeek API Key"
+                />
+              </div>
+              <Button
+                onClick={handleSaveApiKey}
+                variant="primary"
+                className="whitespace-nowrap"
+              >
+                保存
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+              用于 AI 智能分析功能。API Key 仅存储在本地，不会上传到服务器。
+              <br />
+              获取 API Key：访问{' '}
+              <a
+                href="https://platform.deepseek.com/api_keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                DeepSeek 平台
+              </a>
+            </p>
+          </div>
         </div>
       </Card>
 
@@ -185,34 +156,6 @@ function SettingsPage() {
               className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
           </label>
-        </div>
-      </Card>
-
-      {/* 数据管理 */}
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">数据管理</h3>
-        <div className="space-y-3">
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={handleExportData}
-          >
-            📥 导出数据
-          </Button>
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={handleImportData}
-          >
-            📤 导入数据
-          </Button>
-          <Button
-            variant="danger"
-            fullWidth
-            onClick={handleClearData}
-          >
-            🗑️ 清空所有数据
-          </Button>
         </div>
       </Card>
 

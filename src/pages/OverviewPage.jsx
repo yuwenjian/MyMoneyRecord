@@ -20,6 +20,7 @@ import { generateComprehensiveAnalysis } from '../utils/deepseek'
 import { getHoldings } from '../utils/storage'
 import { PortfolioModal } from '../components/PortfolioModal'
 import ReactMarkdown from 'react-markdown'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 dayjs.extend(isSameOrAfter)
@@ -36,6 +37,7 @@ ChartJS.register(
 )
 
 function OverviewPage() {
+  const navigate = useNavigate()
   const [overviewData, setOverviewData] = useState({
     totalAsset: 0,
     todayProfit: 0,
@@ -90,7 +92,31 @@ function OverviewPage() {
       toast.success(`AI分析生成成功（今日第${newCount}/3次）`)
     } catch (error) {
       console.error('生成 AI 分析失败:', error)
-      toast.error(error.message || '生成 AI 分析失败，请检查 API 配置')
+      const errorMessage = error.message || '生成 AI 分析失败，请检查 API 配置'
+      
+      // 如果是 API Key 未配置的错误，显示特殊提示
+      if (errorMessage.includes('API Key 未配置')) {
+        toast.error(
+          (t) => (
+            <div className="flex flex-col">
+              <span>{errorMessage}</span>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id)
+                  navigate('/settings')
+                }}
+                className="mt-2 text-blue-600 hover:underline text-sm text-left"
+              >
+                前往设置页面配置 →
+              </button>
+            </div>
+          ),
+          { duration: 5000 }
+        )
+      } else {
+        toast.error(errorMessage)
+      }
+      
       // 如果 API 调用失败，尝试从本地存储加载
       const today = dayjs().format('YYYY-MM-DD')
       const cached = localStorage.getItem(`ai_analysis_${today}`)
@@ -101,7 +127,7 @@ function OverviewPage() {
     } finally {
       setIsGeneratingAI(false)
     }
-  }, [])
+  }, [navigate])
 
   // 手动重新生成 AI 分析
   const handleRegenerateAI = React.useCallback(async () => {

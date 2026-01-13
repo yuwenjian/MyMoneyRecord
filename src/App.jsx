@@ -11,8 +11,6 @@ import TestPage from './pages/TestPage'
 import './App.css'
 
 function App() {
-  const theme = localStorage.getItem('theme') || 'light'
-
   return (
     <>
       <Toaster 
@@ -20,7 +18,7 @@ function App() {
         toastOptions={{
           duration: 2000,
           style: {
-            background: theme === 'dark' ? '#1e293b' : '#333',
+            background: '#333',
             color: '#fff',
             borderRadius: '10px',
             fontSize: '14px',
