@@ -293,6 +293,11 @@ function RecordPage() {
       })
 
       toast.success('记录已保存', { id: loadingToast })
+      
+      // 触发数据更新事件，通知概览页面可能需要重新生成AI分析
+      window.dispatchEvent(new CustomEvent('dataUpdated', { 
+        detail: { date, investmentType } 
+      }))
     } catch (error) {
       toast.error(`保存失败: ${error.message || error.toString()}`, { id: loadingToast })
     }

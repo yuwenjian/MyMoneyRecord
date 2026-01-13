@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { PageHeader, Card, GradientCard } from '../components/ui'
 import { Line } from 'react-chartjs-2'
 import {
@@ -17,6 +16,10 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import { getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
+import { generateComprehensiveAnalysis } from '../utils/deepseek'
+import { getHoldings } from '../utils/storage'
+import { PortfolioModal } from '../components/PortfolioModal'
+import ReactMarkdown from 'react-markdown'
 import toast from 'react-hot-toast'
 
 dayjs.extend(isSameOrAfter)
@@ -44,10 +47,131 @@ function OverviewPage() {
   const [chartData, setChartData] = useState(null)
   const [chartPeriod, setChartPeriod] = useState('7d')
   const [isLoading, setIsLoading] = useState(true)
+  const [aiAnalysis, setAiAnalysis] = useState('')
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [lastAnalysisDate, setLastAnalysisDate] = useState('')
+  const [todayAnalysisCount, setTodayAnalysisCount] = useState(0) // 今日分析次数
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
+
+  // 生成 AI 分析
+  const generateAIAnalysis = React.useCallback(async (data) => {
+    try {
+      setIsGeneratingAI(true)
+      const today = dayjs().format('YYYY-MM-DD')
+      
+      // 检查今日分析次数
+      const countKey = `ai_analysis_count_${today}`
+      const currentCount = parseInt(localStorage.getItem(countKey) || '0', 10)
+      
+      if (currentCount >= 3) {
+        toast.error('今日AI分析次数已达上限（3次），请明天再试')
+        return
+      }
+      
+      // 获取持仓数据
+      const [stockHoldings, fundHoldings] = await Promise.all([
+        getHoldings('stock'),
+        getHoldings('fund')
+      ])
+      const allHoldings = [...stockHoldings, ...fundHoldings]
+      
+      // 生成综合分析
+      const analysis = await generateComprehensiveAnalysis(data, allHoldings)
+      
+      setAiAnalysis(analysis)
+      setLastAnalysisDate(today)
+      
+      // 更新今日分析次数
+      const newCount = currentCount + 1
+      setTodayAnalysisCount(newCount)
+      localStorage.setItem(countKey, newCount.toString())
+      localStorage.setItem(`ai_analysis_${today}`, analysis)
+      
+      toast.success(`AI分析生成成功（今日第${newCount}/3次）`)
+    } catch (error) {
+      console.error('生成 AI 分析失败:', error)
+      toast.error(error.message || '生成 AI 分析失败，请检查 API 配置')
+      // 如果 API 调用失败，尝试从本地存储加载
+      const today = dayjs().format('YYYY-MM-DD')
+      const cached = localStorage.getItem(`ai_analysis_${today}`)
+      if (cached) {
+        setAiAnalysis(cached)
+        setLastAnalysisDate(today)
+      }
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }, [])
+
+  // 手动重新生成 AI 分析
+  const handleRegenerateAI = React.useCallback(async () => {
+    const today = dayjs().format('YYYY-MM-DD')
+    const countKey = `ai_analysis_count_${today}`
+    const currentCount = parseInt(localStorage.getItem(countKey) || '0', 10)
+    
+    if (currentCount >= 3) {
+      toast.error('今日AI分析次数已达上限（3次），请明天再试')
+      return
+    }
+    
+    const records = await getRecords()
+    const sortedRecords = [...records].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))
+    const todayRecords = sortedRecords.filter(r => r.date === today)
+    const todayWithIndex = todayRecords.find(r => r.shanghaiIndex)
+    const shanghaiIndex = todayWithIndex ? todayWithIndex.shanghaiIndex : null
+
+    await generateAIAnalysis({
+      shanghaiIndex,
+      todayProfit: overviewData.todayProfit,
+      todayProfitPercent: overviewData.todayProfitPercent,
+      stockAsset: overviewData.stockAsset,
+      fundAsset: overviewData.fundAsset,
+      totalAsset: overviewData.totalAsset,
+      monthProfit: overviewData.monthProfit,
+      stockPercent: overviewData.totalAsset > 0 ? (overviewData.stockAsset / overviewData.totalAsset * 100).toFixed(0) : 0,
+      fundPercent: overviewData.totalAsset > 0 ? (overviewData.fundAsset / overviewData.totalAsset * 100).toFixed(0) : 0,
+    })
+  }, [overviewData, generateAIAnalysis])
+
+  // 加载缓存的 AI 分析
+  useEffect(() => {
+    const today = dayjs().format('YYYY-MM-DD')
+    const cached = localStorage.getItem(`ai_analysis_${today}`)
+    const countKey = `ai_analysis_count_${today}`
+    const count = parseInt(localStorage.getItem(countKey) || '0', 10)
+    
+    if (cached) {
+      setAiAnalysis(cached)
+      setLastAnalysisDate(today)
+    }
+    setTodayAnalysisCount(count)
+  }, [])
 
   useEffect(() => {
     loadOverviewData()
   }, [chartPeriod])
+  
+  // 监听数据更新事件，提示用户可以重新生成AI分析
+  useEffect(() => {
+    const handleDataUpdate = async (event) => {
+      // 数据更新后，重新加载概览数据
+      await loadOverviewData()
+      
+      // 提示用户可以重新生成AI分析
+      const today = dayjs().format('YYYY-MM-DD')
+      const countKey = `ai_analysis_count_${today}`
+      const currentCount = parseInt(localStorage.getItem(countKey) || '0', 10)
+      
+      if (currentCount < 3) {
+        toast.success('数据已更新，可以重新生成AI分析', { duration: 3000 })
+      }
+    }
+    
+    window.addEventListener('dataUpdated', handleDataUpdate)
+    return () => {
+      window.removeEventListener('dataUpdated', handleDataUpdate)
+    }
+  }, [])
 
   const loadOverviewData = async () => {
     try {
@@ -282,9 +406,12 @@ function OverviewPage() {
             </div>
           </div>
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <Link to="/statistics" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+            <button
+              onClick={() => setIsPortfolioModalOpen(true)}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
               查看详细配置 →
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -344,33 +471,90 @@ function OverviewPage() {
         </div>
       </div>
 
-      {/* AI 智能总结 */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+      {/* AI 智能分析 */}
+      <Card>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
           <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-semibold text-gray-800">AI 智能总结</h3>
-            <span className="text-xs text-gray-500">Gemini Powered</span>
+            <h3 className="text-lg font-semibold text-gray-800">AI 智能分析</h3>
+            <span className="text-xs text-gray-500 bg-blue-50 text-blue-600 px-2 py-1 rounded">DeepSeek Powered</span>
+            {todayAnalysisCount > 0 && (
+              <span className="text-xs text-gray-500">
+                （今日已用 {todayAnalysisCount}/3 次）
+              </span>
+            )}
           </div>
-          <button className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
-            <span>✨</span>
-            <span>+ 重新生成 AI 复盘</span>
+          <button 
+            onClick={handleRegenerateAI}
+            disabled={isGeneratingAI || todayAnalysisCount >= 3}
+            className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGeneratingAI ? (
+              <>
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>生成中...</span>
+              </>
+            ) : todayAnalysisCount >= 3 ? (
+              <>
+                <span>⚠️</span>
+                <span>今日已达上限</span>
+              </>
+            ) : (
+              <>
+                <span>✨</span>
+                <span>生成AI分析</span>
+              </>
+            )}
           </button>
         </div>
-        <div className="prose max-w-none text-gray-700">
-          <p className="text-sm leading-relaxed">
-            <strong>投资总结(股票)</strong> 今日总市值达 {formatCurrency(overviewData.stockAsset)},
-            单日实现高额收益 {formatCurrency(overviewData.todayProfit, true)},
-            回报率约为 {overviewData.todayProfitPercent.toFixed(2)}%,
-            表现极其强劲。全天无加减仓操作,持仓稳定。
-          </p>
-          <p className="text-sm leading-relaxed mt-3">
-            <strong>复盘建议:</strong>
-            建议深入分析今日高收益的驱动因素(如行业热点或个股基本面变动),
-            确认上涨逻辑的可靠性。在高收益后,应保持警惕,设置合理的止盈或跟踪止损点,
-            以锁定盈利并管理潜在回调风险。
-          </p>
+        <div className="text-gray-700">
+          {isGeneratingAI && !aiAnalysis ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-gray-500">AI 正在分析中，请稍候...</p>
+                <p className="text-xs text-gray-400">（思考模式：正在查询最新市场数据并深度分析）</p>
+              </div>
+            </div>
+          ) : aiAnalysis ? (
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  h2: ({node, ...props}) => <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-3 pb-2 border-b border-gray-200" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2" {...props} />,
+                  h4: ({node, ...props}) => <h4 className="text-sm font-semibold text-gray-800 mt-3 mb-2" {...props} />,
+                  p: ({node, ...props}) => <p className="text-sm leading-relaxed text-gray-700 mb-3" {...props} />,
+                  ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-1.5 mb-3 text-sm text-gray-700 ml-2" {...props} />,
+                  ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-1.5 mb-3 text-sm text-gray-700 ml-2" {...props} />,
+                  li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                  strong: ({node, ...props}) => <strong className="font-semibold text-gray-800" {...props} />,
+                  em: ({node, ...props}) => <em className="italic text-gray-600" {...props} />,
+                  code: ({node, inline, ...props}) => 
+                    inline ? (
+                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800" {...props} />
+                    ) : (
+                      <code className="block bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-x-auto mb-3" {...props} />
+                    ),
+                  blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-blue-300 pl-4 italic text-gray-600 my-3 bg-blue-50 py-2 rounded-r" {...props} />,
+                }}
+              >
+                {aiAnalysis}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400">
+              <p className="text-sm">暂无 AI 分析数据</p>
+              <p className="text-xs mt-2">点击"生成AI分析"按钮获取 AI 分析</p>
+              <p className="text-xs mt-1 text-gray-400">（每次更新数据后可重新生成，每日最多3次）</p>
+            </div>
+          )}
         </div>
-      </div>
+      </Card>
+
+      {/* 持仓管理弹窗 */}
+      <PortfolioModal
+        isOpen={isPortfolioModalOpen}
+        onClose={() => setIsPortfolioModalOpen(false)}
+      />
     </div>
   )
 }

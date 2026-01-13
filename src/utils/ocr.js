@@ -568,6 +568,351 @@ export const recognizeAccountData = async (imageFile, investmentType) => {
 }
 
 /**
+ * 解析持仓列表数据（从持仓明细截图）
+ * 支持两种格式：
+ * 1. 简单表格格式：名称 | 数量 | 成本价 | 当前价
+ * 2. 同花顺App格式：股票名称 + 数据行
+ * @param {string} text - OCR识别的文本
+ * @param {string} investmentType - 投资类型 'stock' 或 'fund'
+ * @returns {Array} 持仓列表
+ */
+const parseHoldingsList = (text, investmentType = 'stock') => {
+  const lines = text.split('\n').filter(line => line.trim())
+  const holdings = []
+  
+  console.log('======== 开始解析持仓列表 ========')
+  console.log('投资类型:', investmentType === 'stock' ? '股票' : '基金')
+  console.log('原始文本行数:', lines.length)
+  console.log('完整文本:', text)
+  
+  if (investmentType === 'stock') {
+    // 首先尝试识别简单表格格式：名称 | 数量 | 成本价 | 当前价
+    // 这种格式通常每行包含：股票名称 + 3-4个数字（数量、成本价、当前价）
+    
+    let foundTableFormat = false
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      
+      // 跳过表头行（包含"名称"、"数量"、"成本价"、"当前价"等关键词）
+      if (/^名称|^数量|^成本价|^当前价|市值|盈亏|持仓|可用/i.test(line) && 
+          !/[\u4e00-\u9fa5]{2,}/.test(line.replace(/名称|数量|成本价|当前价|市值|盈亏|持仓|可用/g, ''))) {
+        console.log(`  ⏭️  跳过表头: ${line}`)
+        continue
+      }
+      
+      // 尝试匹配表格行格式：股票名称 + 数量 + 成本价 + 当前价
+      // 模式1: 中文名称 + 数字（可能有逗号）+ 数字（可能有小数点）+ 数字（可能有小数点）
+      // 例如：卫星ETF 1,300 2.19 2.10
+      // 或者：鸿远电子 600 47.94 56.26
+      
+      // 提取股票名称（中文，可能包含ETF等，排除数字和特殊符号）
+      // 名称在行首
+      const nameMatch = line.match(/^([\u4e00-\u9fa5]{2,}(?:\s*ETF)?)/)
+      
+      if (!nameMatch) {
+        continue
+      }
+      
+      const stockName = nameMatch[1].trim()
+      
+      // 提取名称之后的所有数字（按照表格列顺序：数量、成本价、当前价）
+      // 使用更精确的正则，匹配名称后的所有数字
+      const afterName = line.substring(nameMatch[0].length).trim()
+      
+      // 提取所有数字（包括带逗号的，支持负数）
+      const allNumbers = afterName.match(/-?[\d,]+\.?\d*/g) || []
+      const parsedNumbers = allNumbers.map(n => parseFloat(n.replace(/,/g, ''))).filter(n => !isNaN(n))
+      
+      if (parsedNumbers.length >= 3) {
+        console.log(`  📌 发现股票名称: ${stockName}, 数字: ${parsedNumbers.join(', ')}`)
+        
+        // 按照表格列顺序识别：数量、成本价、当前价
+        // 数量：通常是较大的整数（>= 100），可能有千分位逗号
+        // 成本价：可能是正数或负数，较小的数字（通常 < 1000），可能有小数点
+        // 当前价：正数，较小的数字（通常 < 1000），可能有小数点
+        
+        // 策略：按照顺序，第一个较大的整数是数量，后面两个较小的数字是成本价和当前价
+        let amount = null
+        let cost = 0
+        let currentPrice = 0
+        
+        // 找出数量（第一个较大的整数，>= 100）
+        for (let i = 0; i < parsedNumbers.length; i++) {
+          const num = parsedNumbers[i]
+          if (Number.isInteger(num) && num >= 100) {
+            amount = num
+            // 数量后面的两个数字就是成本价和当前价
+            if (i + 1 < parsedNumbers.length) {
+              cost = parsedNumbers[i + 1]
+            }
+            if (i + 2 < parsedNumbers.length) {
+              currentPrice = parsedNumbers[i + 2]
+            } else if (i + 1 < parsedNumbers.length) {
+              // 如果只有两个数字，第二个既是成本价也是当前价
+              currentPrice = parsedNumbers[i + 1]
+            }
+            break
+          }
+        }
+        
+        // 如果没找到数量，尝试其他策略
+        if (!amount) {
+          // 如果所有数字都是小数或负数，可能是格式不同
+          // 尝试：第一个数字是数量（即使不是整数），后面是价格
+          if (parsedNumbers.length >= 3) {
+            // 找出最大的数字作为数量
+            const maxNum = Math.max(...parsedNumbers.filter(n => n > 0))
+            const maxIndex = parsedNumbers.indexOf(maxNum)
+            
+            if (maxNum >= 100) {
+              amount = Math.round(maxNum) // 数量取整
+              
+              // 数量前后的数字是价格
+              const priceNumbers = parsedNumbers.filter((n, idx) => idx !== maxIndex && Math.abs(n) < 1000)
+              
+              if (priceNumbers.length >= 2) {
+                // 按顺序：成本价在前，当前价在后
+                cost = priceNumbers[0]
+                currentPrice = priceNumbers[1]
+              } else if (priceNumbers.length === 1) {
+                cost = priceNumbers[0]
+                currentPrice = priceNumbers[0] < 0 ? 0 : priceNumbers[0]
+              }
+            }
+          }
+        }
+        
+        // 如果数量存在且至少有一个价格，则认为是有效持仓
+        if (amount && (cost !== 0 || currentPrice !== 0)) {
+          holdings.push({
+            name: stockName,
+            amount: amount,
+            cost: cost,
+            currentPrice: currentPrice > 0 ? currentPrice : (cost > 0 && cost < 1000 ? cost : 0),
+            notes: ''
+          })
+          foundTableFormat = true
+          console.log(`  ✅ 识别持仓(表格格式): ${stockName} - 数量:${amount} 成本:${cost} 当前:${currentPrice}`)
+          continue
+        }
+      } else if (parsedNumbers.length === 2) {
+        // 只有两个数字的情况：可能是数量 + 成本价，或者成本价 + 当前价
+        console.log(`  ⚠️  只有2个数字: ${stockName}, 数字: ${parsedNumbers.join(', ')}`)
+        // 暂时跳过，等待更多数据
+      }
+      
+      // 如果表格格式识别失败，尝试更宽松的模式
+      // 模式2: 尝试识别包含中文名称和多个数字的行
+      const chineseNameMatch = line.match(/([\u4e00-\u9fa5]{2,}(?:\s*ETF)?)/)
+      if (chineseNameMatch && parsedNumbers.length >= 3) {
+        const stockName = chineseNameMatch[1].trim()
+        
+        // 尝试从数字中推断
+        // 数量通常是最大的整数
+        const maxInteger = Math.max(...parsedNumbers.filter(n => Number.isInteger(n) && n >= 100), 0)
+        const amount = maxInteger > 0 ? maxInteger : parsedNumbers[0]
+        
+        // 价格是较小的数字
+        const prices = parsedNumbers.filter(n => n > 0 && n < 1000 && n !== amount)
+        
+        if (prices.length >= 2) {
+          holdings.push({
+            name: stockName,
+            amount: amount,
+            cost: prices[0],
+            currentPrice: prices[1],
+            notes: ''
+          })
+          foundTableFormat = true
+          console.log(`  ✅ 识别持仓(宽松模式): ${stockName} - 数量:${amount} 成本:${prices[0]} 当前:${prices[1]}`)
+        }
+      }
+    }
+    
+    // 如果表格格式识别成功，直接返回
+    if (foundTableFormat && holdings.length > 0) {
+      console.log(`识别到 ${holdings.length} 个持仓（表格格式）`)
+      console.log('============================')
+      return holdings
+    }
+    
+    // 同花顺App格式：两行格式
+    // 第一行：股票名称
+    // 第二行：市值 盈亏 持仓/可用 成本/现价
+    // 根据标注：
+    // - 数量：从 "持仓/可用" 列提取第一个数字（持仓数量）
+    // - 成本价：从 "成本/现价" 列提取第一个数字（成本）
+    // - 当前价：从 "成本/现价" 列提取第二个数字（现价）
+    console.log('尝试同花顺App格式（两行格式）...')
+    let currentStock = null
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      
+      // 跳过表头和无关行
+      if (/持仓股|市值|盈亏|持仓|可用|成本|现价|查看已清仓|买入|卖出|撤单|查询|同花顺|长按识别/i.test(line) && 
+          !/[\u4e00-\u9fa5]{2,}/.test(line.replace(/持仓股|市值|盈亏|持仓|可用|成本|现价|查看已清仓|买入|卖出|撤单|查询|同花顺|长按识别/g, ''))) {
+        continue
+      }
+      
+      // 尝试识别股票名称（纯中文，2-6个字符，可能包含ETF，不包含数字）
+      const stockNamePattern = /^([\u4e00-\u9fa5]{2,}(?:\s*ETF)?)$/
+      const nameMatch = line.match(stockNamePattern)
+      
+      if (nameMatch) {
+        // 找到股票名称，创建新的持仓对象
+        currentStock = {
+          name: nameMatch[1].trim().replace(/\s+ETF$/, ''),
+          amount: 0,
+          cost: 0,
+          currentPrice: 0,
+          notes: ''
+        }
+        console.log(`  📌 发现股票名称: ${currentStock.name}`)
+        continue
+      }
+      
+      // 如果已有股票名称，尝试从当前行提取数据
+      if (currentStock) {
+        // 提取所有数字（包括带逗号的，支持负数）
+        const allNumbers = line.match(/-?[\d,]+\.?\d*/g) || []
+        const parsedNumbers = allNumbers.map(n => parseFloat(n.replace(/,/g, ''))).filter(n => !isNaN(n))
+        
+        if (parsedNumbers.length >= 4) {
+          console.log(`  📊 数据行: ${line}`)
+          console.log(`  📊 提取的数字: ${parsedNumbers.join(', ')}`)
+          
+          // 根据同花顺App格式，数据行的结构：
+          // 市值 盈亏金额 盈亏百分比 持仓数量 可用数量 成本价 现价
+          // 或者：市值 盈亏金额 盈亏百分比 成本价 现价 持仓数量 可用数量
+          
+          // 策略：按照标注的位置识别
+          // 1. 持仓数量：通常是整数，>= 100，<= 100000
+          const amountCandidates = parsedNumbers.filter(n => 
+            Number.isInteger(n) && n >= 100 && n <= 100000
+          )
+          
+          if (amountCandidates.length > 0) {
+            // 持仓数量通常是第一个或第二个较大的整数（第一个是持仓，第二个可能是可用）
+            currentStock.amount = amountCandidates[0]
+            
+            // 2. 成本价和现价：较小的数字（< 1000），可能是负数
+            // 价格通常在持仓数量之后，或者分散在数字中
+            const priceCandidates = parsedNumbers.filter(n => {
+              const absN = Math.abs(n)
+              return absN > 0 && absN < 1000 && n !== currentStock.amount
+            })
+            
+            if (priceCandidates.length >= 2) {
+              // 通常成本价在前，现价在后
+              // 如果第一个是负数，肯定是成本价
+              if (priceCandidates[0] < 0) {
+                currentStock.cost = priceCandidates[0]
+                currentStock.currentPrice = priceCandidates[1]
+              } else {
+                // 两个都是正数，按顺序
+                currentStock.cost = priceCandidates[0]
+                currentStock.currentPrice = priceCandidates[1]
+              }
+            } else if (priceCandidates.length === 1) {
+              currentStock.cost = priceCandidates[0]
+              currentStock.currentPrice = priceCandidates[0] < 0 ? 0 : priceCandidates[0]
+            }
+            
+            // 验证数据有效性
+            if (currentStock.amount > 0 && (currentStock.cost !== 0 || currentStock.currentPrice !== 0)) {
+              // 如果成本价为0但当前价不为0，尝试从其他位置找成本价
+              if (currentStock.cost === 0 && currentStock.currentPrice > 0) {
+                // 尝试从数字中找成本价（可能是负数或较小的正数）
+                const costCandidate = parsedNumbers.find(n => 
+                  n !== currentStock.amount && 
+                  n !== currentStock.currentPrice && 
+                  Math.abs(n) > 0 && 
+                  Math.abs(n) < 1000
+                )
+                if (costCandidate) {
+                  currentStock.cost = costCandidate
+                }
+              }
+              
+              holdings.push({ ...currentStock })
+              console.log(`  ✅ 识别持仓: ${currentStock.name} - 数量:${currentStock.amount} 成本:${currentStock.cost} 当前:${currentStock.currentPrice}`)
+              currentStock = null // 重置，准备识别下一个
+            }
+          } else {
+            // 如果找不到明确的持仓数量，尝试从数字中推断
+            const largeIntegers = parsedNumbers.filter(n => Number.isInteger(n) && n >= 100)
+            if (largeIntegers.length > 0) {
+              currentStock.amount = largeIntegers[0]
+              
+              // 价格是较小的数字
+              const prices = parsedNumbers.filter(n => {
+                const absN = Math.abs(n)
+                return absN > 0 && absN < 1000 && n !== currentStock.amount
+              })
+              
+              if (prices.length >= 2) {
+                currentStock.cost = prices[0]
+                currentStock.currentPrice = prices[1]
+              } else if (prices.length === 1) {
+                currentStock.cost = prices[0]
+                currentStock.currentPrice = prices[0] < 0 ? 0 : prices[0]
+              }
+              
+              if (currentStock.amount > 0 && (currentStock.cost !== 0 || currentStock.currentPrice !== 0)) {
+                holdings.push({ ...currentStock })
+                console.log(`  ✅ 识别持仓(推断): ${currentStock.name} - 数量:${currentStock.amount} 成本:${currentStock.cost} 当前:${currentStock.currentPrice}`)
+                currentStock = null
+              }
+            }
+          }
+        }
+      }
+    }
+  } else {
+    // 基金持仓识别（类似股票逻辑）
+    // ... 基金识别逻辑
+  }
+  
+  console.log(`识别到 ${holdings.length} 个持仓`)
+  console.log('============================')
+  
+  return holdings
+}
+
+/**
+ * 识别持仓列表图片
+ * @param {File} imageFile - 图片文件
+ * @param {string} investmentType - 投资类型 'stock' 或 'fund'
+ * @returns {Promise<Array>} 持仓列表
+ */
+export const recognizeHoldingsList = async (imageFile, investmentType = 'stock') => {
+  try {
+    // 1. 识别图片文本
+    const text = await recognizeText(imageFile)
+    console.log('识别的原始文本:', text)
+
+    // 2. 解析持仓列表
+    const holdings = parseHoldingsList(text, investmentType)
+
+    return {
+      success: true,
+      holdings: holdings,
+      rawText: text
+    }
+  } catch (error) {
+    console.error('识别持仓列表失败:', error)
+    return {
+      success: false,
+      error: error.message || '识别失败',
+      holdings: [],
+      rawText: ''
+    }
+  }
+}
+
+/**
  * 批量识别多张图片并智能合并结果
  * @param {File[]} imageFiles - 图片文件数组
  * @param {string} investmentType - 投资类型 'stock' 或 'fund'

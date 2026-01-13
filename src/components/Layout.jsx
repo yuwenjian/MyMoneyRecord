@@ -56,12 +56,6 @@ const Layout = ({ children }) => {
             </button>
             <h1 className="text-xl font-bold text-gray-800">财智追踪</h1>
           </div>
-          <Link
-            to="/ocr"
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <span className="text-sm font-medium">📷 截图识别</span>
-          </Link>
         </div>
       </div>
 

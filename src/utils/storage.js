@@ -239,6 +239,103 @@ export function formatCurrency(amount, showSign = false) {
   return sign + amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
+// ========== 持仓管理 ==========
+
+// 获取持仓列表
+export async function getHoldings(investmentType = null) {
+  try {
+    const query = new AV.Query('Holding')
+    if (investmentType) {
+      query.equalTo('investmentType', investmentType)
+    }
+    query.ascending('createdAt')
+    const results = await query.find()
+    
+    return results.map(item => ({
+      id: item.id,
+      name: item.get('name'),
+      amount: parseFloat(item.get('amount')) || 0,
+      cost: parseFloat(item.get('cost')) || 0,
+      currentPrice: parseFloat(item.get('currentPrice')) || 0,
+      notes: item.get('notes') || '',
+      investmentType: item.get('investmentType'),
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }))
+  } catch (error) {
+    console.error('获取持仓失败:', error)
+    return []
+  }
+}
+
+// 保存持仓（新增或更新）
+export async function saveHolding(holding) {
+  try {
+    if (!AV || !AV.Query || !AV.Object) {
+      throw new Error('LeanCloud 未正确初始化，AV 对象不存在')
+    }
+
+    const { id, name, amount, cost, currentPrice, notes, investmentType } = holding
+    
+    // 验证必填字段
+    if (!name || !investmentType) {
+      throw new Error('缺少必填字段：name、investmentType')
+    }
+
+    if (investmentType !== 'stock' && investmentType !== 'fund') {
+      throw new Error('investmentType 必须是 "stock" 或 "fund"')
+    }
+
+    let HoldingRecord
+    
+    if (id) {
+      // 更新现有持仓
+      HoldingRecord = AV.Object.createWithoutData('Holding', id)
+    } else {
+      // 创建新持仓
+      HoldingRecord = new AV.Object('Holding')
+    }
+    
+    HoldingRecord.set('name', name)
+    HoldingRecord.set('amount', parseFloat(amount) || 0)
+    HoldingRecord.set('cost', parseFloat(cost) || 0)
+    HoldingRecord.set('currentPrice', parseFloat(currentPrice) || 0)
+    HoldingRecord.set('notes', notes || '')
+    HoldingRecord.set('investmentType', investmentType)
+    
+    const savedRecord = await HoldingRecord.save()
+    
+    return {
+      id: savedRecord.id,
+      name,
+      amount: parseFloat(amount) || 0,
+      cost: parseFloat(cost) || 0,
+      currentPrice: parseFloat(currentPrice) || 0,
+      notes: notes || '',
+      investmentType,
+      createdAt: savedRecord.createdAt,
+      updatedAt: savedRecord.updatedAt
+    }
+  } catch (error) {
+    throw new Error(`保存持仓失败: ${error.message || error.toString()}`)
+  }
+}
+
+// 删除持仓
+export async function deleteHolding(id) {
+  try {
+    if (!AV || !AV.Object) {
+      throw new Error('LeanCloud 未正确初始化，AV 对象不存在')
+    }
+
+    const HoldingRecord = AV.Object.createWithoutData('Holding', id)
+    await HoldingRecord.destroy()
+    return true
+  } catch (error) {
+    throw new Error(`删除持仓失败: ${error.message || error.toString()}`)
+  }
+}
+
 // ========== 收益目标管理 ==========
 
 // 获取所有收益目标
