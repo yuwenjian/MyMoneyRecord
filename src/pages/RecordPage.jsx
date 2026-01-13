@@ -394,11 +394,12 @@ function RecordPage() {
               </div>
 
               {/* 操作按钮 */}
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Button
                   onClick={recognizeAllImages}
                   disabled={isRecognizing}
                   fullWidth
+                  className="w-full sm:flex-1"
                 >
                   {isRecognizing ? '识别中...' : `识别全部 (${imagePreviews.length}张)`}
                 </Button>
@@ -406,6 +407,7 @@ function RecordPage() {
                   variant="secondary"
                   onClick={clearAllImages}
                   fullWidth
+                  className="w-full sm:flex-1"
                 >
                   清除全部
                 </Button>
