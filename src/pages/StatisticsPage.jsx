@@ -25,14 +25,14 @@ import { Fireworks } from '../components/Fireworks'
 import { TargetSettings } from '../components/TargetSettings'
 import { exportToExcel, exportToCSV } from '../utils/export'
 import { calculateMonthlyStats, calculateYearlyStats, getAvailablePeriods } from '../utils/periodStats'
-import { calculatePeriodStats } from '../utils/timeComparison'
 import { aggregateByPeriod, calculateMovingAverage, predictTrend } from '../utils/chartUtils'
 import { debounce, throttle } from '../utils/debounce'
 import { SkeletonCard, SkeletonChart, SkeletonTable, SkeletonStatCard } from '../components/SkeletonLoader'
 import { EmptyState } from '../components/EmptyState'
 import { TrendIndicator, PercentTrendIndicator } from '../components/TrendIndicator'
+import { PageHeader, Card, GradientCard, Button, Input } from '../components/ui'
 import toast from 'react-hot-toast'
-import '../styles/StatisticsPage.css'
+// import '../styles/StatisticsPage.css' // 已迁移到 Tailwind CSS
 
 ChartJS.register(
   CategoryScale,
@@ -86,14 +86,6 @@ function StatisticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState(null) // 选中的周期
   const [periodStats, setPeriodStats] = useState(null) // 周期统计
   const [availablePeriods, setAvailablePeriods] = useState({ months: [], years: [] })
-  const [timeComparison, setTimeComparison] = useState({
-    period1Start: '',
-    period1End: '',
-    period2Start: '',
-    period2End: '',
-    showComparison: false
-  })
-  const [comparisonResult, setComparisonResult] = useState(null)
   const [chartType, setChartType] = useState('line') // 'line', 'bar', 'pie'
   const [chartPeriod, setChartPeriod] = useState('day') // 'day', 'week', 'month', 'year'
   const [showMovingAverage, setShowMovingAverage] = useState(false)
@@ -114,23 +106,33 @@ function StatisticsPage() {
 
   useEffect(() => {
     const initDates = async () => {
-      const records = await getRecords()
-      // 开始日期默认为当前年的1月1号
-      const currentYearStart = dayjs().startOf('year').format('YYYY-MM-DD')
-      
-      if (records.length > 0) {
-        const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
-        const lastDate = sortedRecords[sortedRecords.length - 1].date
+      try {
+        const records = await getRecords()
+        // 开始日期默认为当前年的1月1号
+        const currentYearStart = dayjs().startOf('year').format('YYYY-MM-DD')
         
-        console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${lastDate}`)
-        setStartDate(currentYearStart)
-        setEndDate(lastDate)
-      } else {
-        // 如果没有记录，设置默认日期为当前年的1月1号到今天
+        if (records.length > 0) {
+          const sortedRecords = [...records].sort((a, b) => new Date(a.date) - new Date(b.date))
+          const lastDate = sortedRecords[sortedRecords.length - 1].date
+          
+          console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${lastDate}`)
+          setStartDate(currentYearStart)
+          setEndDate(lastDate)
+        } else {
+          // 如果没有记录，设置默认日期为当前年的1月1号到今天
+          const today = dayjs().format('YYYY-MM-DD')
+          console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${today}`)
+          setStartDate(currentYearStart)
+          setEndDate(today)
+        }
+      } catch (error) {
+        console.error('初始化日期失败:', error)
+        // 即使出错也设置默认日期，避免页面卡住
+        const currentYearStart = dayjs().startOf('year').format('YYYY-MM-DD')
         const today = dayjs().format('YYYY-MM-DD')
-        console.log(`[初始化日期] 设置开始日期: ${currentYearStart}, 结束日期: ${today}`)
         setStartDate(currentYearStart)
         setEndDate(today)
+        toast.error('初始化日期失败，使用默认日期')
       }
     }
 
@@ -165,7 +167,11 @@ function StatisticsPage() {
       if (process.env.NODE_ENV === 'development') {
         console.log(`[日期检查] 日期未初始化或格式不正确: startDate=${startDate}, endDate=${endDate}`)
       }
+      // 如果日期未初始化，设置加载状态为 false
+      setIsLoading(false)
     }
+    
+    // 加载周期统计（不依赖日期范围）
     loadPeriodStats()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, periodView, selectedPeriod, chartType, chartPeriod, showMovingAverage, historyFilter])
@@ -336,6 +342,13 @@ function StatisticsPage() {
     const currentStartDate = startDateRef.current
     const currentEndDate = endDateRef.current
     
+    // 如果日期未设置，不执行计算
+    if (!currentStartDate || !currentEndDate) {
+      console.warn('[loadStatistics] 日期未设置，跳过计算')
+      setIsLoading(false)
+      return
+    }
+    
     setIsLoading(true)
     try {
       const records = await getRecords()
@@ -346,13 +359,6 @@ function StatisticsPage() {
         console.log(`[loadStatistics] 使用的日期范围: startDate=${currentStartDate}, endDate=${currentEndDate}`)
         console.log(`[loadStatistics] state中的日期: startDate=${startDate}, endDate=${endDate}`)
         console.log(`[loadStatistics] 当前时间: ${new Date().toISOString()}`)
-      }
-      
-      // 如果日期未设置，不执行计算
-      if (!currentStartDate || !currentEndDate) {
-        console.warn('[loadStatistics] 日期未设置，跳过计算')
-        setIsLoading(false)
-        return
       }
 
       if (records.length === 0) {
@@ -1005,37 +1011,6 @@ function StatisticsPage() {
     }
   }
 
-  // 时间段对比分析
-  const handleTimeComparison = async () => {
-    const { period1Start, period1End, period2Start, period2End } = timeComparison
-    
-    if (!period1Start || !period1End || !period2Start || !period2End) {
-      toast.error('请填写完整的时间段')
-      return
-    }
-
-    try {
-      const records = await getRecords()
-      const adjustments = await getAdjustments()
-      
-      const period1Stats = calculatePeriodStats(records, adjustments, period1Start, period1End)
-      const period2Stats = calculatePeriodStats(records, adjustments, period2Start, period2End)
-      
-      if (!period1Stats || !period2Stats) {
-        toast.error('所选时间段没有数据')
-        return
-      }
-
-      setComparisonResult({
-        period1: period1Stats,
-        period2: period2Stats
-      })
-      setTimeComparison(prev => ({ ...prev, showComparison: true }))
-    } catch (error) {
-      toast.error(error.message || '对比分析失败')
-    }
-  }
-
   const handleStartDateChange = (date, dateString) => {
     if (dateString) {
       setStartDate(dateString)
@@ -1285,535 +1260,521 @@ function StatisticsPage() {
   }
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <button className="back-icon-btn" onClick={() => navigate('/')}>‹</button>
-        <h1>统计分析</h1>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="统计分析"
+        subtitle="欢迎回来, AI 实时监测中..."
+      />
 
-      <main className="app-main">
-        <div className="statistics-container">
-          {/* 日期范围选择 */}
-          <div className="stats-card">
-            <h2 className="stats-title">日期范围</h2>
-            <div className="date-range-wrapper">
-              <div className="date-range-item">
-                <label className="form-label">开始日期</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="native-date-input"
-                  aria-label="选择开始日期"
+      {/* 日期范围选择 */}
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">日期范围</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">开始日期</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              aria-label="选择开始日期"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">结束日期</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              aria-label="选择结束日期"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* 仪表盘 */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <GradientCard>
+            <div>
+              <div className="text-sm text-blue-100 mb-1">总资产</div>
+              <div className="text-3xl font-bold">
+                {(() => {
+                  const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
+                  const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
+                  return formatCurrency(stock + fund)
+                })()}
+              </div>
+            </div>
+          </GradientCard>
+          
+          <GradientCard fromColor="from-green-600" toColor="to-green-700">
+            <div>
+              <div className="text-sm text-green-100 mb-1">总盈亏</div>
+              <div className="text-3xl font-bold">
+                <TrendIndicator 
+                  value={stats.totalProfitLoss} 
+                  showArrow={true} 
+                  showSign={false}
                 />
               </div>
-              <div className="date-range-item">
-                <label className="form-label">结束日期</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="native-date-input"
-                  aria-label="选择结束日期"
-                />
+            </div>
+          </GradientCard>
+        </div>
+      )}
+
+      {/* 收益目标进度 */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">收益目标进度</h2>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+              title={isTargetProgressExpanded ? "收起" : "展开"}
+            >
+              <span>{isTargetProgressExpanded ? '▼' : '▶'}</span>
+              <span>{isTargetProgressExpanded ? '收起' : '展开'}</span>
+            </button>
+            <button
+              onClick={() => setShowTargetSettings(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="设置目标"
+            >
+              <img src="/assets/images/shezhi.png" alt="设置" className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        {isTargetProgressExpanded && (
+          <>
+            {targetProgresses.length > 0 ? (
+              <div className="space-y-6">
+                {(() => {
+                  const periodOrder = { 'week': 1, 'month': 2, 'year': 3 }
+                  const groupedByPeriod = targetProgresses.reduce((acc, progress) => {
+                    const period = progress.period
+                    if (!acc[period]) {
+                      acc[period] = []
+                    }
+                    acc[period].push(progress)
+                    return acc
+                  }, {})
+                  
+                  return Object.keys(groupedByPeriod)
+                    .sort((a, b) => periodOrder[a] - periodOrder[b])
+                    .map(period => {
+                      const periodLabel = 
+                        period === 'week' ? '每周' :
+                        period === 'month' ? '每月' : '每年'
+                      
+                      const sortedProgresses = groupedByPeriod[period]
+                        .sort((a, b) => {
+                          if (a.investmentType === 'stock' && b.investmentType === 'fund') return -1
+                          if (a.investmentType === 'fund' && b.investmentType === 'stock') return 1
+                          return 0
+                        })
+                      
+                      return (
+                        <div key={period} className="space-y-3">
+                          <h3 className="text-md font-semibold text-gray-700">{periodLabel}</h3>
+                          {sortedProgresses.map((progress) => {
+                            const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
+                            const label = `${typeLabel} - ${periodLabel}`
+                            
+                            return (
+                              <div key={`${progress.investmentType}-${progress.period}`} className="mb-4">
+                                <ProgressBar
+                                  percentage={progress.percentage}
+                                  isAchieved={progress.isAchieved}
+                                  label={label}
+                                  actualValue={formatCurrency(progress.actualProfit, true)}
+                                  targetValue={formatCurrency(progress.targetAmount)}
+                                  investmentType={progress.investmentType}
+                                />
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })
+                })()}
               </div>
-              <div className="date-range-buttons">
-                <button className="filter-btn-stat" onClick={loadStatistics} type="button">筛选</button>
-                <button
-                  className="filter-btn-stat reset-btn"
-                  onClick={handleReset}
-                  type="button"
-                >
-                  重置
-                </button>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline w-4 h-4 align-middle" /> 按钮设置目标</p>
               </div>
+            )}
+          </>
+        )}
+      </Card>
+
+      {/* 持仓分布 */}
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">持仓分布</h2>
+        <div className="space-y-4">
+          {(() => {
+            const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
+            const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
+            const total = stock + fund
+            const stockRatio = total > 0 ? (stock / total * 100) : 0
+            const fundRatio = total > 0 ? (fund / total * 100) : 0
+            
+            return (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">股票</span>
+                    <span className="text-sm font-semibold text-gray-600">{stockRatio.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-red-500 h-2 rounded-full transition-all" 
+                      style={{ width: `${stockRatio}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-lg font-bold text-gray-800">{stats.currentStockAsset}</div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">基金</span>
+                    <span className="text-sm font-semibold text-gray-600">{fundRatio.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all" 
+                      style={{ width: `${fundRatio}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-lg font-bold text-gray-800">{stats.currentFundAsset}</div>
+                </div>
+              </>
+            )
+          })()}
+        </div>
+      </Card>
+
+      {/* 账户资产和盈亏统计 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 账户资产统计 */}
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">账户资产</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2 border-b border-gray-100">
+              <span className="text-sm text-gray-600">当前股票账户总资产</span>
+              <span className="text-lg font-semibold text-gray-800">{stats.currentStockAsset}</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-gray-600">当前基金账户总资产</span>
+              <span className="text-lg font-semibold text-gray-800">{stats.currentFundAsset}</span>
             </div>
           </div>
+        </Card>
 
-          {/* 仪表盘 */}
+        {/* 盈亏统计 */}
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">盈亏统计 ({startDate} 至 {endDate})</h2>
           {isLoading ? (
-            <div className="dashboard-section">
-              <SkeletonStatCard />
-              <SkeletonStatCard />
-            </div>
+            <SkeletonCard />
           ) : (
-            <div className="dashboard-section">
-              <div className="dashboard-card total-asset-card">
-                <div className="dashboard-icon">💰</div>
-                <div className="dashboard-content">
-                  <div className="dashboard-label">总资产</div>
-                  <div className="dashboard-value">
-                    {(() => {
-                      const stock = parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
-                      const fund = parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
-                      return formatCurrency(stock + fund)
-                    })()}
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">股票盈亏资金</span>
+                <span className="text-lg font-semibold">
+                  <TrendIndicator 
+                    value={stats.stockProfitLoss} 
+                    showArrow={true} 
+                    showSign={true}
+                  />
+                </span>
               </div>
-              
-              <div className="dashboard-card today-profit-card">
-                <div className="dashboard-icon">
-                  <img src="/assets/images/jijin_white.png" alt="总盈亏" />
-                </div>
-                <div className="dashboard-content">
-                  <div className="dashboard-label">总盈亏</div>
-                  <div className={`dashboard-value ${(() => {
-                    const total = parseFloat(stats.totalProfitLoss.replace(/,/g, '')) || 0
-                    return total >= 0 ? 'positive' : 'negative'
-                  })()}`}>
-                    <TrendIndicator 
-                      value={stats.totalProfitLoss} 
-                      showArrow={true} 
-                      showSign={false}
-                    />
-                  </div>
-                </div>
+              <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">基金盈亏资金</span>
+                <span className="text-lg font-semibold">
+                  <TrendIndicator 
+                    value={stats.fundProfitLoss} 
+                    showArrow={true} 
+                    showSign={true}
+                  />
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-gray-600">总盈亏</span>
+                <span className="text-lg font-semibold">
+                  <TrendIndicator 
+                    value={stats.totalProfitLoss} 
+                    showArrow={true} 
+                    showSign={false}
+                  />
+                </span>
               </div>
             </div>
           )}
+        </Card>
+      </div>
 
-          {/* 收益目标进度 */}
-          <div className="stats-card">
-            <div className="stats-header-with-action">
-              <h2 className="stats-title">收益目标进度</h2>
-              <div className="header-actions">
-                <button
-                  className="toggle-expand-btn"
-                  onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
-                  title={isTargetProgressExpanded ? "收起" : "展开"}
-                  aria-label={isTargetProgressExpanded ? "收起" : "展开"}
-                >
-                  <span className="toggle-icon">
-                    {isTargetProgressExpanded ? '▼' : '▶'}
+      {/* 月度/年度汇总统计 */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">周期汇总统计</h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {
+                setPeriodView('month')
+                setSelectedPeriod(null)
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                periodView === 'month'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              月度
+            </button>
+            <button
+              onClick={() => {
+                setPeriodView('year')
+                setSelectedPeriod(null)
+              }}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                periodView === 'year'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              年度
+            </button>
+          </div>
+        </div>
+        
+        {/* 周期选择器 */}
+        <div className="mb-4">
+          {periodView === 'month' ? (
+            <select
+              value={selectedPeriod || ''}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">请选择月份</option>
+              {availablePeriods.months.map(month => {
+                const [year, mon] = month.split('-')
+                return (
+                  <option key={month} value={month}>
+                    {year}年{mon}月
+                  </option>
+                )
+              })}
+            </select>
+          ) : (
+            <select
+              value={selectedPeriod || ''}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">请选择年份</option>
+              {availablePeriods.years.map(year => (
+                <option key={year} value={year.toString()}>
+                  {year}年
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* 统计结果 */}
+        {periodStats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-md font-semibold text-gray-700 mb-3">股票统计</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">盈亏金额</span>
+                  <span className={`text-sm font-semibold ${periodStats.stock.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(periodStats.stock.profitLoss, true)}
                   </span>
-                  <span className="toggle-text">
-                    {isTargetProgressExpanded ? '收起' : '展开'}
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">收益率</span>
+                  <span className={`text-sm font-semibold ${periodStats.stock.returnRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {periodStats.stock.returnRate.toFixed(2)}%
                   </span>
-                </button>
-                <button
-                  className="settings-btn"
-                  onClick={() => setShowTargetSettings(true)}
-                  title="设置目标"
-                >
-                  <img src="/assets/images/shezhi.png" alt="设置" />
-                </button>
-              </div>
-            </div>
-            {isTargetProgressExpanded && (
-              <>
-                {targetProgresses.length > 0 ? (
-                  <div className="target-progress-list">
-                    {(() => {
-                      // 按周期排序：每周、每月、每年
-                      const periodOrder = { 'week': 1, 'month': 2, 'year': 3 }
-                      // 按投资类型排序：股票、基金
-                      const typeOrder = { 'stock': 1, 'fund': 2 }
-                      
-                      // 先按周期分组
-                      const groupedByPeriod = targetProgresses.reduce((acc, progress) => {
-                        const period = progress.period
-                        if (!acc[period]) {
-                          acc[period] = []
-                        }
-                        acc[period].push(progress)
-                        return acc
-                      }, {})
-                      
-                      // 按周期顺序排序并渲染
-                      return Object.keys(groupedByPeriod)
-                        .sort((a, b) => periodOrder[a] - periodOrder[b])
-                        .map(period => {
-                          const periodLabel = 
-                            period === 'week' ? '每周' :
-                            period === 'month' ? '每月' : '每年'
-                          
-                          // 对每个周期内的进度按投资类型排序
-                          const sortedProgresses = groupedByPeriod[period]
-                            .sort((a, b) => typeOrder[a.investmentType] - typeOrder[b.investmentType])
-                          
-                          return (
-                            <div key={period} className="target-period-group">
-                              <div className="target-period-title">{periodLabel}</div>
-                              {sortedProgresses.map((progress) => {
-                                const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
-                                const label = `${typeLabel} - ${periodLabel}`
-                                
-                                return (
-                                  <div key={`${progress.investmentType}-${progress.period}`} className="target-progress-item">
-                                    <ProgressBar
-                                      percentage={progress.percentage}
-                                      isAchieved={progress.isAchieved}
-                                      label={label}
-                                      actualValue={formatCurrency(progress.actualProfit, true)}
-                                      targetValue={formatCurrency(progress.targetAmount)}
-                                      investmentType={progress.investmentType}
-                                    />
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )
-                        })
-                    })()}
-                  </div>
-                ) : (
-                  <div className="empty-targets">
-                    <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline-settings-icon" /> 按钮设置目标</p>
+                </div>
+                {periodView === 'year' && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">年化收益率</span>
+                    <span className={`text-sm font-semibold ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(periodStats.stock.annualizedReturn * 100).toFixed(2)}%
+                    </span>
                   </div>
                 )}
-              </>
-            )}
-          </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">胜率</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {periodStats.stock.winRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">最大回撤</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {periodStats.stock.maxDrawdown.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-600">交易天数</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {periodStats.stock.days} 天
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          {/* 持仓分布 */}
-          <div className="stats-card">
-            <h2 className="stats-title">持仓分布</h2>
-            <div className="position-distribution">
+            <div>
+              <h3 className="text-md font-semibold text-gray-700 mb-3">基金统计</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">盈亏金额</span>
+                  <span className={`text-sm font-semibold ${periodStats.fund.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(periodStats.fund.profitLoss, true)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">收益率</span>
+                  <span className={`text-sm font-semibold ${periodStats.fund.returnRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {periodStats.fund.returnRate.toFixed(2)}%
+                  </span>
+                </div>
+                {periodView === 'year' && (
+                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">年化收益率</span>
+                    <span className={`text-sm font-semibold ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(periodStats.fund.annualizedReturn * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">胜率</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {periodStats.fund.winRate.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                  <span className="text-sm text-gray-600">最大回撤</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {periodStats.fund.maxDrawdown.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-600">交易天数</span>
+                  <span className="text-sm font-semibold text-gray-800">
+                    {periodStats.fund.days} 天
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-md font-semibold text-gray-700 mb-3">合计统计</h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-gray-600">总盈亏</span>
+                  <span className={`text-sm font-semibold ${periodStats.total.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(periodStats.total.profitLoss, true)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!periodStats && selectedPeriod && (
+          <div className="text-center py-8 text-gray-500">
+            该周期暂无数据
+          </div>
+        )}
+      </Card>
+
+      {/* 股票与基金收益对比分析 */}
+      <Card>
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="border-2 border-red-200 rounded-xl p-6 bg-red-50">
+            <div className="flex items-center space-x-3 mb-4">
+              <img src="/assets/images/gupiao.png" alt="股票" className="w-8 h-8" />
+              <h3 className="text-lg font-semibold text-gray-800">股票</h3>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">累计盈亏</div>
+                <div className={`text-xl font-bold ${stats.stockProfitLoss === '--' ? 'text-gray-600' : (parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'text-green-600' : 'text-red-600')}`}>
+                  {stats.stockProfitLoss}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600 mb-1">当前资产</div>
+                <div className="text-xl font-bold text-gray-800">{stats.currentStockAsset}</div>
+              </div>
               {(() => {
-                const stock = parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
-                const fund = parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
-                const total = stock + fund
-                const stockRatio = total > 0 ? (stock / total * 100) : 0
-                const fundRatio = total > 0 ? (fund / total * 100) : 0
-                
+                const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
+                const fundProfit = stats.fundProfitLoss === '--' ? 0 : parseFloat(stats.fundProfitLoss.replace(/,/g, '')) || 0
+                const totalProfit = stockProfit + fundProfit
+                const stockRatio = totalProfit !== 0 ? (stockProfit / totalProfit * 100) : 0
                 return (
-                  <>
-                    <div className="distribution-item">
-                      <div className="distribution-header">
-                        <span className="distribution-label">股票</span>
-                        <span className="distribution-percent">{stockRatio.toFixed(1)}%</span>
-                      </div>
-                      <div className="distribution-bar">
-                        <div 
-                          className="distribution-bar-fill stock-fill" 
-                          style={{ width: `${stockRatio}%` }}
-                        ></div>
-                      </div>
-                      <div className="distribution-value">{stats.currentStockAsset}</div>
-                    </div>
-                    <div className="distribution-item">
-                      <div className="distribution-header">
-                        <span className="distribution-label">基金</span>
-                        <span className="distribution-percent">{fundRatio.toFixed(1)}%</span>
-                      </div>
-                      <div className="distribution-bar">
-                        <div 
-                          className="distribution-bar-fill fund-fill" 
-                          style={{ width: `${fundRatio}%` }}
-                        ></div>
-                      </div>
-                      <div className="distribution-value">{stats.currentFundAsset}</div>
-                    </div>
-                  </>
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">占比</div>
+                    <div className="text-xl font-bold text-gray-800">{stockRatio.toFixed(1)}%</div>
+                  </div>
                 )
               })()}
             </div>
           </div>
-
-          {/* 账户资产统计 */}
-          <div className="stats-card">
-            <h2 className="stats-title">账户资产</h2>
-            <div className="stat-item">
-              <span className="stat-label">当前股票账户总资产</span>
-              <span className="stat-value">{stats.currentStockAsset}</span>
+          <div className="border-2 border-blue-200 rounded-xl p-6 bg-blue-50">
+            <div className="flex items-center space-x-3 mb-4">
+              <img src="/assets/images/jijin.png" alt="基金" className="w-8 h-8" />
+              <h3 className="text-lg font-semibold text-gray-800">基金</h3>
             </div>
-            <div className="stat-item">
-              <span className="stat-label">当前基金账户总资产</span>
-              <span className="stat-value">{stats.currentFundAsset}</span>
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">累计盈亏</div>
+                <div className={`text-xl font-bold ${stats.fundProfitLoss === '--' ? 'text-gray-600' : (parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'text-green-600' : 'text-red-600')}`}>
+                  {stats.fundProfitLoss}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600 mb-1">当前资产</div>
+                <div className="text-xl font-bold text-gray-800">{stats.currentFundAsset}</div>
+              </div>
+              {(() => {
+                const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
+                const fundProfit = stats.fundProfitLoss === '--' ? 0 : parseFloat(stats.fundProfitLoss.replace(/,/g, '')) || 0
+                const totalProfit = stockProfit + fundProfit
+                const fundRatio = totalProfit !== 0 ? (fundProfit / totalProfit * 100) : 0
+                return (
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">占比</div>
+                    <div className="text-xl font-bold text-gray-800">{fundRatio.toFixed(1)}%</div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
-
-          {/* 盈亏统计 */}
-          <div className="stats-card">
-            <h2 className="stats-title">盈亏统计 ({startDate} 至 {endDate})</h2>
-            {isLoading ? (
-              <SkeletonCard />
-            ) : (
-              <>
-                <div className="stat-item">
-                  <span className="stat-label">股票盈亏资金</span>
-                  <span className="stat-value">
-                    <TrendIndicator 
-                      value={stats.stockProfitLoss} 
-                      showArrow={true} 
-                      showSign={true}
-                    />
-                  </span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">基金盈亏资金</span>
-                  <span className="stat-value">
-                    <TrendIndicator 
-                      value={stats.fundProfitLoss} 
-                      showArrow={true} 
-                      showSign={true}
-                    />
-                  </span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">总盈亏</span>
-                  <span className="stat-value">
-                    <TrendIndicator 
-                      value={stats.totalProfitLoss} 
-                      showArrow={true} 
-                      showSign={false}
-                    />
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* 月度/年度汇总统计 */}
-          <div className="stats-card">
-            <div className="stats-header-with-action">
-              <h2 className="stats-title">周期汇总统计</h2>
-              <div className="period-view-toggle">
-                <button
-                  className={`period-toggle-btn ${periodView === 'month' ? 'active' : ''}`}
-                  onClick={() => {
-                    setPeriodView('month')
-                    setSelectedPeriod(null)
-                  }}
-                >
-                  月度
-                </button>
-                <button
-                  className={`period-toggle-btn ${periodView === 'year' ? 'active' : ''}`}
-                  onClick={() => {
-                    setPeriodView('year')
-                    setSelectedPeriod(null)
-                  }}
-                >
-                  年度
-                </button>
-              </div>
-            </div>
-            
-            {/* 周期选择器 */}
-            <div className="period-selector">
-              {periodView === 'month' ? (
-                <select
-                  className="period-select"
-                  value={selectedPeriod || ''}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                >
-                  <option value="">请选择月份</option>
-                  {availablePeriods.months.map(month => {
-                    const [year, mon] = month.split('-')
-                    return (
-                      <option key={month} value={month}>
-                        {year}年{mon}月
-                      </option>
-                    )
-                  })}
-                </select>
-              ) : (
-                <select
-                  className="period-select"
-                  value={selectedPeriod || ''}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                >
-                  <option value="">请选择年份</option>
-                  {availablePeriods.years.map(year => (
-                    <option key={year} value={year.toString()}>
-                      {year}年
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* 统计结果 */}
-            {periodStats && (
-              <div className="period-stats-content">
-                <div className="period-stats-section">
-                  <h3 className="period-stats-subtitle">股票统计</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">盈亏金额</span>
-                    <span className={`stat-value ${periodStats.stock.profitLoss >= 0 ? 'positive' : 'negative'}`}>
-                      {formatCurrency(periodStats.stock.profitLoss, true)}
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">收益率</span>
-                    <span className={`stat-value ${periodStats.stock.returnRate >= 0 ? 'positive' : 'negative'}`}>
-                      {periodStats.stock.returnRate.toFixed(2)}%
-                    </span>
-                  </div>
-                  {periodView === 'year' && (
-                    <div className="stat-item">
-                      <span className="stat-label">年化收益率</span>
-                      <span className={`stat-value ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'positive' : 'negative'}`}>
-                        {(periodStats.stock.annualizedReturn * 100).toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
-                  <div className="stat-item">
-                    <span className="stat-label">胜率</span>
-                    <span className="stat-value">
-                      {periodStats.stock.winRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">最大回撤</span>
-                    <span className="stat-value negative">
-                      {periodStats.stock.maxDrawdown.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">交易天数</span>
-                    <span className="stat-value">
-                      {periodStats.stock.days} 天
-                    </span>
-                  </div>
-                </div>
-
-                <div className="period-stats-section">
-                  <h3 className="period-stats-subtitle">基金统计</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">盈亏金额</span>
-                    <span className={`stat-value ${periodStats.fund.profitLoss >= 0 ? 'positive' : 'negative'}`}>
-                      {formatCurrency(periodStats.fund.profitLoss, true)}
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">收益率</span>
-                    <span className={`stat-value ${periodStats.fund.returnRate >= 0 ? 'positive' : 'negative'}`}>
-                      {periodStats.fund.returnRate.toFixed(2)}%
-                    </span>
-                  </div>
-                  {periodView === 'year' && (
-                    <div className="stat-item">
-                      <span className="stat-label">年化收益率</span>
-                      <span className={`stat-value ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'positive' : 'negative'}`}>
-                        {(periodStats.fund.annualizedReturn * 100).toFixed(2)}%
-                      </span>
-                    </div>
-                  )}
-                  <div className="stat-item">
-                    <span className="stat-label">胜率</span>
-                    <span className="stat-value">
-                      {periodStats.fund.winRate.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">最大回撤</span>
-                    <span className="stat-value negative">
-                      {periodStats.fund.maxDrawdown.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">交易天数</span>
-                    <span className="stat-value">
-                      {periodStats.fund.days} 天
-                    </span>
-                  </div>
-                </div>
-
-                <div className="period-stats-section">
-                  <h3 className="period-stats-subtitle">合计统计</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">总盈亏</span>
-                    <span className={`stat-value ${periodStats.total.profitLoss >= 0 ? 'positive' : 'negative'}`}>
-                      {formatCurrency(periodStats.total.profitLoss, true)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {!periodStats && selectedPeriod && (
-              <div className="empty-state" style={{ padding: '20px', textAlign: 'center' }}>
-                该周期暂无数据
-              </div>
-            )}
-          </div>
-
-          {/* 股票与基金收益对比分析 */}
-          <div className="stats-card">
-            <div className="stats-header-with-action">
-              <h2 className="stats-title">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
-            </div>
-            <div className="comparison-stats-grid">
-              <div className="comparison-item stock-comparison">
-                <div className="comparison-header">
-                  <span className="comparison-icon">
-                    <img src="/assets/images/gupiao.png" alt="股票" />
-                  </span>
-                  <span className="comparison-title">股票</span>
-                </div>
-                <div className="comparison-content">
-                  <div className="comparison-stat">
-                    <span className="comparison-label">累计盈亏</span>
-                    <span className={`comparison-value ${parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'positive' : 'negative'}`}>
-                      {stats.stockProfitLoss}
-                    </span>
-                  </div>
-                  <div className="comparison-stat">
-                    <span className="comparison-label">当前资产</span>
-                    <span className="comparison-value">{stats.currentStockAsset}</span>
-                  </div>
-                  {(() => {
-                    const stockProfit = parseFloat(stats.stockProfitLoss.replace(/,/g, ''))
-                    const fundProfit = parseFloat(stats.fundProfitLoss.replace(/,/g, ''))
-                    const totalProfit = stockProfit + fundProfit
-                    const stockRatio = totalProfit !== 0 ? (stockProfit / totalProfit * 100) : 0
-                    return (
-                      <div className="comparison-stat">
-                        <span className="comparison-label">占比</span>
-                        <span className="comparison-value">{stockRatio.toFixed(1)}%</span>
-                      </div>
-                    )
-                  })()}
-                </div>
-              </div>
-              <div className="comparison-item fund-comparison">
-                <div className="comparison-header">
-                  <span className="comparison-icon">
-                    <img src="/assets/images/jijin.png" alt="基金" />
-                  </span>
-                  <span className="comparison-title">基金</span>
-                </div>
-                <div className="comparison-content">
-                  <div className="comparison-stat">
-                    <span className="comparison-label">累计盈亏</span>
-                    <span className={`comparison-value ${parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'positive' : 'negative'}`}>
-                      {stats.fundProfitLoss}
-                    </span>
-                  </div>
-                  <div className="comparison-stat">
-                    <span className="comparison-label">当前资产</span>
-                    <span className="comparison-value">{stats.currentFundAsset}</span>
-                  </div>
-                  {(() => {
-                    const stockProfit = parseFloat(stats.stockProfitLoss.replace(/,/g, ''))
-                    const fundProfit = parseFloat(stats.fundProfitLoss.replace(/,/g, ''))
-                    const totalProfit = stockProfit + fundProfit
-                    const fundRatio = totalProfit !== 0 ? (fundProfit / totalProfit * 100) : 0
-                    return (
-                      <div className="comparison-stat">
-                        <span className="comparison-label">占比</span>
-                        <span className="comparison-value">{fundRatio.toFixed(1)}%</span>
-                      </div>
-                    )
-                  })()}
-                </div>
-              </div>
-            </div>
-            {/* 对比图表 */}
-            {chartData && (
-              <div 
-                id="comparison-chart-fullscreen-container"
-                className={`comparison-chart ${isComparisonFullScreen ? 'fullscreen' : ''}`}
-              >
-                <div className="comparison-chart-header">
-                  <h3 className="comparison-chart-title">收益趋势对比</h3>
-                  <button
-                    type="button"
-                    className="chart-fullscreen-btn"
-                    onClick={async () => {
+        </div>
+        {/* 对比图表 */}
+        {chartData && (
+          <div 
+            id="comparison-chart-fullscreen-container"
+            className={`bg-white rounded-xl p-6 shadow-sm ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">收益趋势对比</h3>
+              <button
+                type="button"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={async () => {
                       const container = document.getElementById('comparison-chart-fullscreen-container')
                       if (!container) {
                         console.warn('找不到对比图表容器')
@@ -1896,367 +1857,214 @@ function StatisticsPage() {
                         }
                       }
                     }}
-                    title={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
-                    aria-label={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
-                  >
-                    {isComparisonFullScreen ? '🗗' : '⛶'}
-                  </button>
-                </div>
-                <div style={{ height: isComparisonFullScreen ? 'calc(100vh - 120px)' : '300px', marginTop: '20px', paddingBottom: isComparisonFullScreen ? '20px' : '0' }}>
-                  <Line data={chartData} options={comparisonChartOptions} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 不同时间段对比分析 */}
-          <div className="stats-card">
-            <h2 className="stats-title">时间段对比分析</h2>
-            <div className="time-comparison-form">
-              <div className="comparison-period-group">
-                <h3 className="comparison-period-title">时间段一</h3>
-                <div className="comparison-date-inputs">
-                  <div className="comparison-date-item">
-                    <label className="form-label">开始日期</label>
-                    <input
-                      type="date"
-                      value={timeComparison.period1Start}
-                      onChange={(e) => setTimeComparison(prev => ({ 
-                        ...prev, 
-                        period1Start: e.target.value
-                      }))}
-                      className="native-date-input"
-                      aria-label="选择时间段一的开始日期"
-                    />
-                  </div>
-                  <div className="comparison-date-item">
-                    <label className="form-label">结束日期</label>
-                    <input
-                      type="date"
-                      value={timeComparison.period1End}
-                      onChange={(e) => setTimeComparison(prev => ({ 
-                        ...prev, 
-                        period1End: e.target.value
-                      }))}
-                      className="native-date-input"
-                      aria-label="选择时间段一的结束日期"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="comparison-period-group">
-                <h3 className="comparison-period-title">时间段二</h3>
-                <div className="comparison-date-inputs">
-                  <div className="comparison-date-item">
-                    <label className="form-label">开始日期</label>
-                    <input
-                      type="date"
-                      value={timeComparison.period2Start}
-                      onChange={(e) => setTimeComparison(prev => ({ 
-                        ...prev, 
-                        period2Start: e.target.value
-                      }))}
-                      className="native-date-input"
-                      aria-label="选择时间段二的开始日期"
-                    />
-                  </div>
-                  <div className="comparison-date-item">
-                    <label className="form-label">结束日期</label>
-                    <input
-                      type="date"
-                      value={timeComparison.period2End}
-                      onChange={(e) => setTimeComparison(prev => ({ 
-                        ...prev, 
-                        period2End: e.target.value
-                      }))}
-                      className="native-date-input"
-                      aria-label="选择时间段二的结束日期"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <button className="comparison-btn" onClick={handleTimeComparison} type="button">
-                开始对比
+                title={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
+                aria-label={isComparisonFullScreen ? '退出全屏' : '全屏显示'}
+              >
+                {isComparisonFullScreen ? '🗗' : '⛶'}
               </button>
             </div>
+            <div className={isComparisonFullScreen ? 'h-[calc(100vh-120px)] pb-5' : 'h-64'}>
+              <Line data={chartData} options={comparisonChartOptions} />
+            </div>
+          </div>
+        )}
+      </Card>
 
-            {comparisonResult && timeComparison.showComparison && (
-              <div className="comparison-result">
-                <div className="comparison-table">
-                  <table className="comparison-stats-table">
-                    <thead>
-                      <tr>
-                        <th>指标</th>
-                        <th>时间段一<br/>({comparisonResult.period1.startDate} 至 {comparisonResult.period1.endDate})</th>
-                        <th>时间段二<br/>({comparisonResult.period2.startDate} 至 {comparisonResult.period2.endDate})</th>
-                        <th>差异</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>股票盈亏</td>
-                        <td className={comparisonResult.period1.stock.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period1.stock.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.stock.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.stock.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.stock.profitLoss - comparisonResult.period1.stock.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.stock.profitLoss - comparisonResult.period1.stock.profitLoss, true)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>股票收益率</td>
-                        <td>{comparisonResult.period1.stock.returnRate.toFixed(2)}%</td>
-                        <td>{comparisonResult.period2.stock.returnRate.toFixed(2)}%</td>
-                        <td className={comparisonResult.period2.stock.returnRate - comparisonResult.period1.stock.returnRate >= 0 ? 'positive' : 'negative'}>
-                          {(comparisonResult.period2.stock.returnRate - comparisonResult.period1.stock.returnRate).toFixed(2)}%
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>基金盈亏</td>
-                        <td className={comparisonResult.period1.fund.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period1.fund.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.fund.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.fund.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.fund.profitLoss - comparisonResult.period1.fund.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.fund.profitLoss - comparisonResult.period1.fund.profitLoss, true)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>基金收益率</td>
-                        <td>{comparisonResult.period1.fund.returnRate.toFixed(2)}%</td>
-                        <td>{comparisonResult.period2.fund.returnRate.toFixed(2)}%</td>
-                        <td className={comparisonResult.period2.fund.returnRate - comparisonResult.period1.fund.returnRate >= 0 ? 'positive' : 'negative'}>
-                          {(comparisonResult.period2.fund.returnRate - comparisonResult.period1.fund.returnRate).toFixed(2)}%
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>总盈亏</td>
-                        <td className={comparisonResult.period1.total.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period1.total.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.total.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.total.profitLoss, true)}
-                        </td>
-                        <td className={comparisonResult.period2.total.profitLoss - comparisonResult.period1.total.profitLoss >= 0 ? 'positive' : 'negative'}>
-                          {formatCurrency(comparisonResult.period2.total.profitLoss - comparisonResult.period1.total.profitLoss, true)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+      {/* 图表区域 */}
+      <Card className={isChartFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800">对比趋势图 (盈亏百分比)</h2>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsChartCollapsed(v => !v)}
+              aria-expanded={!isChartCollapsed}
+            >
+              {isChartCollapsed ? '展开' : '收起'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={toggleFullScreen}
+              title={isChartFullScreen ? '退出全屏' : '全屏显示'}
+            >
+              {isChartFullScreen ? '🗗' : '⛶'}
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => setChartType('line')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                chartType === 'line' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📈 折线
+            </button>
+            <button
+              type="button"
+              onClick={() => setChartType('bar')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                chartType === 'bar' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📊 柱状
+            </button>
+            <button
+              type="button"
+              onClick={() => setChartType('pie')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                chartType === 'pie' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🥧 饼图
+            </button>
+          </div>
+          {chartType !== 'pie' && (
+            <>
+              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                {['day', 'week', 'month', 'year'].map((period) => (
+                  <button
+                    key={period}
+                    type="button"
+                    onClick={() => setChartPeriod(period)}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                      chartPeriod === period ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {period === 'day' ? '日' : period === 'week' ? '周' : period === 'month' ? '月' : '年'}
+                  </button>
+                ))}
               </div>
+              {chartType === 'line' && (
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showMovingAverage}
+                    onChange={(e) => setShowMovingAverage(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">移动平均线</span>
+                </label>
+              )}
+            </>
+          )}
+        </div>
+        {!isChartCollapsed && (
+          <div className={isChartFullScreen ? 'h-[calc(100vh-200px)]' : 'h-96'}>
+            {isLoading ? (
+              <SkeletonChart />
+            ) : chartData ? (
+              <>
+                {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
+                {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
+                {chartType === 'pie' && <Pie data={chartData} options={pieChartOptions} />}
+              </>
+            ) : (
+              <EmptyState type="chart" />
             )}
           </div>
+        )}
+      </Card>
 
-          {/* 图表区域 */}
-          <div 
-            id="chart-fullscreen-container"
-            className={`chart-container ${isChartCollapsed ? 'collapsed' : ''} ${isChartFullScreen ? 'fullscreen' : ''}`}
-          >
-            <div className="chart-header">
-              <h2 className="stats-title">对比趋势图 (盈亏百分比)</h2>
-              <div className="chart-controls">
+      {/* 历史记录列表 */}
+      <Card>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-3 lg:space-y-0">
+          <h2 className="text-lg font-semibold text-gray-800">历史记录</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 类型筛选按钮组 */}
+            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+              {['all', 'stock', 'fund'].map((filter) => (
                 <button
-                  type="button"
-                  className="chart-collapse-btn"
-                  onClick={() => setIsChartCollapsed(v => !v)}
-                  aria-expanded={!isChartCollapsed}
-                  aria-controls="comparison-chart-panel"
-                  title={isChartCollapsed ? '展开图表' : '收起图表'}
+                  key={filter}
+                  onClick={() => setHistoryFilter(filter)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    historyFilter === filter
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  {isChartCollapsed ? '展开' : '收起'}
+                  {filter === 'all' ? '全部' : filter === 'stock' ? '股票' : '基金'}
                 </button>
-                <button
-                  type="button"
-                  className="chart-fullscreen-btn"
-                  onClick={toggleFullScreen}
-                  title={isChartFullScreen ? '退出全屏' : '全屏显示'}
-                  aria-label={isChartFullScreen ? '退出全屏' : '全屏显示'}
-                >
-                  {isChartFullScreen ? '🗗' : '⛶'}
-                </button>
-                <div className="chart-type-toggle">
-                  <button
-                    type="button"
-                    className={`chart-type-btn ${chartType === 'line' ? 'active' : ''}`}
-                    onClick={() => setChartType('line')}
-                    title="折线图"
-                    aria-label="切换为折线图"
-                  >
-                    📈
-                  </button>
-                  <button
-                    type="button"
-                    className={`chart-type-btn ${chartType === 'bar' ? 'active' : ''}`}
-                    onClick={() => setChartType('bar')}
-                    title="柱状图"
-                    aria-label="切换为柱状图"
-                  >
-                    📊
-                  </button>
-                  <button
-                    type="button"
-                    className={`chart-type-btn ${chartType === 'pie' ? 'active' : ''}`}
-                    onClick={() => setChartType('pie')}
-                    title="饼图"
-                    aria-label="切换为饼图"
-                  >
-                    🥧
-                  </button>
-                </div>
-                {chartType !== 'pie' && (
-                  <>
-                    <div className="chart-period-toggle">
-                      <button
-                        type="button"
-                        className={`chart-period-btn ${chartPeriod === 'day' ? 'active' : ''}`}
-                        onClick={() => setChartPeriod('day')}
-                        aria-label="切换为日"
-                      >
-                        日
-                      </button>
-                      <button
-                        type="button"
-                        className={`chart-period-btn ${chartPeriod === 'week' ? 'active' : ''}`}
-                        onClick={() => setChartPeriod('week')}
-                        aria-label="切换为周"
-                      >
-                        周
-                      </button>
-                      <button
-                        type="button"
-                        className={`chart-period-btn ${chartPeriod === 'month' ? 'active' : ''}`}
-                        onClick={() => setChartPeriod('month')}
-                        aria-label="切换为月"
-                      >
-                        月
-                      </button>
-                      <button
-                        type="button"
-                        className={`chart-period-btn ${chartPeriod === 'year' ? 'active' : ''}`}
-                        onClick={() => setChartPeriod('year')}
-                        aria-label="切换为年"
-                      >
-                        年
-                      </button>
-                    </div>
-                    {chartType === 'line' && (
-                      <label className="ma-toggle">
-                        <input
-                          type="checkbox"
-                          checked={showMovingAverage}
-                          onChange={(e) => setShowMovingAverage(e.target.checked)}
-                        />
-                        <span>移动平均线</span>
-                      </label>
-                    )}
-                  </>
-                )}
-              </div>
+              ))}
             </div>
-            <div
-              id="comparison-chart-panel"
-              className="chart-panel"
-              aria-hidden={isChartCollapsed}
+            {/* 导出按钮组 */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleExport('excel')}
+              title="导出为Excel"
             >
-              {isChartCollapsed ? null : isLoading ? (
-                <SkeletonChart />
-              ) : chartData ? (
-                <div style={{ height: isChartFullScreen ? '100%' : '400px' }}>
-                  {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
-                  {chartType === 'bar' && <Bar data={chartData} options={chartOptions} />}
-                  {chartType === 'pie' && <Pie data={chartData} options={pieChartOptions} />}
-                </div>
-              ) : (
-                <EmptyState type="chart" />
-              )}
+              📊 Excel
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              title="导出为CSV"
+            >
+              📄 CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsTableFullScreen(true)}
+              title="全屏查看"
+            >
+              ⛶ 全屏
+            </Button>
+          </div>
+        </div>
+        {/* 批量操作栏 */}
+        {selectedRecords.length > 0 && (
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg mb-4">
+            <span className="text-sm font-medium text-gray-700">已选择 {selectedRecords.length} 条记录</span>
+            <div className="flex space-x-2">
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleBatchDelete}
+              >
+                批量删除
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setSelectedRecords([])}
+              >
+                取消选择
+              </Button>
             </div>
           </div>
-
-          {/* 历史记录列表 */}
-          <div className="stats-card">
-            <div className="stats-header-with-action">
-              <h2 className="stats-title">历史记录</h2>
-              <div className="header-actions-group">
-                {/* 类型筛选按钮组 */}
-                <div className="filter-type-group">
-                  <button
-                    className={`filter-type-btn ${historyFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setHistoryFilter('all')}
-                  >
-                    全部
-                  </button>
-                  <button
-                    className={`filter-type-btn ${historyFilter === 'stock' ? 'active' : ''}`}
-                    onClick={() => setHistoryFilter('stock')}
-                  >
-                    股票
-                  </button>
-                  <button
-                    className={`filter-type-btn ${historyFilter === 'fund' ? 'active' : ''}`}
-                    onClick={() => setHistoryFilter('fund')}
-                  >
-                    基金
-                  </button>
-                </div>
-                {/* 导出按钮组 */}
-                <div className="export-buttons-group">
-                  <button 
-                    className="export-btn" 
-                    onClick={() => handleExport('excel')}
-                    title="导出为Excel"
-                  >
-                    📊 Excel
-                  </button>
-                  <button 
-                    className="export-btn" 
-                    onClick={() => handleExport('csv')}
-                    title="导出为CSV"
-                  >
-                    📄 CSV
-                  </button>
-                </div>
-                <button 
-                  className="expand-btn" 
-                  onClick={() => setIsTableFullScreen(true)}
-                  title="全屏查看"
-                  aria-label="全屏查看表格"
-                >
-                  <span className="expand-icon">⛶</span>
-                </button>
-              </div>
-            </div>
-            <div className="history-table-container">
-              {/* 批量操作栏 */}
-              {selectedRecords.length > 0 && (
-                <div className="batch-actions-bar">
-                  <span>已选择 {selectedRecords.length} 条记录</span>
-                  <button className="batch-delete-btn" onClick={handleBatchDelete}>
-                    批量删除
-                  </button>
-                  <button className="batch-cancel-btn" onClick={() => setSelectedRecords([])}>
-                    取消选择
-                  </button>
-                </div>
-              )}
-              {isLoading ? (
-                <SkeletonTable />
-              ) : historyData.length === 0 ? (
-                <EmptyState type="history" />
-              ) : (
-                <table className="history-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '40px' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRecords.length > 0 && selectedRecords.length === (() => {
+        )}
+        {isLoading ? (
+          <SkeletonTable />
+        ) : historyData.length === 0 ? (
+          <EmptyState type="history" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      checked={selectedRecords.length > 0 && selectedRecords.length === (() => {
+                        const filtered = historyFilter === 'all' 
+                          ? historyData 
+                          : historyData.filter(item => {
+                              if (historyFilter === 'stock') return item.type === '股票'
+                              if (historyFilter === 'fund') return item.type === '基金'
+                              return true
+                            })
+                        return filtered.length
+                      })()}
+                      onChange={(e) => {
+                        if (e.target.checked) {
                           const filtered = historyFilter === 'all' 
                             ? historyData 
                             : historyData.filter(item => {
@@ -2264,142 +2072,134 @@ function StatisticsPage() {
                                 if (historyFilter === 'fund') return item.type === '基金'
                                 return true
                               })
-                          return filtered.length
-                        })()}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            const filtered = historyFilter === 'all' 
-                              ? historyData 
-                              : historyData.filter(item => {
-                                  if (historyFilter === 'stock') return item.type === '股票'
-                                  if (historyFilter === 'fund') return item.type === '基金'
-                                  return true
-                                })
-                            setSelectedRecords(filtered)
-                          } else {
-                            setSelectedRecords([])
-                          }
-                        }}
-                      />
-                    </th>
-                    <th>日期</th>
-                    <th>类型</th>
-                    <th>总资产</th>
-                    <th>总市值</th>
-                    <th>上证指数</th>
-                    <th>当日盈亏</th>
-                    <th>加减仓</th>
-                    <th>备注</th>
-                    <th style={{ width: '120px' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    // 根据筛选条件过滤数据
-                    const filteredData = historyFilter === 'all' 
-                      ? historyData 
-                      : historyData.filter(item => {
-                          if (historyFilter === 'stock') return item.type === '股票'
-                          if (historyFilter === 'fund') return item.type === '基金'
-                          return true
-                        })
-                    
-                    return filteredData.length > 0 ? (
-                      filteredData.map((item, index) => {
-                        const isSelected = selectedRecords.some(r => r.originalData.objectId === item.originalData.objectId)
-                        return (
-                          <tr key={item.originalData.objectId || index} className={isSelected ? 'row-selected' : ''}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleRecordSelection(item)}
-                              />
-                            </td>
-                            <td>{item.date}</td>
-                            <td>{item.type}</td>
-                            <td>{item.totalAsset}</td>
-                            <td>{item.totalMarketValue}</td>
-                            <td>{item.shanghaiIndex}</td>
-                            <td className={item.profitClass}>
-                              <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
-                            </td>
-                            <td className={item.adjustmentClass}>{item.adjustmentAmount}</td>
-                            <td>{item.notes}</td>
-                            <td>
-                              <div className="action-buttons">
-                                <button 
-                                  className="edit-btn" 
-                                  onClick={() => handleEditRecord(item)}
-                                  title="编辑"
-                                >
-                                  编辑
-                                </button>
-                                <button 
-                                  className="delete-btn" 
-                                  onClick={() => handleDeleteRecord(item)}
-                                  title="删除"
-                                >
-                                  删除
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
+                          setSelectedRecords(filtered)
+                        } else {
+                          setSelectedRecords([])
+                        }
+                      }}
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总资产</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总市值</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">上证指数</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当日盈亏</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">加减仓</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">操作</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {(() => {
+                  const filteredData = historyFilter === 'all' 
+                    ? historyData 
+                    : historyData.filter(item => {
+                        if (historyFilter === 'stock') return item.type === '股票'
+                        if (historyFilter === 'fund') return item.type === '基金'
+                        return true
                       })
-                    ) : (
-                      <tr>
-                        <td colSpan="10" style={{ textAlign: 'center', padding: '40px' }}>
-                          <EmptyState 
-                            type="history" 
-                            message={historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
-                          />
-                        </td>
-                      </tr>
-                    )
-                  })()}
-                </tbody>
-              </table>
-              )}
-            </div>
+                  
+                  return filteredData.length > 0 ? (
+                    filteredData.map((item, index) => {
+                      const isSelected = selectedRecords.some(r => r.originalData.objectId === item.originalData.objectId)
+                      return (
+                        <tr
+                          key={item.originalData.objectId || index}
+                          className={`${isSelected ? 'bg-blue-50' : ''} hover:bg-gray-50 transition-colors`}
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              checked={isSelected}
+                              onChange={() => toggleRecordSelection(item)}
+                            />
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalAsset}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalMarketValue}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.shanghaiIndex}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
+                          </td>
+                          <td className={`px-4 py-3 whitespace-nowrap text-sm ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
+                            {item.adjustmentAmount}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{item.notes}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditRecord(item)}
+                              >
+                                编辑
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleDeleteRecord(item)}
+                              >
+                                删除
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="px-4 py-12 text-center">
+                        <EmptyState 
+                          type="history" 
+                          message={historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
+                        />
+                      </td>
+                    </tr>
+                  )
+                })()}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </main>
+        )}
+      </Card>
 
       {/* 全屏表格弹出层 */}
       {isTableFullScreen && (
-        <div className="fullscreen-overlay" onClick={(e) => {
-          // 点击遮罩层关闭全屏
-          if (e.target === e.currentTarget) {
-            setIsTableFullScreen(false)
-          }
-        }}>
-          <div className="fullscreen-content">
-            <div className="fullscreen-header">
-              <h2>历史记录详情</h2>
-              <button className="close-fullscreen" onClick={() => setIsTableFullScreen(false)}>✕ 关闭</button>
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsTableFullScreen(false)
+            }
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">历史记录详情</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsTableFullScreen(false)}
+              >
+                ✕ 关闭
+              </Button>
             </div>
-            <div className="fullscreen-table-wrapper">
+            <div className="flex-1 overflow-auto p-6">
               {/* 全屏模式下的筛选按钮 */}
-              <div className="fullscreen-filter-group">
-                <button
-                  className={`filter-type-btn ${historyFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setHistoryFilter('all')}
-                >
-                  全部
-                </button>
-                <button
-                  className={`filter-type-btn ${historyFilter === 'stock' ? 'active' : ''}`}
-                  onClick={() => setHistoryFilter('stock')}
-                >
-                  股票
-                </button>
-                <button
-                  className={`filter-type-btn ${historyFilter === 'fund' ? 'active' : ''}`}
-                  onClick={() => setHistoryFilter('fund')}
-                >
-                  基金
-                </button>
+              <div className="flex space-x-2 mb-4">
+                {['all', 'stock', 'fund'].map((filter) => (
+                  <Button
+                    key={filter}
+                    variant={historyFilter === filter ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => setHistoryFilter(filter)}
+                  >
+                    {filter === 'all' ? '全部' : filter === 'stock' ? '股票' : '基金'}
+                  </Button>
+                ))}
               </div>
               <div className="fullscreen-table-scroll">
                 <table className="history-table fullscreen-table">

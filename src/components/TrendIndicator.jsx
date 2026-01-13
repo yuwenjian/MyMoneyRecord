@@ -8,15 +8,19 @@ export function TrendIndicator({ value, showArrow = true, showSign = false, clas
     return <span className={`trend-indicator neutral ${className}`}>--</span>
   }
 
-  // 解析数值，去除所有符号和逗号
+  // 解析数值，保留正负号
   const parseValue = () => {
     if (typeof value === 'string') {
-      // 去除字符串中可能存在的 + 和 - 符号以及逗号
+      // 检查是否包含负号
+      const hasNegative = value.includes('-') || value.startsWith('-')
+      // 去除字符串中可能存在的 + 和 - 符号以及逗号，但保留正负性
       const cleanValue = value.replace(/[+\-]/g, '').replace(/,/g, '').trim()
       const parsed = parseFloat(cleanValue)
       if (isNaN(parsed)) return 0
+      // 如果原始字符串有负号，返回负数
+      const result = hasNegative ? -Math.abs(parsed) : Math.abs(parsed)
       // 确保 0 值返回正数 0
-      return parsed === 0 ? 0 : parsed
+      return result === 0 ? 0 : result
     }
     // 确保 0 值返回正数 0，而不是 -0
     if (value === 0 || value === -0 || Math.abs(value) < 0.0001) {

@@ -4,11 +4,12 @@ import toast from 'react-hot-toast'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import 'dayjs/locale/zh-cn'
-import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiPieChart, FiCamera, FiX } from 'react-icons/fi'
+// 已移除图标导入，使用文字符号代替
 import { saveRecord, saveAdjustment, deleteAdjustmentByDate, getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
 import { recognizeAccountData, recognizeMultipleImages } from '../utils/ocr'
-import '../styles/RecordPage.css'
+import { PageHeader, Card, Button, Input } from '../components/ui'
+// import '../styles/RecordPage.css' // 已迁移到 Tailwind CSS
 
 // 配置 dayjs
 dayjs.extend(customParseFormat)
@@ -298,326 +299,327 @@ function RecordPage() {
   }
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>投资收益记录</h1>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="创建收益记录"
+        subtitle="记录每日投资数据，支持智能识别"
+      />
 
-      <main className="app-main">
-        {/* 今日概览卡片 */}
-        <div className="today-overview-section">
-          <div className="overview-card total-card no-click">
-            <div className="overview-icon">
-              <img src="/assets/images/zhichan.png" alt="总资产" />
-            </div>
-            <div className="overview-content">
-              <div className="overview-label">总资产</div>
-              <div className="overview-value-large">{todayOverview.totalAsset}</div>
-            </div>
+      {/* 今日概览卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+          <div>
+            <div className="text-sm text-blue-100 mb-1">总资产</div>
+            <div className="text-4xl lg:text-5xl font-bold">{todayOverview.totalAsset}</div>
           </div>
-          <div className="overview-card profit-card no-click">
-            <div className="overview-icon">
-              {parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? (
-                <FiTrendingUp />
-              ) : (
-                <FiTrendingDown />
+        </Card>
+        <Card className={`${parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? 'bg-gradient-to-br from-green-600 to-green-700' : 'bg-gradient-to-br from-red-600 to-red-700'} text-white`}>
+          <div>
+            <div className="text-sm text-white/80 mb-1">今日盈亏</div>
+            <div className="text-4xl lg:text-5xl font-bold">{todayOverview.todayProfit}</div>
+          </div>
+        </Card>
+      </div>
+
+      <Card>
+        {/* 图片上传区域 */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <label className="text-base font-semibold text-gray-800">
+              智能识别 {imagePreviews.length > 0 && `(已上传 ${imagePreviews.length} 张)`}
+            </label>
+            <span className="text-sm text-gray-500">可上传多张图片分别识别</span>
+          </div>
+          
+          {imagePreviews.length === 0 ? (
+            <label
+              htmlFor="image-upload"
+              className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition-colors"
+            >
+              <input
+                type="file"
+                id="image-upload"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                multiple
+              />
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <span className="text-3xl">📷</span>
+              </div>
+              <div className="text-base font-medium text-gray-700 mb-1">点击上传或拍照</div>
+              <div className="text-sm text-gray-500">支持多张图片，JPG、PNG 等格式</div>
+            </label>
+          ) : (
+            <div className="space-y-4">
+              {/* 图片预览网格 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {imagePreviews.map((preview, index) => (
+                  <div key={preview.id || index} className="relative group">
+                    <img
+                      src={preview.url}
+                      alt={`预览${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold"
+                      onClick={() => removeImage(index)}
+                      title="移除图片"
+                    >
+                      ×
+                    </button>
+                    <div className="absolute bottom-2 left-2 w-6 h-6 bg-black bg-opacity-50 text-white text-xs rounded-full flex items-center justify-center">
+                      {index + 1}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* 添加更多按钮 */}
+                <label
+                  htmlFor="image-upload"
+                  className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+                >
+                  <input
+                    type="file"
+                    id="image-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    multiple
+                  />
+                  <span className="text-2xl mb-1">➕</span>
+                  <span className="text-xs text-gray-500">添加</span>
+                </label>
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="flex space-x-3">
+                <Button
+                  onClick={recognizeAllImages}
+                  disabled={isRecognizing}
+                  fullWidth
+                >
+                  {isRecognizing ? '识别中...' : `识别全部 (${imagePreviews.length}张)`}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={clearAllImages}
+                  fullWidth
+                >
+                  清除全部
+                </Button>
+              </div>
+
+              {isRecognizing && (
+                <div className="flex items-center justify-center space-x-2 text-blue-600">
+                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span>正在识别图片数据...</span>
+                </div>
               )}
             </div>
-            <div className="overview-content">
-              <div className="overview-label">今日盈亏</div>
-              <div className={`overview-value-large ${parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? 'profit' : 'loss'}`}>
-                {todayOverview.todayProfit}
+          )}
+        </div>
+
+        {/* 日期选择 */}
+        <div className="mb-6">
+          <Input
+            type="date"
+            label="日期"
+            value={formData.date}
+            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+          />
+        </div>
+
+        {/* 投资类型 */}
+        <div className="mb-6">
+          <label className="block text-base font-semibold text-gray-800 mb-3">投资类型</label>
+          <div className="flex space-x-4">
+            <label className="flex-1 cursor-pointer">
+              <input
+                type="radio"
+                name="investmentType"
+                value="stock"
+                checked={formData.investmentType === 'stock'}
+                onChange={handleInputChange}
+                className="hidden"
+              />
+              <div className={`
+                flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all
+                ${formData.investmentType === 'stock'
+                  ? 'border-red-500 bg-red-500 text-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
+                }
+              `}>
+                <img
+                  src={formData.investmentType === 'stock' ? '/assets/images/gupiao_white.png' : '/assets/images/gupiao.png'}
+                  alt="股票"
+                  className="w-8 h-8 mb-2"
+                />
+                <span className={`text-base font-medium ${formData.investmentType === 'stock' ? 'text-white' : 'text-gray-800'}`}>
+                  股票
+                </span>
               </div>
-            </div>
+            </label>
+            <label className="flex-1 cursor-pointer">
+              <input
+                type="radio"
+                name="investmentType"
+                value="fund"
+                checked={formData.investmentType === 'fund'}
+                onChange={handleInputChange}
+                className="hidden"
+              />
+              <div className={`
+                flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all
+                ${formData.investmentType === 'fund'
+                  ? 'border-blue-500 bg-blue-500 text-white'
+                  : 'border-gray-300 bg-white hover:border-gray-400'
+                }
+              `}>
+                <img
+                  src={formData.investmentType === 'fund' ? '/assets/images/jijin_white.png' : '/assets/images/jijin.png'}
+                  alt="基金"
+                  className="w-8 h-8 mb-2"
+                />
+                <span className={`text-base font-medium ${formData.investmentType === 'fund' ? 'text-white' : 'text-gray-800'}`}>
+                  基金
+                </span>
+              </div>
+            </label>
           </div>
         </div>
 
-        <div className="form-card">
-          {/* 图片上传区域 */}
-          <div className="image-upload-section">
-            <div className="upload-header">
-              <label className="form-label">
-                <FiCamera style={{ marginRight: '6px' }} />
-                智能识别 {imagePreviews.length > 0 && `(已上传 ${imagePreviews.length} 张)`}
-              </label>
-              <span className="upload-hint">可上传多张图片分别识别</span>
-            </div>
-            
-            {imagePreviews.length === 0 ? (
-              <label className="upload-box" htmlFor="image-upload">
-                <input
-                  type="file"
-                  id="image-upload"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ display: 'none' }}
-                  multiple
-                />
-                <div className="upload-icon">
-                  <FiCamera size={32} />
-                </div>
-                <div className="upload-text">点击上传或拍照</div>
-                <div className="upload-subtext">支持多张图片，JPG、PNG 等格式</div>
-              </label>
-            ) : (
-              <div className="images-container">
-                {/* 图片预览网格 */}
-                <div className="images-grid">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={preview.id || index} className="image-preview-item">
-                      <img src={preview.url} alt={`预览${index + 1}`} className="preview-thumbnail" />
-                      <button
-                        type="button"
-                        className="remove-image-btn"
-                        onClick={() => removeImage(index)}
-                        title="移除图片"
-                      >
-                        <FiX />
-                      </button>
-                      <div className="image-number">{index + 1}</div>
-                    </div>
-                  ))}
-                  
-                  {/* 添加更多按钮 */}
-                  <label className="add-more-box" htmlFor="image-upload">
-                    <input
-                      type="file"
-                      id="image-upload"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                      capture="environment"
-                      multiple
-                    />
-                    <FiCamera size={24} />
-                    <span>添加</span>
-                  </label>
-                </div>
+        {/* 总资产 */}
+        <div className="mb-6">
+          <Input
+            type="number"
+            name="totalAsset"
+            label="总资产"
+            value={formData.totalAsset}
+            onChange={handleInputChange}
+            step="0.01"
+            placeholder="请输入总资产"
+          />
+        </div>
 
-                {/* 操作按钮 */}
-                <div className="images-actions">
-                  <button
-                    type="button"
-                    className="recognize-all-btn"
-                    onClick={recognizeAllImages}
-                    disabled={isRecognizing}
-                  >
-                    {isRecognizing ? '识别中...' : `识别全部 (${imagePreviews.length}张)`}
-                  </button>
-                  <button
-                    type="button"
-                    className="clear-all-btn"
-                    onClick={clearAllImages}
-                  >
-                    清除全部
-                  </button>
-                </div>
-
-                {isRecognizing && (
-                  <div className="recognizing-status">
-                    <div className="recognizing-spinner-small"></div>
-                    <span>正在识别图片数据...</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="new-date-section">
-            <div className="date-field">
-              <label className="form-label">日期</label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="native-date-input"
-              />
-            </div>
-            <button
-              className="new-stats-btn"
-              onClick={() => navigate('/statistics')}
-            >
-              统计分析
-            </button>
-          </div>
-
-          {/* 投资类型 */}
-          <div className="form-row">
-            <label className="form-label">投资类型</label>
-            <div className="radio-group horizontal">
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="investmentType"
-                  value="stock"
-                  checked={formData.investmentType === 'stock'}
-                  onChange={handleInputChange}
-                />
-                <span className="radio-icon stock-icon">
-                  <img 
-                    src={formData.investmentType === 'stock' ? '/assets/images/gupiao_white.png' : '/assets/images/gupiao.png'} 
-                    alt="股票" 
-                  />
-                </span>
-                <span className="radio-label">股票</span>
-              </label>
-              <label className="radio-option">
-                <input
-                  type="radio"
-                  name="investmentType"
-                  value="fund"
-                  checked={formData.investmentType === 'fund'}
-                  onChange={handleInputChange}
-                />
-                <span className="radio-icon fund-icon">
-                  <img 
-                    src={formData.investmentType === 'fund' ? '/assets/images/jijin_white.png' : '/assets/images/jijin.png'} 
-                    alt="基金" 
-                  />
-                </span>
-                <span className="radio-label">基金</span>
-              </label>
-            </div>
-          </div>
-
-          {/* 总资产 */}
-          <div className="form-row">
-            <label className="form-label">总资产</label>
-            <input
+        {/* 总市值（仅股票显示） */}
+        {formData.investmentType === 'stock' && (
+          <div className="mb-6">
+            <Input
               type="number"
-              name="totalAsset"
-              value={formData.totalAsset}
+              name="totalMarketValue"
+              label="总市值"
+              value={formData.totalMarketValue}
               onChange={handleInputChange}
               step="0.01"
-              className="form-input"
-              placeholder="请输入总资产"
+              placeholder="请输入总市值"
             />
           </div>
+        )}
 
-          {/* 总市值（仅股票显示） */}
-          {formData.investmentType === 'stock' && (
-            <div className="form-row">
-              <label className="form-label">总市值</label>
+        {/* 加减仓操作 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-3">加减仓操作</label>
+          <div className="space-y-3">
+            <label className="flex items-center cursor-pointer">
               <input
-                type="number"
-                name="totalMarketValue"
-                value={formData.totalMarketValue}
+                type="radio"
+                name="adjustmentType"
+                value="none"
+                checked={formData.adjustmentType === 'none'}
                 onChange={handleInputChange}
-                step="0.01"
-                className="form-input"
-                placeholder="请输入总市值"
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
-            </div>
-          )}
-
-          {/* 加减仓操作 */}
-          <div className="form-row">
-            <label className="form-label">加减仓操作</label>
-            <div className="radio-group vertical">
-              <label className="radio-option-btn" data-value="none">
+              <span className="ml-2 text-base text-gray-800">无操作</span>
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="adjustmentType"
-                  value="none"
-                  checked={formData.adjustmentType === 'none'}
+                  value="add"
+                  checked={formData.adjustmentType === 'add'}
                   onChange={handleInputChange}
+                  className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
                 />
-                <span className="radio-dot"></span>
-                <span className="radio-label">无操作</span>
+                <span className="ml-2 text-base text-gray-800">+ 加仓</span>
               </label>
-              <div className="adjustment-option-wrapper">
-                <label className="radio-option-btn add-position" data-value="add">
-                  <input
-                    type="radio"
-                    name="adjustmentType"
-                    value="add"
-                    checked={formData.adjustmentType === 'add'}
-                    onChange={handleInputChange}
-                  />
-                  <span className="radio-dot"></span>
-                  <span className="radio-label">+ 加仓</span>
-                </label>
-                {formData.adjustmentType === 'add' && (
-                  <input
-                    type="number"
-                    name="adjustmentAmountAdd"
-                    value={formData.adjustmentAmountAdd}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    className="form-input adjustment-amount-input show"
-                    placeholder="请输入金额"
-                  />
-                )}
-              </div>
-              <div className="adjustment-option-wrapper">
-                <label className="radio-option-btn reduce-position" data-value="reduce">
-                  <input
-                    type="radio"
-                    name="adjustmentType"
-                    value="reduce"
-                    checked={formData.adjustmentType === 'reduce'}
-                    onChange={handleInputChange}
-                  />
-                  <span className="radio-dot"></span>
-                  <span className="radio-label">- 减仓</span>
-                </label>
-                {formData.adjustmentType === 'reduce' && (
-                  <input
-                    type="number"
-                    name="adjustmentAmountReduce"
-                    value={formData.adjustmentAmountReduce}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    className="form-input adjustment-amount-input show"
-                    placeholder="请输入金额"
-                  />
-                )}
-              </div>
+              {formData.adjustmentType === 'add' && (
+                <Input
+                  type="number"
+                  name="adjustmentAmountAdd"
+                  value={formData.adjustmentAmountAdd}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  placeholder="请输入金额"
+                  className="ml-6"
+                />
+              )}
             </div>
-          </div>
-
-          {/* 其他信息分组 */}
-          <div className="form-section">
-            <div className="form-section-title">
-              <span>其他信息</span>
-            </div>
-            
-            {/* 上证指数 */}
-            <div className="form-row">
-              <label className="form-label">上证指数</label>
-              <input
-                type="number"
-                name="shanghaiIndex"
-                value={formData.shanghaiIndex}
-                onChange={handleInputChange}
-                step="0.01"
-                className="form-input"
-                placeholder="请输入上证指数"
-              />
-            </div>
-
-            {/* 备注 */}
-            <div className="form-row">
-              <label className="form-label">投资心得</label>
-              <input
-                type="text"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                className="form-input"
-                placeholder="可选"
-              />
+            <div className="space-y-2">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="adjustmentType"
+                  value="reduce"
+                  checked={formData.adjustmentType === 'reduce'}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-base text-gray-800">- 减仓</span>
+              </label>
+              {formData.adjustmentType === 'reduce' && (
+                <Input
+                  type="number"
+                  name="adjustmentAmountReduce"
+                  value={formData.adjustmentAmountReduce}
+                  onChange={handleInputChange}
+                  step="0.01"
+                  placeholder="请输入金额"
+                  className="ml-6"
+                />
+              )}
             </div>
           </div>
         </div>
 
-        <button className="save-btn" onClick={handleSave}>
-          保存记录
-        </button>
-      </main>
+        {/* 其他信息 */}
+        <div className="mb-6">
+          <h3 className="text-base font-semibold text-gray-800 mb-4">其他信息</h3>
+          <div className="space-y-4">
+            <Input
+              type="number"
+              name="shanghaiIndex"
+              label="上证指数"
+              value={formData.shanghaiIndex}
+              onChange={handleInputChange}
+              step="0.01"
+              placeholder="请输入上证指数"
+            />
+            <Input
+              type="text"
+              name="notes"
+              label="投资心得"
+              value={formData.notes}
+              onChange={handleInputChange}
+              placeholder="可选"
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Button
+        onClick={handleSave}
+        fullWidth
+        size="lg"
+      >
+        保存记录
+      </Button>
     </div>
   )
 }
 
 export default RecordPage
+
 

@@ -1,38 +1,20 @@
-import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import React from 'react'
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { FiMoon, FiSun } from 'react-icons/fi'
-import RecordPage from './pages/RecordPage'
+import Layout from './components/Layout'
+import OverviewPage from './pages/OverviewPage'
 import StatisticsPage from './pages/StatisticsPage'
+import RecordPage from './pages/RecordPage'
+import OCRPage from './pages/OCRPage'
+import SettingsPage from './pages/SettingsPage'
+import TestPage from './pages/TestPage'
 import './App.css'
 
 function App() {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme')
-    return savedTheme || 'light'
-  })
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
+  const theme = localStorage.getItem('theme') || 'light'
 
   return (
     <>
-      <div className="theme-toggle-container">
-        <button 
-          className="theme-toggle-btn"
-          onClick={toggleTheme}
-          aria-label="切换主题"
-          title={theme === 'light' ? '切换到暗色模式' : '切换到浅色模式'}
-        >
-          {theme === 'light' ? <FiMoon /> : <FiSun />}
-        </button>
-      </div>
       <Toaster 
         position="top-center"
         toastOptions={{
@@ -46,10 +28,16 @@ function App() {
         }}
       />
       <Router>
-        <Routes>
-          <Route path="/" element={<RecordPage />} />
-          <Route path="/statistics" element={<StatisticsPage />} />
-        </Routes>
+        <Layout>
+          <Routes>
+            <Route path="/test" element={<TestPage />} />
+            <Route path="/" element={<OverviewPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
+            <Route path="/records" element={<RecordPage />} />
+            <Route path="/ocr" element={<OCRPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </Layout>
       </Router>
     </>
   )
