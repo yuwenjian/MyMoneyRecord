@@ -12,8 +12,8 @@ export function Card({ children, className = '', shadow = true, padding = true }
   return (
     <div
       className={`
-        bg-white rounded-xl
-        ${padding ? 'p-6' : ''}
+        bg-white rounded-xl w-full max-w-full overflow-hidden
+        ${padding ? 'p-4 sm:p-6' : ''}
         ${shadow ? 'shadow-sm' : ''}
         ${className}
       `}

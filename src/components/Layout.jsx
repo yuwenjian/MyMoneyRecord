@@ -136,8 +136,8 @@ const Layout = ({ children }) => {
         )}
 
         {/* 主内容区 */}
-        <main className="flex-1 min-h-screen pt-16 lg:pt-0">
-          <div className="p-4 lg:p-6">
+        <main className="flex-1 min-h-screen pt-16 lg:pt-0 overflow-x-hidden">
+          <div className="p-4 lg:p-6 w-full max-w-full overflow-x-hidden">
             {children}
           </div>
         </main>

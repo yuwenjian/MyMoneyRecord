@@ -1260,7 +1260,7 @@ function StatisticsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       <PageHeader
         title="统计分析"
         subtitle="欢迎回来, AI 实时监测中..."
@@ -1767,7 +1767,7 @@ function StatisticsPage() {
         {chartData && (
           <div 
             id="comparison-chart-fullscreen-container"
-            className={`bg-white rounded-xl p-6 shadow-sm ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
+            className={`bg-white rounded-xl p-4 sm:p-6 shadow-sm w-full max-w-full overflow-hidden ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">收益趋势对比</h3>
@@ -2045,9 +2045,9 @@ function StatisticsPage() {
         ) : historyData.length === 0 ? (
           <EmptyState type="history" />
         ) : (
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-              <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 w-full">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0 w-full">
+              <table className="min-w-full divide-y divide-gray-200 w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
