@@ -1331,9 +1331,9 @@ function StatisticsPage() {
 
       {/* 收益目标进度 */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
           <h2 className="text-lg font-semibold text-gray-800">收益目标进度</h2>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
               className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
@@ -1972,7 +1972,7 @@ function StatisticsPage() {
 
       {/* 历史记录列表 */}
       <Card>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-3 lg:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
           <h2 className="text-lg font-semibold text-gray-800">历史记录</h2>
           <div className="flex flex-wrap items-center gap-2">
             {/* 类型筛选按钮组 */}
@@ -2020,9 +2020,9 @@ function StatisticsPage() {
         </div>
         {/* 批量操作栏 */}
         {selectedRecords.length > 0 && (
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-blue-50 rounded-lg mb-4 space-y-2 sm:space-y-0">
             <span className="text-sm font-medium text-gray-700">已选择 {selectedRecords.length} 条记录</span>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
               <Button
                 variant="danger"
                 size="sm"
@@ -2045,8 +2045,9 @@ function StatisticsPage() {
         ) : historyData.length === 0 ? (
           <EmptyState type="history" />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
@@ -2079,15 +2080,15 @@ function StatisticsPage() {
                       }}
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总资产</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总市值</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">上证指数</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当日盈亏</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">加减仓</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">操作</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">日期</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">类型</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">总资产</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">总市值</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">上证指数</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">加减仓</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">备注</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sm:w-32 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -2116,19 +2117,19 @@ function StatisticsPage() {
                               onChange={() => toggleRecordSelection(item)}
                             />
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalAsset}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalMarketValue}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.shanghaiIndex}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">{item.totalAsset}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{item.totalMarketValue}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">{item.shanghaiIndex}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm">
                             <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
                           </td>
-                          <td className={`px-4 py-3 whitespace-nowrap text-sm ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
+                          <td className={`px-2 sm:px-4 py-3 whitespace-nowrap text-sm hidden md:table-cell ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
                             {item.adjustmentAmount}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{item.notes}</td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <td className="px-2 sm:px-4 py-3 text-sm text-gray-900 hidden lg:table-cell">{item.notes}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm">
                             <div className="flex space-x-2">
                               <Button
                                 variant="ghost"
@@ -2162,6 +2163,7 @@ function StatisticsPage() {
                 })()}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </Card>
