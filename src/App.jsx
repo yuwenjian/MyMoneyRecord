@@ -7,6 +7,8 @@ import StatisticsPage from './pages/StatisticsPage'
 import RecordPage from './pages/RecordPage'
 import OCRPage from './pages/OCRPage'
 import SettingsPage from './pages/SettingsPage'
+import PortfolioPage from './pages/PortfolioPage'
+import CalendarPage from './pages/CalendarPage'
 import TestPage from './pages/TestPage'
 import './App.css'
 
@@ -34,6 +36,8 @@ function App() {
             <Route path="/records" element={<RecordPage />} />
             <Route path="/ocr" element={<OCRPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
           </Routes>
         </Layout>
       </Router>

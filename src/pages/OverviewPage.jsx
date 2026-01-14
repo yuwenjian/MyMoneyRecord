@@ -19,8 +19,6 @@ import { calculateDailyProfitLoss } from '../utils/calculations'
 import { generateComprehensiveAnalysis } from '../utils/deepseek'
 import { getHoldings } from '../utils/storage'
 import { calculateHistoryStatsByType } from '../utils/historyStats'
-import { PortfolioModal } from '../components/PortfolioModal'
-import CalendarModal from '../components/CalendarModal'
 import ReactMarkdown from 'react-markdown'
 import { useNavigate } from 'react-router-dom'
 import { FiCalendar } from 'react-icons/fi'
@@ -56,8 +54,6 @@ function OverviewPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [lastAnalysisDate, setLastAnalysisDate] = useState('')
   const [todayAnalysisCount, setTodayAnalysisCount] = useState(0) // 今日分析次数
-  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   // 生成 AI 分析
   const generateAIAnalysis = React.useCallback(async (data, historyStats) => {
@@ -383,7 +379,7 @@ function OverviewPage() {
       <GradientCard className="relative">
         {/* 日历图标 - 右上角 */}
         <button
-          onClick={() => setIsCalendarModalOpen(true)}
+          onClick={() => navigate('/calendar')}
           className="absolute top-4 right-4 p-2 rounded-lg hover:bg-blue-500/20 transition-colors text-white/90 hover:text-white"
           title="查看日历"
         >
@@ -454,7 +450,7 @@ function OverviewPage() {
           </div>
           <div className="mt-6 pt-6 border-t border-gray-200">
             <button
-              onClick={() => setIsPortfolioModalOpen(true)}
+              onClick={() => navigate('/portfolio')}
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
               查看详细配置 →
@@ -597,17 +593,6 @@ function OverviewPage() {
         </div>
       </Card>
 
-      {/* 持仓管理弹窗 */}
-      <PortfolioModal
-        isOpen={isPortfolioModalOpen}
-        onClose={() => setIsPortfolioModalOpen(false)}
-      />
-      
-      {/* 日历弹窗 */}
-      <CalendarModal
-        isOpen={isCalendarModalOpen}
-        onClose={() => setIsCalendarModalOpen(false)}
-      />
     </div>
   )
 }
