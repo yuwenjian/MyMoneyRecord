@@ -377,13 +377,18 @@ export function PortfolioModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-2 sm:p-4 bg-black bg-opacity-50 overflow-y-auto">
       <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[95vh] flex flex-col my-auto">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">持仓管理</h2>
+        <div 
+          className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 relative z-10 bg-white"
+          style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
+        >
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex-1">持仓管理</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 z-20 relative"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+            aria-label="关闭"
           >
-            <span className="text-2xl">×</span>
+            <span className="text-2xl leading-none">×</span>
           </button>
         </div>
 

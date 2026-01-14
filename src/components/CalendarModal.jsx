@@ -273,27 +273,36 @@ function CalendarModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-0 sm:p-4">
       <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-center space-x-2 sm:space-x-4">
+        <div 
+          className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 relative z-10 bg-white"
+          style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
+        >
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
             <button
               onClick={handlePrevMonth}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              style={{ minWidth: '44px', minHeight: '44px' }}
+              aria-label="上一月"
             >
               <FiChevronLeft size={18} className="sm:w-5 sm:h-5" />
             </button>
-            <h2 className="text-base sm:text-xl font-semibold text-gray-800">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-800 truncate">
               {currentMonth.format('YYYY年MM月')}
             </h2>
             <button
               onClick={handleNextMonth}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+              style={{ minWidth: '44px', minHeight: '44px' }}
+              aria-label="下一月"
             >
               <FiChevronRight size={18} className="sm:w-5 sm:h-5" />
             </button>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0 z-20 relative ml-2"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+            aria-label="关闭"
           >
             <FiX size={20} className="sm:w-6 sm:h-6" />
           </button>
