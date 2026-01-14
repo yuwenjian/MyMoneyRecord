@@ -378,17 +378,25 @@ export function PortfolioModal({ isOpen, onClose }) {
       <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[95vh] flex flex-col my-auto">
         {/* 头部 */}
         <div 
-          className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 relative z-10 bg-white"
-          style={{ paddingTop: 'max(1rem, env(safe-area-inset-top, 1rem))' }}
+          className="sticky top-0 left-0 right-0 flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200 flex-shrink-0 bg-white"
+          style={{ 
+            paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0.75rem))',
+            zIndex: 1000
+          }}
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex-1">持仓管理</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex-1 mr-2 truncate">持仓管理</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 z-20 relative"
-            style={{ minWidth: '44px', minHeight: '44px' }}
+            className="flex-shrink-0 flex items-center justify-center rounded-lg transition-colors bg-gray-100 hover:bg-gray-200 active:bg-gray-300"
+            style={{ 
+              width: '44px', 
+              height: '44px',
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
             aria-label="关闭"
           >
-            <span className="text-2xl leading-none">×</span>
+            <span className="text-2xl leading-none text-gray-800 font-bold">×</span>
           </button>
         </div>
 
