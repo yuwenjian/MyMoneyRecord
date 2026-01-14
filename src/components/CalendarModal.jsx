@@ -189,10 +189,10 @@ function CalendarModal({ isOpen, onClose }) {
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
     
     return (
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {/* 星期标题 */}
         {weekDays.map(day => (
-          <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+          <div key={day} className="text-center text-xs sm:text-sm font-semibold text-gray-600 py-1 sm:py-2">
             {day}
           </div>
         ))}
@@ -212,32 +212,50 @@ function CalendarModal({ isOpen, onClose }) {
               onClick={() => handleDateClick(date)}
               style={bgStyle}
               className={`
-                relative p-2 min-h-[60px] border rounded-lg cursor-pointer
+                relative p-1 sm:p-2 min-h-[50px] sm:min-h-[60px] border rounded sm:rounded-lg cursor-pointer
                 transition-all hover:opacity-80
                 ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-800'}
                 ${isToday ? 'border-blue-500 border-2' : 'border-gray-200'}
                 ${isSelected ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
               `}
             >
-              <div className={`text-sm font-medium mb-1 ${isCurrentMonth ? '' : 'opacity-50'}`}>
+              <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 ${isCurrentMonth ? '' : 'opacity-50'}`}>
                 {date.date()}
               </div>
               
               {dayData && isCurrentMonth && (
-                <div className="space-y-0.5 text-xs">
+                <div className="space-y-0 sm:space-y-0.5 text-[10px] sm:text-xs leading-tight">
                   {dayData.stockProfit !== 0 && (
-                    <div className={`${dayData.stockProfit >= 0 ? 'text-red-600' : 'text-red-400'}`}>
-                      股: {formatCurrency(dayData.stockProfit, true)}
+                    <div className={`truncate ${dayData.stockProfit >= 0 ? 'text-red-600' : 'text-red-400'}`}>
+                      <span className="hidden sm:inline">股: </span>
+                      <span className="sm:hidden">股</span>
+                      <span className="hidden sm:inline">{formatCurrency(dayData.stockProfit, true)}</span>
+                      <span className="sm:hidden">
+                        {dayData.stockProfit >= 0 ? '+' : ''}
+                        {(dayData.stockProfit / 1000).toFixed(1)}k
+                      </span>
                     </div>
                   )}
                   {dayData.fundProfit !== 0 && (
-                    <div className={`${dayData.fundProfit >= 0 ? 'text-blue-600' : 'text-blue-400'}`}>
-                      基: {formatCurrency(dayData.fundProfit, true)}
+                    <div className={`truncate ${dayData.fundProfit >= 0 ? 'text-blue-600' : 'text-blue-400'}`}>
+                      <span className="hidden sm:inline">基: </span>
+                      <span className="sm:hidden">基</span>
+                      <span className="hidden sm:inline">{formatCurrency(dayData.fundProfit, true)}</span>
+                      <span className="sm:hidden">
+                        {dayData.fundProfit >= 0 ? '+' : ''}
+                        {(dayData.fundProfit / 1000).toFixed(1)}k
+                      </span>
                     </div>
                   )}
                   {dayData.totalProfit !== 0 && (
-                    <div className={`font-semibold ${dayData.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                      总: {formatCurrency(dayData.totalProfit, true)}
+                    <div className={`font-semibold truncate ${dayData.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      <span className="hidden sm:inline">总: </span>
+                      <span className="sm:hidden">总</span>
+                      <span className="hidden sm:inline">{formatCurrency(dayData.totalProfit, true)}</span>
+                      <span className="sm:hidden">
+                        {dayData.totalProfit >= 0 ? '+' : ''}
+                        {(dayData.totalProfit / 1000).toFixed(1)}k
+                      </span>
                     </div>
                   )}
                 </div>
@@ -252,37 +270,37 @@ function CalendarModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-0 sm:p-4">
+      <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={handlePrevMonth}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <FiChevronLeft size={20} />
+              <FiChevronLeft size={18} className="sm:w-5 sm:h-5" />
             </button>
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-800">
               {currentMonth.format('YYYY年MM月')}
             </h2>
             <button
               onClick={handleNextMonth}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <FiChevronRight size={20} />
+              <FiChevronRight size={18} className="sm:w-5 sm:h-5" />
             </button>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <FiX size={24} />
+            <FiX size={20} className="sm:w-6 sm:h-6" />
           </button>
         </div>
         
         {/* 日历内容 */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-2 sm:p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -293,18 +311,18 @@ function CalendarModal({ isOpen, onClose }) {
         </div>
         
         {/* 底部说明 */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-center space-x-6 text-xs text-gray-600">
+        <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="flex items-center justify-center flex-wrap gap-3 sm:gap-6 text-xs text-gray-600">
             <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500"></div>
               <span>股票收益</span>
             </div>
             <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500"></div>
               <span>基金收益</span>
             </div>
             <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500"></div>
               <span>总收益</span>
             </div>
           </div>

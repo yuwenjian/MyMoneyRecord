@@ -377,19 +377,19 @@ function OverviewPage() {
       <PageHeader
         title="概览"
         subtitle="欢迎回来, AI 实时监测中..."
-        actions={
-          <button
-            onClick={() => setIsCalendarModalOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
-            title="查看日历"
-          >
-            <FiCalendar size={20} />
-          </button>
-        }
       />
 
       {/* 总资产卡片 */}
-      <GradientCard>
+      <GradientCard className="relative">
+        {/* 日历图标 - 右上角 */}
+        <button
+          onClick={() => setIsCalendarModalOpen(true)}
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-blue-500/20 transition-colors text-white/90 hover:text-white"
+          title="查看日历"
+        >
+          <FiCalendar size={20} />
+        </button>
+        
         <div className="mb-6">
           <h2 className="text-lg font-medium text-blue-100 mb-1">当前总资产 (CNY)</h2>
           <div className="text-4xl lg:text-5xl font-bold">

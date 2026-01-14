@@ -374,11 +374,11 @@ export function PortfolioModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-50 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-2 sm:p-4 bg-black bg-opacity-50 overflow-y-auto">
+      <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-4xl sm:max-h-[95vh] flex flex-col my-auto">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">持仓管理</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">持仓管理</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -388,18 +388,19 @@ export function PortfolioModal({ isOpen, onClose }) {
         </div>
 
         {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* 股票持仓 */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <img src="/assets/images/gupiao.png" alt="股票" className="w-6 h-6" />
-                <h3 className="text-lg font-semibold text-gray-800">股票持仓</h3>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <img src="/assets/images/gupiao.png" alt="股票" className="w-5 h-5 sm:w-6 sm:h-6" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">股票持仓</h3>
               </div>
               {!editingItem && (
                 <Button
                   onClick={() => handleAdd('stock')}
                   size="sm"
+                  className="text-xs sm:text-sm px-3 sm:px-4"
                 >
                   + 新增持仓
                 </Button>
@@ -497,10 +498,11 @@ export function PortfolioModal({ isOpen, onClose }) {
                       placeholder="可选"
                     />
                   </div>
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     <Button
                       onClick={() => handleSave('stock')}
                       fullWidth
+                      className="w-full sm:w-auto"
                     >
                       保存
                     </Button>
@@ -508,6 +510,7 @@ export function PortfolioModal({ isOpen, onClose }) {
                       variant="secondary"
                       onClick={handleCancel}
                       fullWidth
+                      className="w-full sm:w-auto"
                     >
                       取消
                     </Button>
@@ -518,9 +521,10 @@ export function PortfolioModal({ isOpen, onClose }) {
 
             {holdings.stock.length > 0 ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
+                {/* 表头 - 桌面端 */}
+                <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
                   <div className="truncate">名称</div>
-                  <div className="text-right hidden sm:block">数量</div>
+                  <div className="text-right">数量</div>
                   <div className="text-right hidden md:block">成本价</div>
                   <div className="text-right hidden md:block">当前价</div>
                   <div className="text-right">盈亏</div>
@@ -532,44 +536,86 @@ export function PortfolioModal({ isOpen, onClose }) {
                   const profitPercent = item.cost > 0 ? (profit / (item.cost * item.amount)) * 100 : 0
 
                   return (
-                    <div key={item.id} className="grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
-                      <div className="font-medium truncate" title={item.name}>{item.name}</div>
-                      <div className="text-right hidden sm:block">{item.amount.toLocaleString()}</div>
-                      <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
-                      <div className="text-right hidden md:block">{item.currentPrice > 0 ? formatCurrency(item.currentPrice) : '--'}</div>
-                      <div className={`text-right font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        <div className="hidden sm:block">{formatCurrency(profit, true)}</div>
-                        <div className="text-xs">({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)</div>
+                    <div key={item.id}>
+                      {/* 移动端布局 */}
+                      <div className="sm:hidden p-3 border border-gray-200 rounded-lg bg-white">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-sm truncate flex-1 mr-2" title={item.name}>{item.name}</div>
+                          <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="text-xs text-gray-500">
+                            {item.amount.toLocaleString()} 股
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item, 'stock')}
+                              className="text-xs px-3 py-1.5"
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(item, 'stock')}
+                              className="text-xs px-3 py-1.5"
+                            >
+                              删除
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-end space-x-1 sm:space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(item, 'stock')}
-                          className="text-xs px-2"
-                        >
-                          编辑
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(item, 'stock')}
-                          className="text-xs px-2"
-                        >
-                          删除
-                        </Button>
+                      {/* 桌面端布局 */}
+                      <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
+                        <div className="font-medium truncate" title={item.name}>{item.name}</div>
+                        <div className="text-right">{item.amount.toLocaleString()}</div>
+                        <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
+                        <div className="text-right hidden md:block">{item.currentPrice > 0 ? formatCurrency(item.currentPrice) : '--'}</div>
+                        <div className={`text-right font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div>{formatCurrency(profit, true)}</div>
+                          <div className="text-xs">({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)</div>
+                        </div>
+                        <div className="flex justify-end space-x-1 sm:space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(item, 'stock')}
+                            className="text-xs px-2"
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDelete(item, 'stock')}
+                            className="text-xs px-2"
+                          >
+                            删除
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )
                 })}
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 text-sm">
                     <span className="font-medium text-gray-700">合计：</span>
-                    <div className="text-right">
-                      <div>总市值：{formatCurrency(calculateTotalValue('stock'))}</div>
-                      <div>总成本：{formatCurrency(calculateTotalCost('stock'))}</div>
-                      <div className={`font-semibold ${calculateProfit('stock') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        总盈亏：{formatCurrency(calculateProfit('stock'), true)}
+                    <div className="text-left sm:text-right w-full sm:w-auto">
+                      <div className="flex justify-between sm:block">
+                        <span className="sm:hidden text-gray-600">总市值：</span>
+                        <span>{formatCurrency(calculateTotalValue('stock'))}</span>
+                      </div>
+                      <div className="flex justify-between sm:block mt-1">
+                        <span className="sm:hidden text-gray-600">总成本：</span>
+                        <span>{formatCurrency(calculateTotalCost('stock'))}</span>
+                      </div>
+                      <div className={`flex justify-between sm:block mt-1 font-semibold ${calculateProfit('stock') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className="sm:hidden">总盈亏：</span>
+                        <span>{formatCurrency(calculateProfit('stock'), true)}</span>
                       </div>
                     </div>
                   </div>
@@ -588,14 +634,15 @@ export function PortfolioModal({ isOpen, onClose }) {
           {/* 基金持仓 */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <img src="/assets/images/jijin.png" alt="基金" className="w-6 h-6" />
-                <h3 className="text-lg font-semibold text-gray-800">基金持仓</h3>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <img src="/assets/images/jijin.png" alt="基金" className="w-5 h-5 sm:w-6 sm:h-6" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">基金持仓</h3>
               </div>
               {!editingItem && (
                 <Button
                   onClick={() => handleAdd('fund')}
                   size="sm"
+                  className="text-xs sm:text-sm px-3 sm:px-4"
                 >
                   + 新增持仓
                 </Button>
@@ -714,9 +761,10 @@ export function PortfolioModal({ isOpen, onClose }) {
 
             {holdings.fund.length > 0 ? (
               <div className="space-y-2">
-                <div className="grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
+                {/* 表头 - 桌面端 */}
+                <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
                   <div className="truncate">名称</div>
-                  <div className="text-right hidden sm:block">份额</div>
+                  <div className="text-right">份额</div>
                   <div className="text-right hidden md:block">成本价</div>
                   <div className="text-right hidden md:block">当前净值</div>
                   <div className="text-right">盈亏</div>
@@ -728,44 +776,86 @@ export function PortfolioModal({ isOpen, onClose }) {
                   const profitPercent = item.cost > 0 ? (profit / (item.cost * item.amount)) * 100 : 0
 
                   return (
-                    <div key={item.id} className="grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
-                      <div className="font-medium truncate" title={item.name}>{item.name}</div>
-                      <div className="text-right hidden sm:block">{item.amount.toLocaleString()}</div>
-                      <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
-                      <div className="text-right hidden md:block">{item.currentPrice > 0 ? formatCurrency(item.currentPrice) : '--'}</div>
-                      <div className={`text-right font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        <div className="hidden sm:block">{formatCurrency(profit, true)}</div>
-                        <div className="text-xs">({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)</div>
+                    <div key={item.id}>
+                      {/* 移动端布局 */}
+                      <div className="sm:hidden p-3 border border-gray-200 rounded-lg bg-white">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-sm truncate flex-1 mr-2" title={item.name}>{item.name}</div>
+                          <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="text-xs text-gray-500">
+                            {item.amount.toLocaleString()} 份
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item, 'fund')}
+                              className="text-xs px-3 py-1.5"
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              onClick={() => handleDelete(item, 'fund')}
+                              className="text-xs px-3 py-1.5"
+                            >
+                              删除
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-end space-x-1 sm:space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(item, 'fund')}
-                          className="text-xs px-2"
-                        >
-                          编辑
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(item, 'fund')}
-                          className="text-xs px-2"
-                        >
-                          删除
-                        </Button>
+                      {/* 桌面端布局 */}
+                      <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
+                        <div className="font-medium truncate" title={item.name}>{item.name}</div>
+                        <div className="text-right">{item.amount.toLocaleString()}</div>
+                        <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
+                        <div className="text-right hidden md:block">{item.currentPrice > 0 ? formatCurrency(item.currentPrice) : '--'}</div>
+                        <div className={`text-right font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <div>{formatCurrency(profit, true)}</div>
+                          <div className="text-xs">({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)</div>
+                        </div>
+                        <div className="flex justify-end space-x-1 sm:space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(item, 'fund')}
+                            className="text-xs px-2"
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDelete(item, 'fund')}
+                            className="text-xs px-2"
+                          >
+                            删除
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )
                 })}
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 text-sm">
                     <span className="font-medium text-gray-700">合计：</span>
-                    <div className="text-right">
-                      <div>总市值：{formatCurrency(calculateTotalValue('fund'))}</div>
-                      <div>总成本：{formatCurrency(calculateTotalCost('fund'))}</div>
-                      <div className={`font-semibold ${calculateProfit('fund') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        总盈亏：{formatCurrency(calculateProfit('fund'), true)}
+                    <div className="text-left sm:text-right w-full sm:w-auto">
+                      <div className="flex justify-between sm:block">
+                        <span className="sm:hidden text-gray-600">总市值：</span>
+                        <span>{formatCurrency(calculateTotalValue('fund'))}</span>
+                      </div>
+                      <div className="flex justify-between sm:block mt-1">
+                        <span className="sm:hidden text-gray-600">总成本：</span>
+                        <span>{formatCurrency(calculateTotalCost('fund'))}</span>
+                      </div>
+                      <div className={`flex justify-between sm:block mt-1 font-semibold ${calculateProfit('fund') >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className="sm:hidden">总盈亏：</span>
+                        <span>{formatCurrency(calculateProfit('fund'), true)}</span>
                       </div>
                     </div>
                   </div>

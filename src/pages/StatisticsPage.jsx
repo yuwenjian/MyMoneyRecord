@@ -1316,8 +1316,8 @@ function StatisticsPage() {
           
           <GradientCard fromColor="from-green-600" toColor="to-green-700">
             <div>
-              <div className="text-sm text-green-100 mb-1">总盈亏</div>
-              <div className="text-3xl font-bold">
+              <div className="text-sm text-white mb-1">总盈亏</div>
+              <div className="text-3xl font-bold text-white [&_.trend-indicator]:!text-white [&_.trend-icon]:!text-white">
                 <TrendIndicator 
                   value={stats.totalProfitLoss} 
                   showArrow={true} 
