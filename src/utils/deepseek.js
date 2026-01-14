@@ -67,12 +67,13 @@ export async function callDeepSeekAPI(prompt, options = {}) {
 }
 
 /**
- * 生成综合AI分析（整合大盘分析、持仓分析和盈亏对比）
+ * 生成综合AI分析（基于本地数据，包含历史趋势和风险评估）
  * @param {Object} data - 综合数据
  * @param {Array} holdings - 持仓列表
+ * @param {Object} historyStats - 历史统计数据 { stats7d, stats30d }
  * @returns {Promise<string>} AI 分析结果
  */
-export async function generateComprehensiveAnalysis(data, holdings = []) {
+export async function generateComprehensiveAnalysis(data, holdings = [], historyStats = null) {
   const { shanghaiIndex, todayProfit, todayProfitPercent, stockAsset, fundAsset, totalAsset, monthProfit, stockPercent, fundPercent } = data
   
   // 格式化持仓信息
@@ -103,102 +104,153 @@ export async function generateComprehensiveAnalysis(data, holdings = []) {
   const todayStr = today.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
   const todayDateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`
   
-  // 构建市场数据提示（如果用户提供了上证指数，则使用；否则提示AI尝试查询）
-  let marketDataPrompt = ''
-  if (shanghaiIndex) {
-    marketDataPrompt = `**今日（${todayDateStr}）A股市场数据（基于用户记录）：**
-- **上证指数**：${shanghaiIndex}点（用户记录的数据）
-
-**注意：** 由于无法获取完整的实时市场数据，请基于以下策略进行分析：
-1. 如果可能，尝试通过互联网搜索查询${todayDateStr}的完整市场数据（包括深证成指、创业板指、热门板块等）
-2. 如果无法获取实时数据，请基于上证指数${shanghaiIndex}点进行合理分析
-3. 在分析中明确说明数据来源和局限性`
-  } else {
-    marketDataPrompt = `**重要提示：** 请尝试通过互联网搜索查询今日（${todayDateStr}）A股市场的最新收盘数据。如果无法获取实时数据，请在分析中明确说明数据来源的局限性。`
+  // 格式化历史统计数据
+  let historyStatsInfo = ''
+  if (historyStats) {
+    const { stats7d, stats30d } = historyStats
+    
+    if (stats7d?.total) {
+      const stats7 = stats7d.total
+      historyStatsInfo += `\n**近7天表现：**
+- 总收益：${stats7.totalProfit >= 0 ? '+' : ''}${stats7.totalProfit.toFixed(2)}元
+- 盈利天数：${stats7.profitableDays}天 / ${stats7.totalDays}天（胜率：${stats7.winRate.toFixed(1)}%）
+- 平均每日收益：${stats7.avgDailyProfit >= 0 ? '+' : ''}${stats7.avgDailyProfit.toFixed(2)}元
+- 最大回撤：${stats7.maxDrawdown.toFixed(2)}元（${stats7.maxDrawdownPercent.toFixed(2)}%）
+- 波动性：${stats7.volatility.toFixed(2)}元
+- 收益率：${stats7.returnRate >= 0 ? '+' : ''}${stats7.returnRate.toFixed(2)}%`
+    }
+    
+    if (stats30d?.total) {
+      const stats30 = stats30d.total
+      historyStatsInfo += `\n\n**近30天表现：**
+- 总收益：${stats30.totalProfit >= 0 ? '+' : ''}${stats30.totalProfit.toFixed(2)}元
+- 盈利天数：${stats30.profitableDays}天 / ${stats30.totalDays}天（胜率：${stats30.winRate.toFixed(1)}%）
+- 平均每日收益：${stats30.avgDailyProfit >= 0 ? '+' : ''}${stats30.avgDailyProfit.toFixed(2)}元
+- 最大回撤：${stats30.maxDrawdown.toFixed(2)}元（${stats30.maxDrawdownPercent.toFixed(2)}%）
+- 波动性：${stats30.volatility.toFixed(2)}元
+- 收益率：${stats30.returnRate >= 0 ? '+' : ''}${stats30.returnRate.toFixed(2)}%`
+    }
+    
+    if (stats7d?.stock && stats7d?.fund) {
+      historyStatsInfo += `\n\n**股票 vs 基金对比（近7天）：**
+- 股票收益：${stats7d.stock.totalProfit >= 0 ? '+' : ''}${stats7d.stock.totalProfit.toFixed(2)}元（胜率：${stats7d.stock.winRate.toFixed(1)}%）
+- 基金收益：${stats7d.fund.totalProfit >= 0 ? '+' : ''}${stats7d.fund.totalProfit.toFixed(2)}元（胜率：${stats7d.fund.winRate.toFixed(1)}%）`
+    }
   }
   
-  const prompt = `请作为专业的投资理财分析师，对今日A股市场和我个人的投资情况进行全面分析。
+  // 构建市场数据提示（仅基于用户记录）
+  let marketDataPrompt = ''
+  if (shanghaiIndex) {
+    marketDataPrompt = `**今日（${todayDateStr}）市场参考：**
+- **上证指数**：${shanghaiIndex}点（您记录的数据）
+
+**说明：** 分析将基于您记录的数据和持仓情况，不依赖外部市场数据。`
+  } else {
+    marketDataPrompt = `**说明：** 分析将基于您的持仓和收益数据，不依赖外部市场数据。`
+  }
+  
+  const prompt = `请作为一位经验丰富的投资理财顾问，基于我提供的本地数据，对我的投资情况进行全面、通俗易懂的分析。
 
 ${marketDataPrompt}
 
-**我的投资数据：**
-- 上证指数（我记录的）：${shanghaiIndex || '未提供'}
+**我的当前投资数据：**
 - 总资产：${totalAsset.toFixed(2)} 元
 - 股票占比：${stockPercent}%，金额：${stockAsset.toFixed(2)} 元
 - 基金占比：${fundPercent}%，金额：${fundAsset.toFixed(2)} 元
 - 今日盈亏：${todayProfit >= 0 ? '+' : ''}${todayProfit.toFixed(2)} 元
 - 今日收益率：${todayProfitPercent >= 0 ? '+' : ''}${todayProfitPercent.toFixed(2)}%
 - 本月收益：${monthProfit >= 0 ? '+' : ''}${monthProfit.toFixed(2)} 元
+${shanghaiIndex ? `- 上证指数（我记录的）：${shanghaiIndex}点` : ''}
+
+${historyStatsInfo}
 
 ${holdingsInfo.length > 0 ? `**我的持仓详情：**\n${holdingsInfo.join('\n\n')}\n` : '**我的持仓：**暂无持仓数据\n'}
 
-请从以下三个维度进行深度分析，使用Markdown格式：
+请从以下五个维度进行深入分析，使用Markdown格式，语言要通俗易懂，避免过于专业的术语：
 
-## 1. 今日大盘复盘
+## 1. 今日表现总结
 
-**请基于${todayDateStr}的市场数据进行分析：**
+用简单明了的话总结：
+- 今天赚了还是亏了？赚/亏了多少？
+- 和昨天相比，资产是增加了还是减少了？
+- 股票和基金哪个表现更好？
+${shanghaiIndex ? `- 如果上证指数是${shanghaiIndex}点，我的收益和指数相比如何？` : ''}
 
-- **主要指数表现**：
-  - 上证指数：${shanghaiIndex ? `收盘点位 ${shanghaiIndex}点（用户记录）` : '请尝试查询或说明无法获取'}
-  - 深证成指：请尝试查询或说明数据来源
-  - 创业板指：请尝试查询或说明数据来源
-  - 如果无法获取完整数据，请基于已知数据（上证指数）进行合理分析
-- **热门板块和行业分析**：如果可能，查询今日涨幅榜数据；如果无法获取，请基于市场一般规律进行分析
-- **热门股票分析**：如果可能，查询涨幅榜数据；如果无法获取，请说明数据限制
-- **市场情绪和资金流向分析**：如果可能，查询相关数据；如果无法获取，请说明数据限制
+## 2. 持仓详细分析
 
-**重要：** 如果无法获取实时数据，请明确说明"由于无法获取${todayDateStr}的实时市场数据，以下分析基于已知数据和一般市场规律"，然后继续提供有价值的分析。
+**对每一只持仓进行分析：**
+${holdingsInfo.length > 0 ? `请逐个分析每只股票/基金，用通俗的语言说明：
+- 这只持仓现在赚了还是亏了？赚/亏了多少？
+- 为什么这只持仓会盈利/亏损？（比如：成本价和当前价的差距）
+- 这只持仓的风险高还是低？（根据盈亏比例和持仓占比判断）
+- **具体操作建议**：明确说明是"继续持有"、"考虑加仓"、"建议减仓"还是"考虑清仓"，并给出理由
 
-## 2. 持仓分析与投资建议
+**整体持仓结构：**
+- 我的持仓是否过于集中在某几只股票/基金？（如果单只持仓占比超过30%，需要提醒风险）
+- 股票和基金的配置比例是否合理？
+- 持仓数量是否合适？（太少可能风险集中，太多可能难以管理）` : `目前暂无持仓数据，建议：
+- 可以考虑开始建立投资组合
+- 建议股票和基金合理配置，分散风险`}
 
-请结合今日大盘行情，对**每一只持仓**进行详细分析：
-- **逐个分析每只股票/基金**：
-  - 该持仓今日的表现（涨跌情况、与大盘对比）
-  - 该持仓所属的行业/板块在今日市场的表现
-  - 该持仓与今日热门板块/股票的关联性
-  - 该持仓的盈亏情况分析（为什么盈利/亏损）
-  - 该持仓的风险评估（高/中/低风险）
-  - 针对该持仓的具体操作建议（持有/加仓/减仓/清仓）
-- **整体持仓结构分析**：
-  - 我的持仓组合与今日市场热点的匹配度
-  - 持仓集中度分析（是否过于集中）
-  - 行业分布是否合理
-  - 风险分散是否充分
-- **综合投资建议**：
-  - 结合市场行情，给出具体的投资建议和操作指导
-  - 风险提示和优化建议
-  - 建议调整的持仓和理由
+## 3. 历史趋势分析
 
-## 3. 盈亏对比分析
+${historyStatsInfo ? `基于近7天和30天的数据，分析：
+- 我的收益趋势是向上还是向下？
+- 盈利天数占比如何？是经常赚钱还是经常亏钱？
+- 收益是否稳定？波动大不大？
+- 和之前相比，现在的表现是变好了还是变差了？
 
-请对比分析：
-- 我的今日收益率（${todayProfitPercent >= 0 ? '+' : ''}${todayProfitPercent.toFixed(2)}%）与大盘指数的表现对比
-- 我的投资组合是否跑赢或跑输大盘，原因分析
-- 总结今日盈亏的主要原因（是持仓结构问题、选股问题还是市场环境问题）
-- 给出针对性的优化建议
+**风险评估：**
+- 最大回撤是多少？这意味着什么？（用通俗的话解释：比如"最多的时候亏了XX元"）
+- 波动性如何？收益是否稳定？
+- 整体风险等级：低风险/中风险/高风险，并说明原因` : `历史数据不足，无法进行趋势分析。建议持续记录数据，以便后续分析。`}
 
-请用专业但易懂的语言，确保分析深入且具有指导意义，总字数控制在1000字以内。`
+## 4. 投资建议与优化
+
+**具体操作建议：**
+${holdingsInfo.length > 0 ? `- 列出需要调整的持仓，明确说明：
+  - 哪些持仓建议减仓或清仓？（比如：亏损超过20%且风险高的）
+  - 哪些持仓可以继续持有或加仓？（比如：盈利稳定且风险可控的）
+  - 如何优化持仓结构？（比如：增加基金配置降低风险，或调整单只持仓占比）` : `- 建议开始建立投资组合，合理配置股票和基金`}
+
+**风险提示：**
+- 当前投资组合存在哪些风险？
+- 需要注意哪些问题？
+- 如何降低风险？
+
+## 5. 总结与展望
+
+用一段话总结：
+- 当前投资状况的总体评价
+- 主要优势和需要改进的地方
+- 下一步的投资建议
+
+**重要要求：**
+1. 语言要通俗易懂，避免专业术语，如果必须用术语要简单解释
+2. 必须给出具体的操作建议，比如"建议减仓XX股票20%"、"可以考虑加仓XX基金"
+3. 风险评估要明确，说明为什么是低/中/高风险
+4. 总字数控制在1200字以内，但要确保分析深入且有指导意义
+5. 用第一人称"您"来称呼，让分析更亲切`
 
   return await callDeepSeekAPI(prompt, {
     model: 'deepseek-chat',
-    enableThinking: true, // 启用思考模式，提升分析准确性
-    systemPrompt: `你是一位专业的投资理财分析师，擅长分析A股市场行情和投资组合表现。
+    enableThinking: false, // 基于本地数据，不需要思考模式
+    systemPrompt: `你是一位经验丰富的投资理财顾问，擅长基于用户的投资数据进行分析和指导。
 
-**数据获取策略：**
-1. 优先尝试通过互联网搜索查询最新的股市行情数据
-2. 如果无法获取实时数据，请明确说明数据来源的局限性
-3. 基于用户提供的已知数据（如用户记录的上证指数）进行分析
-4. 如果数据不完整，可以基于已知数据和市场一般规律进行合理分析
-5. 绝对不要编造或虚构市场数据
+**分析原则：**
+1. 完全基于用户提供的本地数据进行分析，不要尝试获取外部市场数据
+2. 如果用户记录了上证指数，可以作为参考，但不要编造其他市场数据
+3. 语言要通俗易懂，避免专业术语，如果必须用术语要简单解释
+4. 必须给出具体的操作建议，比如"建议减仓XX股票"、"可以考虑加仓XX基金"
+5. 风险评估要明确，说明为什么是低/中/高风险
+6. 对每只持仓都要进行详细分析，给出具体建议
 
-**分析要求：**
-- 使用专业但易懂的语言进行分析
-- 确保所有数据准确无误，明确标注数据来源
-- 如果数据不完整，在分析开头明确说明数据限制
-- 分析深入且具有指导意义
-- 对每只持仓都要进行详细分析
-- 即使数据不完整，也要提供有价值的投资建议`,
-    maxTokens: 4000 // 增加token限制以支持更详细的分析
+**分析风格：**
+- 用第一人称"您"来称呼，让分析更亲切
+- 用简单明了的话解释复杂的概念
+- 用具体数字和例子说明问题
+- 给出可操作的建议，不要只说空话`,
+    maxTokens: 4000
   })
 }
 

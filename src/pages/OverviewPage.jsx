@@ -18,6 +18,7 @@ import { getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
 import { generateComprehensiveAnalysis } from '../utils/deepseek'
 import { getHoldings } from '../utils/storage'
+import { calculateHistoryStatsByType } from '../utils/historyStats'
 import { PortfolioModal } from '../components/PortfolioModal'
 import CalendarModal from '../components/CalendarModal'
 import ReactMarkdown from 'react-markdown'
@@ -59,7 +60,7 @@ function OverviewPage() {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   // 生成 AI 分析
-  const generateAIAnalysis = React.useCallback(async (data) => {
+  const generateAIAnalysis = React.useCallback(async (data, historyStats) => {
     try {
       setIsGeneratingAI(true)
       const today = dayjs().format('YYYY-MM-DD')
@@ -81,7 +82,7 @@ function OverviewPage() {
       const allHoldings = [...stockHoldings, ...fundHoldings]
       
       // 生成综合分析
-      const analysis = await generateComprehensiveAnalysis(data, allHoldings)
+      const analysis = await generateComprehensiveAnalysis(data, allHoldings, historyStats)
       
       setAiAnalysis(analysis)
       setLastAnalysisDate(today)
@@ -144,10 +145,15 @@ function OverviewPage() {
     }
     
     const records = await getRecords()
+    const adjustments = await getAdjustments()
     const sortedRecords = [...records].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))
     const todayRecords = sortedRecords.filter(r => r.date === today)
     const todayWithIndex = todayRecords.find(r => r.shanghaiIndex)
     const shanghaiIndex = todayWithIndex ? todayWithIndex.shanghaiIndex : null
+
+    // 计算历史统计数据
+    const historyStats7d = calculateHistoryStatsByType(records, adjustments, 7)
+    const historyStats30d = calculateHistoryStatsByType(records, adjustments, 30)
 
     await generateAIAnalysis({
       shanghaiIndex,
@@ -159,6 +165,9 @@ function OverviewPage() {
       monthProfit: overviewData.monthProfit,
       stockPercent: overviewData.totalAsset > 0 ? (overviewData.stockAsset / overviewData.totalAsset * 100).toFixed(0) : 0,
       fundPercent: overviewData.totalAsset > 0 ? (overviewData.fundAsset / overviewData.totalAsset * 100).toFixed(0) : 0,
+    }, {
+      stats7d: historyStats7d,
+      stats30d: historyStats30d
     })
   }, [overviewData, generateAIAnalysis])
 
