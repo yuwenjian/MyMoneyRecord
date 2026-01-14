@@ -2189,9 +2189,9 @@ function StatisticsPage() {
                 ✕ 关闭
               </Button>
             </div>
-            <div className="flex-1 overflow-auto p-6">
+            <div className="flex-1 overflow-hidden flex flex-col">
               {/* 全屏模式下的筛选按钮 */}
-              <div className="flex space-x-2 mb-4">
+              <div className="flex space-x-2 mb-4 px-6 pt-6">
                 {['all', 'stock', 'fund'].map((filter) => (
                   <Button
                     key={filter}
@@ -2203,73 +2203,79 @@ function StatisticsPage() {
                   </Button>
                 ))}
               </div>
-              <div className="fullscreen-table-scroll">
-                <table className="history-table fullscreen-table">
-                <thead>
-                  <tr>
-                    <th>日期</th>
-                    <th>类型</th>
-                    <th>总资产</th>
-                    <th>总市值</th>
-                    <th>上证指数</th>
-                    <th>当日盈亏</th>
-                    <th>加减仓</th>
-                    <th>备注</th>
-                    <th style={{ width: '120px' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    // 根据筛选条件过滤数据
-                    const filteredData = historyFilter === 'all' 
-                      ? historyData 
-                      : historyData.filter(item => {
-                          if (historyFilter === 'stock') return item.type === '股票'
-                          if (historyFilter === 'fund') return item.type === '基金'
-                          return true
-                        })
-                    
-                    return filteredData.length > 0 ? (
-                      filteredData.map((item, index) => (
-                        <tr key={item.originalData?.objectId || index}>
-                          <td>{item.date}</td>
-                          <td>{item.type}</td>
-                          <td>{item.totalAsset}</td>
-                          <td>{item.totalMarketValue}</td>
-                          <td>{item.shanghaiIndex}</td>
-                          <td className={item.profitClass}>{item.dailyProfitLoss}</td>
-                          <td className={item.adjustmentClass}>{item.adjustmentAmount}</td>
-                          <td>{item.notes}</td>
-                          <td>
-                            <div className="action-buttons">
-                              <button 
-                                className="edit-btn" 
-                                onClick={() => handleEditRecord(item)}
-                                title="编辑"
-                              >
-                                编辑
-                              </button>
-                              <button 
-                                className="delete-btn" 
-                                onClick={() => handleDeleteRecord(item)}
-                                title="删除"
-                              >
-                                删除
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
+              <div className="flex-1 overflow-auto px-6 pb-6">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
                       <tr>
-                        <td colSpan="9" style={{ textAlign: 'center', padding: '40px' }}>
-                          {historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
-                        </td>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">日期</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">类型</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">总资产</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">总市值</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">上证指数</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">加减仓</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">备注</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">操作</th>
                       </tr>
-                    )
-                  })()}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {(() => {
+                        // 根据筛选条件过滤数据
+                        const filteredData = historyFilter === 'all' 
+                          ? historyData 
+                          : historyData.filter(item => {
+                              if (historyFilter === 'stock') return item.type === '股票'
+                              if (historyFilter === 'fund') return item.type === '基金'
+                              return true
+                            })
+                        
+                        return filteredData.length > 0 ? (
+                          filteredData.map((item, index) => (
+                            <tr key={item.originalData?.objectId || index} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalAsset}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalMarketValue}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.shanghaiIndex}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
+                              </td>
+                              <td className={`px-4 py-3 whitespace-nowrap text-sm ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
+                                {item.adjustmentAmount}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{item.notes}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditRecord(item)}
+                                  >
+                                    编辑
+                                  </Button>
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => handleDeleteRecord(item)}
+                                  >
+                                    删除
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="9" className="px-4 py-12 text-center text-gray-500">
+                              {historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
+                            </td>
+                          </tr>
+                        )
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

@@ -19,8 +19,10 @@ import { calculateDailyProfitLoss } from '../utils/calculations'
 import { generateComprehensiveAnalysis } from '../utils/deepseek'
 import { getHoldings } from '../utils/storage'
 import { PortfolioModal } from '../components/PortfolioModal'
+import CalendarModal from '../components/CalendarModal'
 import ReactMarkdown from 'react-markdown'
 import { useNavigate } from 'react-router-dom'
+import { FiCalendar } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 
 dayjs.extend(isSameOrAfter)
@@ -54,6 +56,7 @@ function OverviewPage() {
   const [lastAnalysisDate, setLastAnalysisDate] = useState('')
   const [todayAnalysisCount, setTodayAnalysisCount] = useState(0) // 今日分析次数
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false)
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
   // 生成 AI 分析
   const generateAIAnalysis = React.useCallback(async (data) => {
@@ -365,6 +368,15 @@ function OverviewPage() {
       <PageHeader
         title="概览"
         subtitle="欢迎回来, AI 实时监测中..."
+        actions={
+          <button
+            onClick={() => setIsCalendarModalOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-800"
+            title="查看日历"
+          >
+            <FiCalendar size={20} />
+          </button>
+        }
       />
 
       {/* 总资产卡片 */}
@@ -580,6 +592,12 @@ function OverviewPage() {
       <PortfolioModal
         isOpen={isPortfolioModalOpen}
         onClose={() => setIsPortfolioModalOpen(false)}
+      />
+      
+      {/* 日历弹窗 */}
+      <CalendarModal
+        isOpen={isCalendarModalOpen}
+        onClose={() => setIsCalendarModalOpen(false)}
       />
     </div>
   )

@@ -40,7 +40,7 @@ const Layout = ({ children }) => {
               {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
             </button>
             <img 
-              src="/assets/images/logo.png" 
+              src="/assets/images/logo.jpg" 
               alt="财智追踪" 
               className="w-8 h-8 rounded-lg object-cover"
               onError={(e) => {
@@ -68,7 +68,7 @@ const Layout = ({ children }) => {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center space-x-3">
                 <img 
-                  src="/assets/images/logo.png" 
+                  src="/assets/images/logo.jpg" 
                   alt="财智追踪" 
                   className="w-10 h-10 rounded-lg object-cover"
                   onError={(e) => {
