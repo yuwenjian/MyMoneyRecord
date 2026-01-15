@@ -2,35 +2,259 @@ import { createWorker } from 'tesseract.js'
 
 /**
  * OCR 图片识别工具
+ * 使用免费开源的 Tesseract.js 进行文字识别
  * 支持识别股票/基金账户截图中的关键数据
  * 优化版：支持同花顺App等主流券商App
+ * 
+ * Tesseract.js 是纯 JavaScript 实现的 OCR 引擎，完全免费开源
+ * 支持 100+ 种语言，包括中文简体、繁体等
  */
 
-// 创建 OCR worker
+// 创建 Tesseract OCR worker（单例模式）
 let worker = null
 
+/**
+ * 初始化 OCR Worker
+ * @returns {Promise<Worker>} OCR Worker 实例
+ */
 const initWorker = async () => {
   if (!worker) {
+    console.log('初始化 Tesseract OCR Worker...')
+    
+    // 使用中文简体 + 英文语言包
+    // chi_sim = 中文简体，eng = 英文
     worker = await createWorker('chi_sim+eng', 1, {
-      logger: m => console.log('OCR进度:', m)
+      logger: m => {
+        // 只显示识别进度，减少日志噪音
+        if (m.status === 'recognizing text') {
+          const progress = Math.round(m.progress * 100)
+          if (progress % 20 === 0 || progress === 100) {
+            console.log(`OCR识别进度: ${progress}%`)
+          }
+        }
+      }
     })
+    
+    // 优化识别参数，提高中文识别准确率
+    await worker.setParameters({
+      // PSM (Page Segmentation Mode) 模式：
+      // 6 = 统一文本块（适合单列文本，如手机截图）
+      // 11 = 稀疏文本（适合不规则布局）
+      // 尝试多种模式，选择最佳结果
+      tessedit_pageseg_mode: '6', // 统一文本块模式
+      
+      // 字符白名单：限制识别的字符范围，提高准确率
+      // 包含：数字、小数点、常用符号、中文关键词、英文字母
+      tessedit_char_whitelist: '0123456789.,+-总资产市值盈亏收益指数上证沪指深指持有账户基金股票ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz：:（）()年月日点%',
+      
+      // 保留单词间空格（有助于保持文本结构）
+      preserve_interword_spaces: '1',
+      
+      // 提高识别准确率的其他参数
+      tessedit_ocr_engine_mode: '1', // 使用 LSTM OCR 引擎（更准确）
+    })
+    
+    console.log('Tesseract OCR Worker 初始化完成')
   }
   return worker
 }
 
 /**
- * 识别图片中的文本
+ * 图片预处理：提高识别准确率
+ * 通过 Canvas API 对图片进行增强处理
+ * @param {File|string} image - 图片文件或图片URL
+ * @returns {Promise<HTMLImageElement>} 处理后的图片元素
+ */
+const preprocessImage = async (image) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    
+    img.onload = () => {
+      try {
+        // 创建 Canvas 进行图片处理
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        
+        // 设置 Canvas 尺寸（保持原图尺寸，不缩放）
+        canvas.width = img.width
+        canvas.height = img.height
+        
+        // 绘制原图
+        ctx.drawImage(img, 0, 0)
+        
+        // 获取图片像素数据
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+        
+        // 图片增强处理：提高对比度和清晰度
+        for (let i = 0; i < data.length; i += 4) {
+          // RGB 值
+          let r = data[i]
+          let g = data[i + 1]
+          let b = data[i + 2]
+          
+          // 转换为灰度值（用于判断亮度）
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b
+          
+          // 提高对比度：增强暗部和亮部的差异
+          const contrast = 1.2 // 对比度系数
+          r = Math.min(255, Math.max(0, (r - 128) * contrast + 128))
+          g = Math.min(255, Math.max(0, (g - 128) * contrast + 128))
+          b = Math.min(255, Math.max(0, (b - 128) * contrast + 128))
+          
+          // 轻微锐化：增强边缘
+          data[i] = r
+          data[i + 1] = g
+          data[i + 2] = b
+          // alpha 通道保持不变
+        }
+        
+        // 将处理后的数据写回 Canvas
+        ctx.putImageData(imageData, 0, 0)
+        
+        // 将 Canvas 转换为 Blob，然后创建新的 Image
+        canvas.toBlob((blob) => {
+          const processedImg = new Image()
+          processedImg.onload = () => resolve(processedImg)
+          processedImg.onerror = reject
+          processedImg.src = URL.createObjectURL(blob)
+        }, 'image/png')
+      } catch (error) {
+        console.warn('图片预处理失败，使用原图:', error)
+        // 预处理失败时返回原图
+        resolve(img)
+      }
+    }
+    
+    img.onerror = reject
+    
+    // 设置图片源
+    if (image instanceof File) {
+      img.src = URL.createObjectURL(image)
+    } else if (typeof image === 'string') {
+      img.src = image
+    } else {
+      reject(new Error('不支持的图片格式'))
+    }
+  })
+}
+
+/**
+ * 识别图片中的文本（优化版：快速识别）
+ * 使用免费开源的 Tesseract.js 进行 OCR 识别
  * @param {File|string} image - 图片文件或图片URL
  * @returns {Promise<string>} 识别出的文本
  */
 export const recognizeText = async (image) => {
   try {
+    console.log('开始 OCR 识别...')
+    
+    // 初始化 Worker
     const ocr = await initWorker()
-    const { data: { text } } = await ocr.recognize(image)
-    return text
+    
+    // 图片预处理（可选，提高识别准确率）
+    // 注意：如果图片质量已经很好，可以跳过预处理以提高速度
+    const usePreprocessing = true // 可以通过配置控制
+    
+    let imageToRecognize = image
+    
+    if (usePreprocessing && image instanceof File) {
+      console.log('对图片进行预处理以提高识别准确率...')
+      try {
+        const processedImg = await preprocessImage(image)
+        // 将处理后的图片转换为 Blob URL
+        imageToRecognize = processedImg.src
+      } catch (error) {
+        console.warn('图片预处理失败，使用原图:', error)
+        // 预处理失败时使用原图
+      }
+    }
+    
+    // 🆕 优化：默认只使用 PSM 6（最快），如果结果不理想再尝试其他模式
+    // PSM 模式说明：
+    // 6 = 统一文本块（适合单列文本，如手机截图）- 默认使用
+    // 11 = 稀疏文本（适合不规则布局）- 仅在结果不理想时尝试
+    const startTime = Date.now()
+    
+    // 首先使用默认模式（PSM 6）进行识别
+    console.log('使用 PSM 模式 6 进行识别...')
+    const { data: primaryData } = await ocr.recognize(imageToRecognize, {
+      rectangle: undefined, // 识别整个图片
+    })
+    
+    const primaryText = primaryData.text.trim()
+    const primaryConfidence = primaryData.confidence || 0
+    const primaryLength = primaryText.length
+    
+    console.log(`PSM 6 结果: 文本长度 ${primaryLength}, 置信度 ${Math.round(primaryConfidence)}%`)
+    
+    // 🆕 智能判断：如果结果不理想（文本太短或置信度太低），尝试其他模式
+    // 判断标准：文本长度 < 50 字符 或 置信度 < 30%
+    const shouldTryAlternative = primaryLength < 50 || primaryConfidence < 30
+    
+    let finalText = primaryText
+    let finalPsmMode = 6
+    let finalConfidence = primaryConfidence
+    
+    if (shouldTryAlternative) {
+      console.log('结果不理想，尝试 PSM 模式 11...')
+      try {
+        await ocr.setParameters({
+          tessedit_pageseg_mode: '11' // 稀疏文本模式
+        })
+        
+        const { data: altData } = await ocr.recognize(imageToRecognize, {
+          rectangle: undefined,
+        })
+        
+        const altText = altData.text.trim()
+        const altConfidence = altData.confidence || 0
+        const altLength = altText.length
+        
+        console.log(`PSM 11 结果: 文本长度 ${altLength}, 置信度 ${Math.round(altConfidence)}%`)
+        
+        // 如果替代模式结果更好（文本更长或置信度更高），使用替代模式的结果
+        if (altLength > primaryLength || 
+            (altLength === primaryLength && altConfidence > primaryConfidence)) {
+          finalText = altText
+          finalPsmMode = 11
+          finalConfidence = altConfidence
+          console.log('使用 PSM 11 的结果（更优）')
+        } else {
+          console.log('保持使用 PSM 6 的结果')
+        }
+        
+        // 恢复默认 PSM 模式
+        await ocr.setParameters({
+          tessedit_pageseg_mode: '6'
+        })
+      } catch (error) {
+        console.warn('PSM 11 模式识别失败，使用默认结果:', error)
+        // 恢复默认 PSM 模式
+        await ocr.setParameters({
+          tessedit_pageseg_mode: '6'
+        })
+      }
+    }
+    
+    const endTime = Date.now()
+    const duration = ((endTime - startTime) / 1000).toFixed(2)
+    
+    console.log('OCR识别完成')
+    console.log(`使用 PSM 模式: ${finalPsmMode}`)
+    console.log(`识别文本长度: ${finalText.length} 字符`)
+    console.log(`识别置信度: ${Math.round(finalConfidence)}%`)
+    console.log(`识别耗时: ${duration} 秒`)
+    
+    // 清理临时 URL（如果是预处理生成的）
+    if (usePreprocessing && imageToRecognize !== image && imageToRecognize.startsWith('blob:')) {
+      URL.revokeObjectURL(imageToRecognize)
+    }
+    
+    return finalText
   } catch (error) {
     console.error('OCR识别失败:', error)
-    throw new Error('图片识别失败，请重试')
+    throw new Error(`图片识别失败: ${error.message || '未知错误'}，请重试`)
   }
 }
 
@@ -122,7 +346,9 @@ const parseTonghuashunData = (text, investmentType = 'stock') => {
   const result = {
     totalAsset: null,
     totalMarketValue: null,
-    shanghaiIndex: null
+    shanghaiIndex: null,
+    totalAssetSource: null,  // 记录总资产来源
+    totalMarketValueSource: null  // 记录总市值来源
   }
 
   console.log('======== 开始解析同花顺数据 ========')
@@ -148,12 +374,12 @@ const getStockPatterns = () => {
   return {
     // 上证指数 - 通常在顶部显示
     shanghaiIndex: /上证指数|沪指|上证|sh.*index|指数/i,
-    // 总资产
-    totalAsset: /总资产|账户总资产|资产总额/i,
-    // 总市值 - 股票专用
+    // 总资产 - 严格匹配，避免误识别
+    totalAsset: /^总资产|^账户总资产|^资产总额|总资产[：:]\s*$/i,
+    // 总市值 - 股票专用，放宽匹配以支持OCR识别错误
     totalMarketValue: /总市值|持有市值|市值/i,
-    // 需要排除的关键词
-    excludeKeywords: /盈亏|盈利|亏损|收益|利润|参考盈亏|当日.*盈亏|累计盈亏|持有收益|日收益/i,
+    // 需要排除的关键词 - 加强排除规则
+    excludeKeywords: /总盈亏|盈亏|盈利|亏损|收益|利润|参考盈亏|当日.*盈亏|累计盈亏|持有收益|日收益|参考.*盈亏/i,
   }
 }
 
@@ -182,12 +408,23 @@ const getFundPatterns = () => {
 const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stock') => {
 
   // 首先尝试从整体文本中直接提取上证指数（通常在顶部）
-  const indexMatch = text.match(/(\d{4}\.\d{2})\s*[\+\-]/)
-  if (indexMatch && !result.shanghaiIndex) {
-    const num = parseFloat(indexMatch[1])
-    if (num > 2000 && num < 5000) { // 上证指数合理范围
-      result.shanghaiIndex = num
-      console.log('✓ 从顶部提取到上证指数:', num)
+  // 🆕 支持多种格式：3000.12、3000.12+、3000.12-、3000等
+  const indexPatterns = [
+    /(\d{4}\.\d{2})\s*[\+\-]/,  // 3000.12+ 或 3000.12-
+    /(\d{4}\.\d{1,2})/,          // 3000.12 或 3000.1
+    /(\d{4})\s*点/,              // 3000 点
+    /(\d{4})\s*[\+\-]/           // 3000+ 或 3000-
+  ]
+  
+  for (const pattern of indexPatterns) {
+    const indexMatch = text.match(pattern)
+    if (indexMatch && !result.shanghaiIndex) {
+      const num = parseFloat(indexMatch[1])
+      if (num > 2000 && num < 5000) { // 上证指数合理范围
+        result.shanghaiIndex = num
+        console.log(`✓ 从顶部提取到上证指数: ${num} (模式: ${pattern})`)
+        break
+      }
     }
   }
 
@@ -214,6 +451,7 @@ const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stoc
           if (!isStockLine && !isProfitLossLine) {
             allNumbers.push({
               value: num,
+              originalNumStr: numStr,  // 🆕 保存原始数字字符串，用于检查小数点
               line: line.trim(),
               lineIndex: index,
               context: {
@@ -249,138 +487,330 @@ const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stoc
       
       // 先尝试当前行
       let num = extractNumber(trimmedLine)
+      let numSource = '当前行'
       console.log(`  → 当前行提取: ${num}`)
       
-      // 如果当前行没有或数字太小，看下一行
+      // 如果当前行没有或数字太小，看下一行（最多看2行）
       if ((!num || num < 100) && lines[index + 1]) {
-        const nextLine = lines[index + 1]
+        const nextLine = lines[index + 1].trim()
         console.log(`  → 检查下一行: "${nextLine}"`)
-        // 下一行也要排除盈亏关键词
-        if (!patterns.excludeKeywords.test(nextLine)) {
-          num = extractNumber(nextLine)
-          console.log(`  → 下一行提取: ${num}`)
+        // 下一行也要排除盈亏关键词和市值关键词
+        if (!patterns.excludeKeywords.test(nextLine) && 
+            !nextLine.includes('市值') && 
+            !nextLine.includes('盈亏')) {
+          const nextNum = extractNumber(nextLine)
+          if (nextNum && nextNum >= 100) {
+            num = nextNum
+            numSource = '下一行'
+            console.log(`  → 下一行提取: ${num}`)
+          }
         } else {
-          console.log(`  → 下一行包含盈亏关键词，跳过`)
+          console.log(`  → 下一行包含排除关键词，跳过`)
         }
       }
       
-      // 验证：总资产必须 > 1000（至少1千元）
-      if (num && num >= 1000) {
-        // 进一步验证：如果已经有总资产，选择较大的那个
-        if (!result.totalAsset || num > result.totalAsset) {
+      // 如果还没找到，再看第2行
+      if ((!num || num < 100) && lines[index + 2]) {
+        const nextLine2 = lines[index + 2].trim()
+        console.log(`  → 检查第2行: "${nextLine2}"`)
+        if (!patterns.excludeKeywords.test(nextLine2) && 
+            !nextLine2.includes('市值') && 
+            !nextLine2.includes('盈亏')) {
+          const nextNum2 = extractNumber(nextLine2)
+          if (nextNum2 && nextNum2 >= 100) {
+            num = nextNum2
+            numSource = '第2行'
+            console.log(`  → 第2行提取: ${num}`)
+          }
+        }
+      }
+      
+      // 验证：总资产必须 > 1000（至少1千元），且必须紧邻关键词（最多2行内）
+      if (num && num >= 1000 && (numSource === '当前行' || numSource === '下一行' || numSource === '第2行')) {
+        // 进一步验证：如果已经有总资产，优先选择紧邻关键词的（当前行 > 下一行 > 第2行）
+        const shouldUpdate = !result.totalAsset || 
+          (numSource === '当前行' && result.totalAssetSource !== '当前行') ||
+          (numSource === '下一行' && result.totalAssetSource !== '当前行' && result.totalAssetSource !== '下一行')
+        
+        if (shouldUpdate) {
           result.totalAsset = num
-          console.log(`  ✅ 成功识别总资产: ${num}`)
+          result.totalAssetSource = numSource
+          console.log(`  ✅ 成功识别总资产: ${num} (来源: ${numSource})`)
+        } else {
+          console.log(`  ℹ️ 已有总资产 ${result.totalAsset}，跳过 ${num}`)
         }
       } else {
-        console.log(`  ✗ 数字验证失败: ${num} (必须 >= 1000)`)
+        console.log(`  ✗ 数字验证失败: ${num} (必须 >= 1000 且紧邻关键词)`)
       }
     }
 
     // 总市值识别 - 优先级最高，只要找到"总市值"关键词就提取其下方数字
+    // 🆕 关键逻辑：总市值关键词的下一行就是总市值的金额
     // 如果是基金模式且totalMarketValue为null，跳过市值识别
     if (patterns.totalMarketValue && 
         patterns.totalMarketValue.test(trimmedLine) && 
         !trimmedLine.includes('总资产') && 
         !patterns.excludeKeywords.test(trimmedLine)) {
-      console.log(`  → 🎯 发现市值关键词行: "${trimmedLine}"`)
+      console.log(`  → 🎯 发现市值关键词行[${index}]: "${trimmedLine}"`)
       
-      let num = extractNumber(trimmedLine)
-      let numSource = '当前行'
-      console.log(`  → 当前行提取: ${num}`)
+      // 🆕 首先找到"总盈亏"行的位置，用于后续验证
+      const profitLossLineIndex = lines.findIndex((line, idx) => 
+        /总盈亏|总.*盈亏/i.test(line.trim())
+      )
+      let profitLossNum = null
+      if (profitLossLineIndex !== -1) {
+        profitLossNum = extractNumber(lines[profitLossLineIndex].trim())
+        console.log(`  → 📍 找到"总盈亏"行[${profitLossLineIndex}]: "${lines[profitLossLineIndex].trim()}"，数字: ${profitLossNum}`)
+        console.log(`  → 📍 "总市值"行[${index}] 与"总盈亏"行[${profitLossLineIndex}] 的距离: ${Math.abs(profitLossLineIndex - index)}行`)
+      } else {
+        console.log(`  → ℹ️ 未找到"总盈亏"行`)
+      }
       
-      // 尝试下一行
-      if ((!num || num < 100) && lines[index + 1]) {
-        const nextLine = lines[index + 1]
-        console.log(`  → 检查下一行: "${nextLine}"`)
+      let num = null
+      let numSource = null
+      let numLineIndex = null
+      
+      // 🆕 优先从下一行提取（总市值关键词的下一行就是总市值的金额）
+      // 关键：如果下一行是"总盈亏"，说明总市值在更后面的行
+      if (lines[index + 1]) {
+        const nextLine = lines[index + 1].trim()
+        const nextLineIndex = index + 1
+        console.log(`  → 优先检查下一行[${nextLineIndex}]: "${nextLine}"`)
         
-        // 只排除明确包含"盈亏"等关键词的行，数字本身可以提取
-        const hasExcludeKeyword = patterns.excludeKeywords.test(nextLine)
-        console.log(`  → 下一行包含排除关键词: ${hasExcludeKeyword}`)
+        // 🆕 检查下一行是否是"总盈亏"关键词行
+        const isTotalProfitLossLine = /总盈亏|总.*盈亏/i.test(nextLine)
+        console.log(`  → 下一行是否是"总盈亏"行: ${isTotalProfitLossLine}`)
         
-        if (!hasExcludeKeyword) {
-          const nextNum = extractNumber(nextLine)
-          if (nextNum) {
-            num = nextNum
-            numSource = '下一行'
-            console.log(`  → ✓ 下一行提取到: ${num}`)
+        if (isTotalProfitLossLine) {
+          // 如果下一行是"总盈亏"，说明总市值在更后面的行（跳过总盈亏行）
+          console.log(`  → ⚠️ 下一行是"总盈亏"，跳过，继续查找总市值`)
+          // 跳过总盈亏行，查找第2行或第3行
+          let found = false
+          for (let offset = 2; offset <= 3 && !found; offset++) {
+            if (lines[index + offset]) {
+              const candidateLine = lines[index + offset].trim()
+              const candidateLineIndex = index + offset
+              console.log(`  → 检查第${offset}行[${candidateLineIndex}]: "${candidateLine}"`)
+              
+              // 检查是否包含排除关键词
+              const hasExcludeKeyword = patterns.excludeKeywords.test(candidateLine) || 
+                                         /总盈亏|总.*盈亏/i.test(candidateLine) ||
+                                         candidateLine.includes('盈亏') || 
+                                         candidateLine.includes('收益') ||
+                                         candidateLine.includes('参考') ||
+                                         candidateLine.includes('当日') ||
+                                         candidateLine.includes('累计')
+              
+              if (!hasExcludeKeyword) {
+                const candidateNum = extractNumber(candidateLine)
+                if (candidateNum && candidateNum >= 100) {
+                  // 🆕 严格验证：如果这个数字与"总盈亏"的数字相同，直接拒绝
+                  if (profitLossNum && Math.abs(candidateNum - profitLossNum) < 0.01) {
+                    console.log(`  → ⚠️ 警告：第${offset}行的数字 ${candidateNum} 与总盈亏 ${profitLossNum} 相同，跳过`)
+                  } else {
+                    num = candidateNum
+                    numSource = `第${offset}行`
+                    numLineIndex = candidateLineIndex
+                    found = true
+                    console.log(`  → ✓✓✓ 从第${offset}行[${candidateLineIndex}]成功提取总市值: ${num}`)
+                  }
+                }
+              } else {
+                console.log(`  → ✗ 第${offset}行包含排除关键词，跳过`)
+              }
+            }
           }
         } else {
-          console.log(`  → ✗ 下一行包含盈亏关键词，跳过`)
-        }
-      }
-      
-      // 尝试第2行
-      if ((!num || num < 100) && lines[index + 2]) {
-        const nextLine2 = lines[index + 2]
-        console.log(`  → 检查第2行: "${nextLine2}"`)
-        
-        if (!patterns.excludeKeywords.test(nextLine2)) {
-          const nextNum2 = extractNumber(nextLine2)
-          if (nextNum2) {
-            num = nextNum2
-            numSource = '第2行'
-            console.log(`  → ✓ 第2行提取到: ${num}`)
+          // 下一行不是"总盈亏"，检查是否包含其他排除关键词
+          const hasExcludeKeyword = patterns.excludeKeywords.test(nextLine) || 
+                                     nextLine.includes('盈亏') || 
+                                     nextLine.includes('收益') ||
+                                     nextLine.includes('参考') ||
+                                     nextLine.includes('当日') ||
+                                     nextLine.includes('累计')
+          console.log(`  → 下一行包含排除关键词: ${hasExcludeKeyword}`)
+          
+          if (!hasExcludeKeyword) {
+            const nextNum = extractNumber(nextLine)
+            if (nextNum && nextNum >= 100) {
+              // 🆕 严格验证：如果这个数字与"总盈亏"的数字相同，直接拒绝
+              if (profitLossNum && Math.abs(nextNum - profitLossNum) < 0.01) {
+                console.log(`  → ⚠️ 警告：下一行的数字 ${nextNum} 与总盈亏 ${profitLossNum} 相同，跳过`)
+              } else {
+                num = nextNum
+                numSource = '下一行'
+                numLineIndex = nextLineIndex
+                console.log(`  → ✓✓✓ 从下一行[${nextLineIndex}]成功提取总市值: ${num}`)
+              }
+            } else {
+              console.log(`  → ✗ 下一行没有有效数字或数字太小: ${nextNum}`)
+            }
+          } else {
+            console.log(`  → ✗ 下一行包含排除关键词，跳过下一行`)
+            // 如果下一行是排除关键词，继续查找第2行
+            if (lines[index + 2]) {
+              const nextLine2 = lines[index + 2].trim()
+              const nextLine2Index = index + 2
+              console.log(`  → 检查第2行[${nextLine2Index}]: "${nextLine2}"`)
+              
+              const hasExcludeKeyword2 = patterns.excludeKeywords.test(nextLine2) || 
+                                         /总盈亏|总.*盈亏/i.test(nextLine2) ||
+                                         nextLine2.includes('盈亏') || 
+                                         nextLine2.includes('收益') ||
+                                         nextLine2.includes('参考') ||
+                                         nextLine2.includes('当日') ||
+                                         nextLine2.includes('累计')
+              
+              if (!hasExcludeKeyword2) {
+                const nextNum2 = extractNumber(nextLine2)
+                if (nextNum2 && nextNum2 >= 100) {
+                  // 🆕 严格验证：如果这个数字与"总盈亏"的数字相同，直接拒绝
+                  if (profitLossNum && Math.abs(nextNum2 - profitLossNum) < 0.01) {
+                    console.log(`  → ⚠️ 警告：第2行的数字 ${nextNum2} 与总盈亏 ${profitLossNum} 相同，跳过`)
+                  } else {
+                    num = nextNum2
+                    numSource = '第2行'
+                    numLineIndex = nextLine2Index
+                    console.log(`  → ✓ 从第2行[${nextLine2Index}]提取到总市值: ${num}`)
+                  }
+                }
+              } else {
+                console.log(`  → ✗ 第2行也包含排除关键词，跳过`)
+              }
+            }
           }
         }
       }
       
-      // 只要找到合理的数字就接受
-      if (num && num >= 100) {
+      // 如果当前行有数字，且下一行没有找到，也可以使用当前行的数字
+      if (!num) {
+        const currentNum = extractNumber(trimmedLine)
+        if (currentNum && currentNum >= 100) {
+          // 🆕 严格验证：如果这个数字与"总盈亏"的数字相同，直接拒绝
+          if (profitLossNum && Math.abs(currentNum - profitLossNum) < 0.01) {
+            console.log(`  → ⚠️ 警告：当前行的数字 ${currentNum} 与总盈亏 ${profitLossNum} 相同，跳过`)
+          } else {
+            num = currentNum
+            numSource = '当前行'
+            numLineIndex = index
+            console.log(`  → 使用当前行的数字: ${num}`)
+          }
+        }
+      }
+      
+      // 🆕 最终严格验证：检查数字来源行是否就是"总盈亏"行或紧邻"总盈亏"行
+      if (num && profitLossLineIndex !== -1 && numLineIndex !== null) {
+        const distance = Math.abs(numLineIndex - profitLossLineIndex)
+        console.log(`  → 📍 数字来源行[${numLineIndex}] 与"总盈亏"行[${profitLossLineIndex}] 的距离: ${distance}行`)
+        
+        // 如果数字来源行就是"总盈亏"行，直接拒绝
+        if (numLineIndex === profitLossLineIndex) {
+          console.log(`  → ⚠️ 警告：数字来源行就是"总盈亏"行，拒绝识别`)
+          num = null
+          numSource = null
+          numLineIndex = null
+        } 
+        // 如果数字来源行紧邻"总盈亏"行（前后1行内），且数字相同或接近，拒绝
+        else if (distance <= 1 && profitLossNum && Math.abs(num - profitLossNum) < 0.01) {
+          console.log(`  → ⚠️ 警告：数字来源行紧邻"总盈亏"行且数字相同，拒绝识别`)
+          num = null
+          numSource = null
+          numLineIndex = null
+        }
+      }
+      
+      // 验证：市值必须 >= 100，且必须紧邻关键词（最多2行内）
+      if (num && num >= 100 && (numSource === '当前行' || numSource === '下一行' || numSource === '第2行')) {
         const rounded = Math.round(num * 100) / 100
         
-        console.log(`  → 📊 候选总市值: ${rounded} (来源: ${numSource})`)
+        console.log(`  → 📊 候选总市值: ${rounded} (来源: ${numSource}, 行索引: ${numLineIndex})`)
         
-        // 简化验证：只检查基本合理性
+        // 验证：只检查基本合理性
         let isValid = true
         let rejectReason = ''
         
-        // 唯一的硬性要求：市值不能大于总资产的110%
+        // 硬性要求：市值不能大于总资产的110%
         if (result.totalAsset && rounded > result.totalAsset * 1.1) {
           isValid = false
           rejectReason = `超过总资产 (${rounded} > ${result.totalAsset * 1.1})`
         }
         
-        // 如果是从"总市值"关键词的紧邻行提取，直接接受（不检查占比）
-        if (numSource === '下一行' && !result.totalMarketValue) {
-          if (isValid) {
-            result.totalMarketValue = rounded
-            console.log(`  ✓✓✓ 从"总市值"关键词下方成功识别: ${rounded}`)
-          } else {
-            console.log(`  ✗ 验证失败: ${rejectReason}`)
+        // 🆕 额外验证：如果总资产已识别，市值应该在合理范围内（10%-95%）
+        if (result.totalAsset && isValid) {
+          const minValue = result.totalAsset * 0.10
+          const maxValue = result.totalAsset * 0.95
+          if (rounded < minValue || rounded > maxValue) {
+            isValid = false
+            rejectReason = `不在合理范围 (${rounded} 不在 ${minValue.toFixed(0)} - ${maxValue.toFixed(0)} 之间)`
           }
-        } else if (isValid && !result.totalMarketValue) {
+        }
+        
+        // 如果是从"总市值"关键词的紧邻行提取，直接接受
+        if (isValid && !result.totalMarketValue) {
           result.totalMarketValue = rounded
-          console.log(`  ✓✓✓ 成功识别总市值: ${rounded}`)
+          result.totalMarketValueSource = numSource
+          console.log(`  ✅✅✅ 从"总市值"关键词成功识别: ${rounded} (来源: ${numSource}, 行索引: ${numLineIndex})`)
         } else if (!isValid) {
           console.log(`  ✗ 市值验证失败: ${rejectReason}`)
         } else if (result.totalMarketValue) {
           console.log(`  ℹ️ 已有总市值 ${result.totalMarketValue}，跳过 ${rounded}`)
         }
       } else {
-        console.log(`  ✗ 未找到有效数字 (需要 >= 100)`)
+        console.log(`  ✗ 未找到有效数字 (需要 >= 100 且紧邻关键词)`)
       }
     }
 
-    // 上证指数识别
+    // 上证指数识别 - 加强识别逻辑
     if (patterns.shanghaiIndex.test(trimmedLine) && !result.shanghaiIndex) {
+      console.log(`  → 🎯 发现上证指数关键词行: "${trimmedLine}"`)
+      
       let num = extractNumber(trimmedLine)
+      let numSource = '当前行'
+      console.log(`  → 当前行提取: ${num}`)
+      
+      // 如果当前行没有数字，尝试下一行
       if (!num && lines[index + 1]) {
-        num = extractNumber(lines[index + 1])
+        const nextLine = lines[index + 1].trim()
+        console.log(`  → 检查下一行: "${nextLine}"`)
+        const nextNum = extractNumber(nextLine)
+        if (nextNum) {
+          num = nextNum
+          numSource = '下一行'
+          console.log(`  → 下一行提取: ${num}`)
+        }
       }
-      // 验证是否在合理范围
+      
+      // 验证是否在合理范围（2000-5000）
       if (num && num > 2000 && num < 5000) {
         result.shanghaiIndex = num
-        console.log(`  ✓ 识别到上证指数: ${num}`)
+        console.log(`  ✓✓✓ 识别到上证指数: ${num} (来源: ${numSource})`)
+      } else if (num) {
+        console.log(`  ✗ 数字 ${num} 不在合理范围 (2000-5000)`)
       }
     }
   })
 
   // 如果还没找到总资产，从所有大数字中选择最大的（排除股票代码）
   // 🆕 基金模式不使用候选机制，必须明确匹配到"基金资产"关键词
+  // 🆕 加强验证：候选数字不能包含在排除关键词的行中
   if (!result.totalAsset && investmentType !== 'fund') {
     console.log(`  ℹ️ 股票模式：启动总资产候选机制`)
-    
+
     const largeNumbers = allNumbers
+      .filter(n => {
+        // 检查数字所在行是否包含排除关键词
+        const lineText = n.line.toLowerCase()
+        const hasExcludeKeyword = patterns.excludeKeywords.test(n.line) ||
+                                   lineText.includes('盈亏') ||
+                                   lineText.includes('收益') ||
+                                   lineText.includes('市值') ||
+                                   lineText.includes('参考')
+        if (hasExcludeKeyword) {
+          console.log(`  [候选过滤] ${n.value} 所在行包含排除关键词: "${n.line}"`)
+          return false
+        }
+        return true
+      })
       .filter(n => n.value >= 10000)  // 总资产至少1万
       .filter(n => {
         // 只排除明确的6位整数（股票代码：100000-999999）
@@ -391,9 +821,10 @@ const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stoc
         return true
       })
       .sort((a, b) => b.value - a.value)
-    
+
     if (largeNumbers.length > 0) {
       result.totalAsset = largeNumbers[0].value
+      result.totalAssetSource = '候选机制'
       console.log(`  ✓ 从大数字中选择总资产: ${result.totalAsset} (${largeNumbers[0].line})`)
     }
   } else if (!result.totalAsset && investmentType === 'fund') {
@@ -403,12 +834,55 @@ const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stoc
 
   // 如果还没找到总市值，在已有总资产的情况下，选择合适的数字（排除股票代码）
   // 基金模式不需要启动候选机制（patterns.totalMarketValue为null）
-  if (!result.totalMarketValue && result.totalAsset && patterns.totalMarketValue) {
-    console.log(`  ℹ️ 启动总市值候选机制，总资产: ${result.totalAsset}`)
+  // 🆕 加强验证：候选数字不能包含在排除关键词的行中
+  // 🆕 重要：只有在没有找到"总市值"关键词行的情况下才启动候选机制
+  const foundMarketValueKeyword = lines.some((line, idx) => 
+    patterns.totalMarketValue && patterns.totalMarketValue.test(line.trim())
+  )
+  
+  if (!result.totalMarketValue && result.totalAsset && patterns.totalMarketValue && !foundMarketValueKeyword) {
+    console.log(`  ℹ️ 未找到"总市值"关键词行，启动候选机制，总资产: ${result.totalAsset}`)
+    
+    // 🆕 首先找到"总盈亏"行的数字，用于排除
+    const profitLossLineIndex = lines.findIndex(line => /总盈亏|总.*盈亏/i.test(line.trim()))
+    let profitLossNum = null
+    if (profitLossLineIndex !== -1) {
+      profitLossNum = extractNumber(lines[profitLossLineIndex])
+      console.log(`  → 找到"总盈亏"行（索引${profitLossLineIndex}），数字: ${profitLossNum}`)
+    }
     
     const candidates = allNumbers
       .filter(n => {
-        // 放宽候选池范围：10%-95%（原来是20%-95%）
+        // 首先检查数字所在行是否包含排除关键词（盈亏、收益等）
+        const lineText = n.line.toLowerCase()
+        const hasExcludeKeyword = patterns.excludeKeywords.test(n.line) ||
+                                   /总盈亏|总.*盈亏/i.test(n.line) ||
+                                   lineText.includes('盈亏') ||
+                                   lineText.includes('收益') ||
+                                   lineText.includes('参考') ||
+                                   lineText.includes('当日') ||
+                                   lineText.includes('累计') ||
+                                   (lineText.includes('总') && lineText.includes('盈亏'))
+        if (hasExcludeKeyword) {
+          console.log(`  [候选过滤] ${n.value} 所在行包含排除关键词: "${n.line}"`)
+          return false
+        }
+        
+        // 🆕 如果数字与"总盈亏"的数字相同或接近，直接排除
+        if (profitLossNum && Math.abs(n.value - profitLossNum) < 0.01) {
+          console.log(`  [候选过滤] ${n.value} 与总盈亏 ${profitLossNum} 相同，排除`)
+          return false
+        }
+        
+        // 🆕 额外检查：如果行中包含"总市值"关键词，优先考虑
+        const hasMarketValueKeyword = /总市值|持有市值|市值/i.test(n.line)
+        if (hasMarketValueKeyword) {
+          console.log(`  [候选优先] ${n.value} 所在行包含市值关键词: "${n.line}"`)
+        }
+        return true
+      })
+      .filter(n => {
+        // 候选池范围：10%-95%
         const minValue = result.totalAsset * 0.10
         const maxValue = result.totalAsset * 0.95
         const inRange = n.value >= minValue && n.value <= maxValue
@@ -418,22 +892,63 @@ const parseWithPatterns = (text, lines, patterns, result, investmentType = 'stoc
         return n.value >= 1000 && inRange
       })
       .filter(n => {
-        // 只排除明确的6位整数（股票代码：100000-999999）
-        // 5位数（如42047）和带小数的不过滤
-        if (n.value >= 100000 && n.value < 1000000 && Number.isInteger(n.value)) {
-          console.log(`  [候选过滤] ${n.value} 疑似6位股票代码`)
+        // 🆕 修复：不要过滤在合理范围内的6位数
+        // 如果数字在总资产的10%-95%范围内，说明它可能是总市值，不应该被当作股票代码
+        const minValue = result.totalAsset * 0.10
+        const maxValue = result.totalAsset * 0.95
+        const inRange = n.value >= minValue && n.value <= maxValue
+        
+        // 只排除明确的6位整数（股票代码：100000-999999），但排除条件更严格：
+        // 1. 必须是纯整数（没有小数点）
+        // 2. 必须在合理范围外（不在10%-95%总资产范围内）
+        // 3. 原始数字字符串中不包含小数点
+        const originalNumStr = n.originalNumStr || ''  // 获取原始数字字符串
+        const hasDecimalInOriginal = /\./.test(originalNumStr)  // 检查原始数字字符串是否有小数点
+        const hasDecimalInLine = /\./.test(n.line)  // 检查所在行是否有小数点
+        const isPureInteger = Number.isInteger(n.value)
+        const isInRange = inRange
+        
+        // 🆕 关键修复：如果数字在合理范围内（10%-95%总资产），即使看起来像股票代码也不过滤
+        // 因为总市值应该在总资产的10%-95%范围内
+        if (isInRange) {
+          console.log(`  [候选保留] ${n.value} 在合理范围内（${minValue.toFixed(0)}-${maxValue.toFixed(0)}），保留（可能是总市值）`)
+          return true
+        }
+        
+        // 只有在合理范围外的6位整数才可能被过滤
+        if (n.value >= 100000 && n.value < 1000000 && isPureInteger && !hasDecimalInOriginal && !hasDecimalInLine) {
+          console.log(`  [候选过滤] ${n.value} 疑似6位股票代码（不在合理范围内且无小数点）`)
           return false
         }
+        
         return true
       })
-      .sort((a, b) => b.value - a.value) // 按从大到小排序
+      .map(n => {
+        // 🆕 给包含"总市值"关键词的数字更高优先级
+        const hasMarketValueKeyword = /总市值|持有市值|市值/i.test(n.line)
+        return {
+          ...n,
+          priority: hasMarketValueKeyword ? 1 : 0  // 1 = 高优先级，0 = 普通
+        }
+      })
+      .sort((a, b) => {
+        // 🆕 先按优先级排序（包含市值关键词的优先），再按数值大小排序
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority  // 高优先级在前
+        }
+        return b.value - a.value  // 数值从大到小
+      })
     
     console.log(`  → 候选池中有 ${candidates.length} 个数字`)
     
     if (candidates.length > 0) {
       const rounded = Math.round(candidates[0].value * 100) / 100
       result.totalMarketValue = rounded
+      result.totalMarketValueSource = '候选机制'
       console.log(`  ✓ 从候选数字中选择总市值: ${rounded} (${candidates[0].line})`)
+      if (candidates[0].priority === 1) {
+        console.log(`  ✓ 该数字来自包含"总市值"关键词的行，优先级高`)
+      }
     } else {
       console.log(`  ✗✗✗ 没有找到符合条件的总市值候选`)
       console.log(`  ℹ️ 调试信息：`)

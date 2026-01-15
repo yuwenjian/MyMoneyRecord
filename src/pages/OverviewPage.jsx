@@ -619,35 +619,35 @@ function OverviewPage() {
             )}
           </button>
         </div>
-        <div className="text-gray-700">
+        <div className="text-gray-300">
           {isGeneratingAI && !aiAnalysis ? (
             <div className="flex items-center justify-center py-8">
               <div className="flex flex-col items-center space-y-3">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-sm text-gray-500">AI 正在分析中，请稍候...</p>
+                <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-sm text-gray-300">AI 正在分析中，请稍候...</p>
                 <p className="text-xs text-gray-400">（思考模式：正在查询最新市场数据并深度分析）</p>
               </div>
             </div>
           ) : aiAnalysis ? (
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none prose-invert">
               <ReactMarkdown
                 components={{
-                  h2: ({node, ...props}) => <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-3 pb-2 border-b border-gray-200" {...props} />,
-                  h3: ({node, ...props}) => <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2" {...props} />,
-                  h4: ({node, ...props}) => <h4 className="text-sm font-semibold text-gray-800 mt-3 mb-2" {...props} />,
-                  p: ({node, ...props}) => <p className="text-sm leading-relaxed text-gray-700 mb-3" {...props} />,
-                  ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-1.5 mb-3 text-sm text-gray-700 ml-2" {...props} />,
-                  ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-1.5 mb-3 text-sm text-gray-700 ml-2" {...props} />,
-                  li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                  strong: ({node, ...props}) => <strong className="font-semibold text-gray-800" {...props} />,
-                  em: ({node, ...props}) => <em className="italic text-gray-600" {...props} />,
+                  h2: ({node, ...props}) => <h2 className="text-lg font-semibold text-amber-400 mt-6 mb-3 pb-2 border-b border-dark-border" {...props} />,
+                  h3: ({node, ...props}) => <h3 className="text-base font-semibold text-gray-200 mt-4 mb-2" {...props} />,
+                  h4: ({node, ...props}) => <h4 className="text-sm font-semibold text-gray-200 mt-3 mb-2" {...props} />,
+                  p: ({node, ...props}) => <p className="text-sm leading-relaxed text-gray-300 mb-3" {...props} />,
+                  ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-1.5 mb-3 text-sm text-gray-300 ml-2" {...props} />,
+                  ol: ({node, ...props}) => <ol className="list-decimal list-inside space-y-1.5 mb-3 text-sm text-gray-300 ml-2" {...props} />,
+                  li: ({node, ...props}) => <li className="mb-1 text-gray-300" {...props} />,
+                  strong: ({node, ...props}) => <strong className="font-semibold text-gray-200" {...props} />,
+                  em: ({node, ...props}) => <em className="italic text-gray-400" {...props} />,
                   code: ({node, inline, ...props}) => 
                     inline ? (
-                      <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800" {...props} />
+                      <code className="bg-dark-elevated px-1.5 py-0.5 rounded text-xs font-mono text-amber-400 border border-dark-border" {...props} />
                     ) : (
-                      <code className="block bg-gray-100 p-3 rounded text-xs font-mono text-gray-800 overflow-x-auto mb-3" {...props} />
+                      <code className="block bg-dark-elevated p-3 rounded text-xs font-mono text-amber-400 overflow-x-auto mb-3 border border-dark-border" {...props} />
                     ),
-                  blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-blue-300 pl-4 italic text-gray-600 my-3 bg-blue-50 py-2 rounded-r" {...props} />,
+                  blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-amber-500/50 pl-4 italic text-gray-300 my-3 bg-dark-elevated py-2 rounded-r" {...props} />,
                 }}
               >
                 {aiAnalysis}
