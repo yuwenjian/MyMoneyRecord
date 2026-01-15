@@ -378,26 +378,26 @@ function OverviewPage() {
       {/* 总资产卡片 - 非对称重叠设计 */}
       <div className="relative animate-stagger-1">
         <GradientCard className="relative overflow-visible">
-          {/* 日历图标 - 橙色大卡片右上角，不在任何子卡片内 */}
+          {/* 日历图标 - 调整位置避免遮挡数字 */}
           <button
             onClick={() => navigate('/calendar')}
-            className="absolute top-6 right-6 p-3 rounded-xl bg-dark-surface/90 backdrop-blur-md border-2 border-amber-500/50 hover:border-amber-400 hover:bg-dark-elevated active:scale-95 transition-all duration-300 text-amber-400 shadow-glow-amber z-30"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 sm:p-3 rounded-xl bg-dark-surface/90 backdrop-blur-md border-2 border-amber-500/50 hover:border-amber-400 hover:bg-dark-elevated active:scale-95 transition-all duration-300 text-amber-400 shadow-glow-amber z-30"
             title="查看日历"
           >
-            <FiCalendar size={20} />
+            <FiCalendar size={18} className="sm:w-5 sm:h-5" />
           </button>
           
           {/* 非对称布局 */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
             {/* 主数字 - 左侧大号显示 */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 pr-16 sm:pr-20 lg:pr-6">
               <div className="mb-2">
                 <span className="text-sm font-sans font-medium text-white/70 uppercase tracking-wider">
                   当前总资产
                 </span>
                 <span className="text-xs text-white/50 ml-2">CNY</span>
               </div>
-              <div className="text-6xl lg:text-7xl font-display font-bold text-white tracking-tighter leading-none mb-6">
+              <div className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white tracking-tighter leading-none mb-6 break-all">
                 {isLoading ? (
                   <span className="inline-block animate-pulse text-white/50">加载中...</span>
                 ) : (

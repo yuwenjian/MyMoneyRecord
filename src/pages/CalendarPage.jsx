@@ -17,6 +17,15 @@ dayjs.extend(weekOfYear)
 dayjs.extend(localeData)
 dayjs.locale('zh-cn')
 
+// 移动端紧凑格式：去掉千分位分隔符，使用更短的格式
+const formatCompactCurrency = (amount) => {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '--'
+  }
+  // 去掉千分位分隔符，保留两位小数
+  return amount.toFixed(2)
+}
+
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(dayjs())
   const [currentYear, setCurrentYear] = useState(dayjs())
@@ -548,28 +557,37 @@ export default function CalendarPage() {
               onClick={() => handleDateClick(date)}
               style={bgStyle}
               className={`
-                relative p-1 sm:p-2 min-h-[70px] sm:min-h-[90px] border-2 rounded-lg cursor-pointer
+                relative p-0.5 sm:p-2 border-2 rounded-lg cursor-pointer
                 transition-all duration-300 hover:scale-105 flex flex-col
+                aspect-square min-w-0
                 ${!isCurrentMonth ? 'bg-dark-elevated/50 border-dark-border text-gray-500' : 'bg-dark-surface border-dark-border'}
                 ${isToday ? 'border-amber-500 ring-2 ring-amber-500/30' : ''}
                 ${isSelected ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-dark-bg border-amber-500' : ''}
               `}
             >
-              <div className={`text-xs sm:text-sm font-sans font-semibold mb-1 flex-shrink-0 ${isCurrentMonth ? 'text-gray-300' : 'text-gray-600'}`}>
+              {/* 日期数字 - 缩小以节省空间 */}
+              <div className={`text-[10px] sm:text-sm font-sans font-semibold mb-0.5 flex-shrink-0 text-center ${isCurrentMonth ? 'text-gray-300' : 'text-gray-600'}`}>
                 {date.date()}
               </div>
               
+              {/* 收益数字区域 - 确保可见 */}
               {dayData && isCurrentMonth && (
-                <div className="flex-1 flex flex-col justify-center min-h-0 space-y-0.5 sm:space-y-1">
-                  {/* 总收益 - 使用白色文字确保在任何背景上都清晰 */}
-                  <div className="font-display font-bold text-[9px] sm:text-xs leading-tight text-center">
-                    <span className="text-gray-400 text-[8px] sm:text-[10px] font-sans font-medium hidden sm:inline">总: </span>
-                    <span className={`block truncate px-0.5 font-bold ${dayData.totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
-                      {formatCurrency(dayData.totalProfit, false)}
+                <div className="flex-1 flex flex-col justify-center items-center min-h-0 px-0.5">
+                  {/* 总收益 - 移动端优化显示，确保一行显示 */}
+                  <div className="w-full text-center">
+                    <span 
+                      className={`inline-block whitespace-nowrap font-display font-bold ${dayData.totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}
+                      style={{ 
+                        fontSize: 'clamp(7px, 1.8vw, 11px)',
+                        lineHeight: '1.1'
+                      }}
+                    >
+                      <span className="sm:hidden">{formatCompactCurrency(dayData.totalProfit)}</span>
+                      <span className="hidden sm:inline">{formatCurrency(dayData.totalProfit, false)}</span>
                     </span>
                   </div>
-                  {/* 股票和基金收益 - 使用白色文字 */}
-                  <div className="hidden sm:block space-y-0.5 text-[10px] leading-tight">
+                  {/* 股票和基金收益 - 桌面端显示 */}
+                  <div className="hidden sm:block space-y-0.5 text-[9px] leading-tight mt-0.5">
                     {dayData.stockProfit !== 0 && (
                       <div className="truncate">
                         <span className="text-gray-400 font-sans font-medium">股: </span>
@@ -636,9 +654,9 @@ export default function CalendarPage() {
                   <FiChevronLeft size={18} className="sm:w-5 sm:h-5 text-amber-400" />
                 </button>
               )}
-              <h2 className="text-base sm:text-xl font-display font-bold text-amber-400 px-2">
+              <h2 className="text-base sm:text-xl font-display font-bold text-amber-400 px-2 whitespace-nowrap">
                 {viewMode === '日' 
-                  ? currentMonth.format('YYYY年MM月')
+                  ? currentMonth.format('YYYY/MM')
                   : viewMode === '月'
                   ? currentYear.format('YYYY年')
                   : '所有年份'

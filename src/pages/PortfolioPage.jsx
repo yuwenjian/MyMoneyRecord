@@ -512,10 +512,10 @@ export default function PortfolioPage() {
               return (
                 <div key={item.id}>
                   {/* 移动端布局 */}
-                  <div className="sm:hidden p-3 border border-gray-200 rounded-lg bg-white">
+                  <div className="sm:hidden p-3 border border-dark-border rounded-lg bg-dark-surface">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm truncate flex-1 mr-2" title={item.name}>{item.name}</div>
-                      <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className="font-medium text-sm truncate flex-1 mr-2 text-gray-200" title={item.name}>{item.name}</div>
+                      <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                         ({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)
                       </div>
                     </div>
@@ -544,7 +544,7 @@ export default function PortfolioPage() {
                     </div>
                   </div>
                   {/* 桌面端布局 */}
-                  <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
+                  <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-dark-border rounded-lg items-center text-xs sm:text-sm bg-dark-surface">
                     <div className="font-medium truncate" title={item.name}>{item.name}</div>
                     <div className="text-right">{item.amount.toLocaleString()}</div>
                     <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
@@ -754,10 +754,10 @@ export default function PortfolioPage() {
               return (
                 <div key={item.id}>
                   {/* 移动端布局 */}
-                  <div className="sm:hidden p-3 border border-gray-200 rounded-lg bg-white">
+                  <div className="sm:hidden p-3 border border-dark-border rounded-lg bg-dark-surface">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-sm truncate flex-1 mr-2" title={item.name}>{item.name}</div>
-                      <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className="font-medium text-sm truncate flex-1 mr-2 text-gray-200" title={item.name}>{item.name}</div>
+                      <div className={`font-semibold text-sm whitespace-nowrap ${profit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                         ({profitPercent >= 0 ? '+' : ''}{profitPercent.toFixed(1)}%)
                       </div>
                     </div>
@@ -786,7 +786,7 @@ export default function PortfolioPage() {
                     </div>
                   </div>
                   {/* 桌面端布局 */}
-                  <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-gray-200 rounded-lg items-center text-xs sm:text-sm">
+                  <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 border border-dark-border rounded-lg items-center text-xs sm:text-sm bg-dark-surface">
                     <div className="font-medium truncate" title={item.name}>{item.name}</div>
                     <div className="text-right">{item.amount.toLocaleString()}</div>
                     <div className="text-right hidden md:block">{formatCurrency(item.cost)}</div>
