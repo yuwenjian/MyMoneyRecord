@@ -369,134 +369,159 @@ function OverviewPage() {
     : 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 lg:space-y-12">
       <PageHeader
         title="概览"
         subtitle="欢迎回来，AI 实时监测中..."
       />
 
-      {/* 总资产卡片 */}
-      <GradientCard className="relative mb-6">
-        {/* 日历图标 - 右上角 */}
-        <button
-          onClick={() => navigate('/calendar')}
-          className="absolute top-5 right-5 p-2.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200 text-white/90 hover:text-white backdrop-blur-sm"
-          title="查看日历"
-        >
-          <FiCalendar size={22} />
-        </button>
-        
-        <div className="mb-6">
-          <h2 className="text-base font-medium text-white/90 mb-2 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-white/60 rounded-full"></span>
-            当前总资产 (CNY)
-          </h2>
-          <div className="text-5xl lg:text-6xl font-bold text-white tracking-tight">
-            {isLoading ? (
-              <span className="inline-block animate-pulse">加载中...</span>
-            ) : (
-              formatCurrency(overviewData.totalAsset)
-            )}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-5">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <div className="text-sm text-white/80 mb-2 font-medium">今日盈亏</div>
-            <div className="flex items-center space-x-2">
-              <span className={`text-2xl font-bold ${overviewData.todayProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
-                {formatCurrency(overviewData.todayProfit, true)}
-              </span>
-              {overviewData.todayProfitPercent !== 0 && (
-                <span className={`text-sm font-semibold px-2 py-0.5 rounded-lg ${overviewData.todayProfit >= 0 ? 'bg-green-500/30 text-green-100' : 'bg-red-500/30 text-red-100'}`}>
-                  {overviewData.todayProfitPercent >= 0 ? '+' : ''}{overviewData.todayProfitPercent.toFixed(2)}%
+      {/* 总资产卡片 - 非对称重叠设计 */}
+      <div className="relative animate-stagger-1">
+        <GradientCard className="relative overflow-visible">
+          {/* 日历图标 - 橙色大卡片右上角，不在任何子卡片内 */}
+          <button
+            onClick={() => navigate('/calendar')}
+            className="absolute top-6 right-6 p-3 rounded-xl bg-dark-surface/90 backdrop-blur-md border-2 border-amber-500/50 hover:border-amber-400 hover:bg-dark-elevated active:scale-95 transition-all duration-300 text-amber-400 shadow-glow-amber z-30"
+            title="查看日历"
+          >
+            <FiCalendar size={20} />
+          </button>
+          
+          {/* 非对称布局 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+            {/* 主数字 - 左侧大号显示 */}
+            <div className="lg:col-span-7">
+              <div className="mb-2">
+                <span className="text-sm font-sans font-medium text-white/70 uppercase tracking-wider">
+                  当前总资产
                 </span>
-              )}
+                <span className="text-xs text-white/50 ml-2">CNY</span>
+              </div>
+              <div className="text-6xl lg:text-7xl font-display font-bold text-white tracking-tighter leading-none mb-6">
+                {isLoading ? (
+                  <span className="inline-block animate-pulse text-white/50">加载中...</span>
+                ) : (
+                  <span className="number-display text-white drop-shadow-lg">
+                    {formatCurrency(overviewData.totalAsset)}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <div className="text-sm text-white/80 mb-2 font-medium">本月收益</div>
-            <div className="flex items-center space-x-2">
-              <span className={`text-2xl font-bold ${overviewData.monthProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
-                {formatCurrency(overviewData.monthProfit, true)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </GradientCard>
 
-      {/* 资产构成和图表 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 资产构成 */}
-        <Card hover className="lg:col-span-1">
-          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+            {/* 收益指标 - 右侧小卡片，向左移动 */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-2">
+                <div className="text-xs font-sans font-medium text-amber-400/80 mb-2 uppercase tracking-wider">
+                  今日盈亏
+                </div>
+                <div className="flex items-baseline space-x-2">
+                  <span className={`text-3xl font-display font-bold ${overviewData.todayProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                    {formatCurrency(overviewData.todayProfit, true)}
+                  </span>
+                  {overviewData.todayProfitPercent !== 0 && (
+                    <span className={`text-sm font-sans font-semibold px-2 py-1 rounded-lg ${overviewData.todayProfit >= 0 ? 'bg-success-base/20 text-success-light border border-success-base/30' : 'bg-danger-base/20 text-danger-light border border-danger-base/30'}`}>
+                      {overviewData.todayProfitPercent >= 0 ? '+' : ''}{overviewData.todayProfitPercent.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-3">
+                <div className="text-xs font-sans font-medium text-amber-400/80 mb-2 uppercase tracking-wider">
+                  本月收益
+                </div>
+                <div className="flex items-baseline">
+                  <span className={`text-3xl font-display font-bold ${overviewData.monthProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                    {formatCurrency(overviewData.monthProfit, true)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GradientCard>
+      </div>
+
+      {/* 资产构成和图表 - 非对称网格布局 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        {/* 资产构成 - 左侧窄列 */}
+        <Card hover className="lg:col-span-4 animate-stagger-2">
+          <h3 className="text-xl font-display font-bold text-amber-400 mb-8 flex items-center gap-3 decorative-line">
+            <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
             资产构成
           </h3>
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-5 border border-red-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
-                  <span className="text-gray-700 font-semibold">股票</span>
+            {/* 股票 */}
+            <div className="bg-gradient-to-br from-danger-base/10 to-danger-dark/5 rounded-2xl p-6 border border-danger-base/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-danger-base/5 rounded-full blur-2xl"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-danger-base shadow-glow-amber"></div>
+                    <span className="text-gray-200 font-sans font-semibold text-base">股票</span>
+                  </div>
+                  <span className="text-amber-400 font-display font-bold text-xl">{stockPercent}%</span>
                 </div>
-                <span className="text-gray-600 font-bold text-lg">{stockPercent}%</span>
-              </div>
-              <div className="text-3xl font-bold text-gray-800">
-                {formatCurrency(overviewData.stockAsset)}
-              </div>
-              <div className="mt-3 w-full bg-red-200 rounded-full h-2.5 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-red-500 to-red-600 h-full rounded-full transition-all duration-500 shadow-sm"
-                  style={{ width: `${stockPercent}%` }}
-                ></div>
+                <div className="text-4xl font-display font-bold text-white mb-4">
+                  {formatCurrency(overviewData.stockAsset)}
+                </div>
+                <div className="w-full bg-dark-border rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-danger-base to-danger-light h-full rounded-full transition-all duration-700 shadow-glow-amber"
+                    style={{ width: `${stockPercent}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-200/50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-4 h-4 rounded-full bg-blue-500 shadow-sm"></div>
-                  <span className="text-gray-700 font-semibold">基金</span>
+            
+            {/* 基金 */}
+            <div className="bg-gradient-to-br from-amber-500/10 to-gold-base/5 rounded-2xl p-6 border border-amber-500/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-amber-500 shadow-glow-amber"></div>
+                    <span className="text-gray-200 font-sans font-semibold text-base">基金</span>
+                  </div>
+                  <span className="text-amber-400 font-display font-bold text-xl">{fundPercent}%</span>
                 </div>
-                <span className="text-gray-600 font-bold text-lg">{fundPercent}%</span>
-              </div>
-              <div className="text-3xl font-bold text-gray-800">
-                {formatCurrency(overviewData.fundAsset)}
-              </div>
-              <div className="mt-3 w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500 shadow-sm"
-                  style={{ width: `${fundPercent}%` }}
-                ></div>
+                <div className="text-4xl font-display font-bold text-white mb-4">
+                  {formatCurrency(overviewData.fundAsset)}
+                </div>
+                <div className="w-full bg-dark-border rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-amber-500 to-gold-base h-full rounded-full transition-all duration-700 shadow-glow-amber"
+                    style={{ width: `${fundPercent}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-dark-border">
             <button
               onClick={() => navigate('/portfolio')}
-              className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1 group transition-colors"
+              className="text-amber-400 hover:text-amber-300 text-sm font-sans font-semibold flex items-center gap-2 group transition-colors"
             >
               查看详细配置
-              <span className="group-hover:translate-x-1 transition-transform">→</span>
+              <span className="group-hover:translate-x-1 transition-transform text-lg">→</span>
             </button>
           </div>
         </Card>
 
-        {/* 净值增长曲线 */}
-        <Card hover className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+        {/* 净值增长曲线 - 右侧宽列 */}
+        <Card hover className="lg:col-span-8 animate-stagger-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+            <h3 className="text-xl font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">
+              <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
               净值增长曲线
             </h3>
-            <div className="flex space-x-2 bg-gray-100 p-1 rounded-xl">
+            <div className="flex space-x-2 bg-dark-elevated p-1.5 rounded-xl border border-dark-border">
               {['7d', '1m', 'year'].map((period) => (
                 <button
                   key={period}
                   onClick={() => setChartPeriod(period)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`px-5 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                     chartPeriod === period
-                      ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-white/50'
+                      ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
+                      : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
                   }`}
                 >
                   {period === '7d' ? '7日' : period === '1m' ? '1月' : '今年'}
@@ -520,13 +545,27 @@ function OverviewPage() {
                     y: {
                       beginAtZero: false,
                       grid: {
-                        color: 'rgba(0, 0, 0, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.05)',
                       },
+                      ticks: {
+                        color: '#9ca3af',
+                        font: {
+                          family: 'IBM Plex Sans, sans-serif',
+                          size: 11
+                        }
+                      }
                     },
                     x: {
                       grid: {
                         display: false,
                       },
+                      ticks: {
+                        color: '#9ca3af',
+                        font: {
+                          family: 'IBM Plex Sans, sans-serif',
+                          size: 11
+                        }
+                      }
                     },
                   },
                 }}
@@ -540,19 +579,19 @@ function OverviewPage() {
         </Card>
       </div>
 
-      {/* AI 智能分析 */}
-      <Card hover>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
-          <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+      {/* AI 智能分析 - 全宽编辑风格 */}
+      <Card hover className="animate-stagger-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+          <div className="flex flex-wrap items-center gap-4">
+            <h3 className="text-xl font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">
+              <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
               AI 智能分析
             </h3>
-            <span className="text-xs font-semibold bg-gradient-to-r from-primary-100 to-primary-50 text-primary-700 px-3 py-1.5 rounded-full border border-primary-200">
+            <span className="text-xs font-sans font-semibold bg-amber-500/20 text-amber-400 px-4 py-2 rounded-full border border-amber-500/30 backdrop-blur-sm">
               🤖 DeepSeek Powered
             </span>
             {todayAnalysisCount > 0 && (
-              <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+              <span className="text-xs text-gray-400 bg-dark-elevated px-3 py-1.5 rounded-full font-sans font-medium border border-dark-border">
                 今日已用 {todayAnalysisCount}/3 次
               </span>
             )}
@@ -560,11 +599,11 @@ function OverviewPage() {
           <button 
             onClick={handleRegenerateAI}
             disabled={isGeneratingAI || todayAnalysisCount >= 3}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 rounded-xl hover:from-primary-100 hover:to-primary-200 transition-all duration-200 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-200 active:scale-95"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-dark-elevated text-amber-400 rounded-xl hover:bg-dark-surface hover:text-amber-300 transition-all duration-300 text-sm font-sans font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-amber-500/20 hover:border-amber-500/40 active:scale-95 shadow-dark-lg hover:shadow-glow-amber"
           >
             {isGeneratingAI ? (
               <>
-                <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
                 <span>生成中...</span>
               </>
             ) : todayAnalysisCount >= 3 ? (

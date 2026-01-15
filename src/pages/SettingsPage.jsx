@@ -61,7 +61,7 @@ function SettingsPage() {
 
       {/* 显示设置 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">显示设置</h3>
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">显示设置</h3>
         <div className="space-y-4">
           <Select
             label="货币单位"
@@ -88,10 +88,10 @@ function SettingsPage() {
 
       {/* AI 设置 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">AI 智能分析设置</h3>
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">AI 智能分析设置</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               DeepSeek API Key
             </label>
             <div className="flex space-x-2 items-start">
@@ -111,7 +111,7 @@ function SettingsPage() {
                 保存
               </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-400">
               用于 AI 智能分析功能。API Key 仅存储在本地，不会上传到服务器。
               <br />
               获取 API Key：访问{' '}
@@ -119,7 +119,7 @@ function SettingsPage() {
                 href="https://platform.deepseek.com/api_keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
+                className="text-amber-400 hover:text-amber-300 hover:underline transition-colors"
               >
                 DeepSeek 平台
               </a>
@@ -130,30 +130,30 @@ function SettingsPage() {
 
       {/* 功能设置 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">功能设置</h3>
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">功能设置</h3>
         <div className="space-y-4">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <div className="font-medium text-gray-700">自动备份</div>
-              <div className="text-sm text-gray-500">定期自动备份数据</div>
+              <div className="font-medium text-gray-300">自动备份</div>
+              <div className="text-sm text-gray-400">定期自动备份数据</div>
             </div>
             <input
               type="checkbox"
               checked={settings.autoBackup}
               onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-5 h-5 text-amber-500 border-dark-border rounded focus:ring-amber-500 bg-dark-elevated"
             />
           </label>
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <div className="font-medium text-gray-700">通知提醒</div>
-              <div className="text-sm text-gray-500">启用系统通知</div>
+              <div className="font-medium text-gray-300">通知提醒</div>
+              <div className="text-sm text-gray-400">启用系统通知</div>
             </div>
             <input
               type="checkbox"
               checked={settings.notifications}
               onChange={(e) => handleSettingChange('notifications', e.target.checked)}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-5 h-5 text-amber-500 border-dark-border rounded focus:ring-amber-500 bg-dark-elevated"
             />
           </label>
         </div>
@@ -161,8 +161,8 @@ function SettingsPage() {
 
       {/* 关于 */}
       <Card>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">关于</h3>
-        <div className="space-y-2 text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-gray-300 mb-4">关于</h3>
+        <div className="space-y-2 text-sm text-gray-400">
           <p>财智追踪 v1.0.0</p>
           <p>一个简单易用的投资收益记录工具</p>
           <p className="pt-4 text-xs text-gray-500">

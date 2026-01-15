@@ -12,19 +12,21 @@ export function Select({ label, error, options = [], className = '', ...props })
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
           {label}
         </label>
       )}
       <select
         className={`
-          w-full px-4 py-2
-          border rounded-lg
-          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-          transition-colors
+          w-full px-4 py-2.5
+          border-2 rounded-xl
+          bg-dark-elevated text-gray-200
+          focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500
+          transition-all duration-300
+          font-sans
           ${error 
-            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-            : 'border-gray-300'
+            ? 'border-danger-500/50 focus:border-danger-500 focus:ring-danger-500/30' 
+            : 'border-dark-border hover:border-amber-500/30'
           }
           ${className}
         `}
@@ -37,7 +39,10 @@ export function Select({ label, error, options = [], className = '', ...props })
         ))}
       </select>
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="mt-1 text-sm text-danger-600 font-medium flex items-center gap-1">
+          <span>⚠️</span>
+          {error}
+        </p>
       )}
     </div>
   )

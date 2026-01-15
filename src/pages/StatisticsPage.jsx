@@ -21,7 +21,6 @@ import { getRecords, getAdjustments, formatDate, formatCurrency, saveRecord, del
 import { calculateDailyProfitLoss } from '../utils/calculations'
 import { getTargetProgress } from '../utils/targetCalculations'
 import { ProgressBar } from '../components/ProgressBar'
-import { Fireworks } from '../components/Fireworks'
 import { TargetSettings } from '../components/TargetSettings'
 import { exportToExcel, exportToCSV } from '../utils/export'
 import { calculateMonthlyStats, calculateYearlyStats, getAvailablePeriods } from '../utils/periodStats'
@@ -101,8 +100,6 @@ function StatisticsPage() {
   const [targetProgresses, setTargetProgresses] = useState([])
   const [isTargetProgressExpanded, setIsTargetProgressExpanded] = useState(true)
   const [showTargetSettings, setShowTargetSettings] = useState(false)
-  const [showFireworks, setShowFireworks] = useState(false)
-  const [achievedTargets, setAchievedTargets] = useState(new Set())
 
   useEffect(() => {
     const initDates = async () => {
@@ -545,26 +542,6 @@ function StatisticsPage() {
         getTargetProgress(target, records, adjustments)
       )
       setTargetProgresses(progresses)
-      
-      // 检查是否有新达成的目标
-      const newlyAchieved = new Set()
-      progresses.forEach(progress => {
-        const key = `${progress.investmentType}-${progress.period}`
-        if (progress.isAchieved && !achievedTargets.has(key)) {
-          newlyAchieved.add(key)
-        }
-      })
-      
-      // 如果有新达成的目标，显示烟花
-      if (newlyAchieved.size > 0) {
-        setShowFireworks(true)
-        setAchievedTargets(prev => {
-          const updated = new Set(prev)
-          newlyAchieved.forEach(key => updated.add(key))
-          return updated
-        })
-        setTimeout(() => setShowFireworks(false), 3000) // 3秒后关闭烟花
-      }
     } catch (error) {
       console.error('加载目标进度失败:', error)
     }
@@ -1049,7 +1026,12 @@ function StatisticsPage() {
         display: true,
         position: 'top',
         labels: {
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#f3f4f6',  // 深色主题使用浅色文字
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 500
+          }
         }
       },
       tooltip: {
@@ -1089,15 +1071,24 @@ function StatisticsPage() {
         title: {
           display: true,
           text: '日期',
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#d1d5db',  // 深色主题使用浅灰色
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 600
+          }
         },
         ticks: {
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#9ca3af',  // 深色主题使用浅灰色
           maxRotation: 45,
           minRotation: 0,
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 11
+          }
         },
         grid: {
-          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
+          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',  // 深色主题使用浅色网格
         }
       },
       y: {
@@ -1107,16 +1098,25 @@ function StatisticsPage() {
         title: {
           display: true,
           text: '盈亏百分比（%）',
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#d1d5db',  // 深色主题使用浅灰色
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 600
+          }
         },
         ticks: {
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#9ca3af',  // 深色主题使用浅灰色
           callback: function(value) {
             return value.toFixed(2) + '%'
+          },
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 11
           }
         },
         grid: {
-          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
+          color: isChartFullScreen ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',  // 深色主题使用浅色网格
         }
       }
     }
@@ -1142,7 +1142,12 @@ function StatisticsPage() {
         display: true,
         position: 'right',
         labels: {
-          color: isChartFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isChartFullScreen ? '#333333' : '#f3f4f6',  // 深色主题使用浅色文字
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 500
+          }
         }
       },
       tooltip: {
@@ -1186,7 +1191,12 @@ function StatisticsPage() {
         display: true,
         position: 'top',
         labels: {
-          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isComparisonFullScreen ? '#333333' : '#f3f4f6',  // 深色主题使用浅色文字
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 500
+          }
         }
       },
       tooltip: {
@@ -1226,15 +1236,24 @@ function StatisticsPage() {
         title: {
           display: true,
           text: '日期',
-          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isComparisonFullScreen ? '#333333' : '#d1d5db',  // 深色主题使用浅灰色
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 600
+          }
         },
         ticks: {
-          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isComparisonFullScreen ? '#333333' : '#9ca3af',  // 深色主题使用浅灰色
           maxRotation: 45,
           minRotation: 0,
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 11
+          }
         },
         grid: {
-          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
+          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',  // 深色主题使用浅色网格
         }
       },
       y: {
@@ -1244,16 +1263,25 @@ function StatisticsPage() {
         title: {
           display: true,
           text: '盈亏百分比（%）',
-          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isComparisonFullScreen ? '#333333' : '#d1d5db',  // 深色主题使用浅灰色
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 12,
+            weight: 600
+          }
         },
         ticks: {
-          color: isComparisonFullScreen ? '#333333' : undefined,  // 全屏时强制黑色
+          color: isComparisonFullScreen ? '#333333' : '#9ca3af',  // 深色主题使用浅灰色
           callback: function(value) {
             return value.toFixed(2) + '%'
+          },
+          font: {
+            family: 'IBM Plex Sans, sans-serif',
+            size: 11
           }
         },
         grid: {
-          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : undefined,  // 全屏时浅灰色网格
+          color: isComparisonFullScreen ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)',  // 深色主题使用浅色网格
         }
       }
     }
@@ -1268,25 +1296,25 @@ function StatisticsPage() {
 
       {/* 日期范围选择 */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">日期范围</h2>
+        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">日期范围</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">开始日期</label>
+            <label className="block text-sm font-sans font-semibold text-gray-300 mb-2">开始日期</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
               aria-label="选择开始日期"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">结束日期</label>
+            <label className="block text-sm font-sans font-semibold text-gray-300 mb-2">结束日期</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
               aria-label="选择结束日期"
             />
           </div>
@@ -1331,12 +1359,12 @@ function StatisticsPage() {
 
       {/* 收益目标进度 */}
       <Card>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-          <h2 className="text-lg font-semibold text-gray-800">收益目标进度</h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
+          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">收益目标进度</h2>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+              className="flex items-center space-x-2 px-4 py-2 bg-dark-elevated text-gray-300 rounded-xl hover:bg-dark-surface hover:text-amber-400 transition-all duration-300 text-sm font-sans font-semibold border border-dark-border hover:border-amber-500/30"
               title={isTargetProgressExpanded ? "收起" : "展开"}
             >
               <span>{isTargetProgressExpanded ? '▼' : '▶'}</span>
@@ -1344,10 +1372,10 @@ function StatisticsPage() {
             </button>
             <button
               onClick={() => setShowTargetSettings(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-dark-elevated rounded-xl transition-all duration-300 border border-transparent hover:border-amber-500/30"
               title="设置目标"
             >
-              <img src="/assets/images/shezhi.png" alt="设置" className="w-5 h-5" />
+              <img src="/assets/images/shezhi.png" alt="设置" className="w-5 h-5 opacity-80 hover:opacity-100" />
             </button>
           </div>
         </div>
@@ -1382,7 +1410,7 @@ function StatisticsPage() {
                       
                       return (
                         <div key={period} className="space-y-3">
-                          <h3 className="text-md font-semibold text-gray-700">{periodLabel}</h3>
+                          <h3 className="text-md font-sans font-semibold text-gray-300">{periodLabel}</h3>
                           {sortedProgresses.map((progress) => {
                             const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
                             const label = `${typeLabel} - ${periodLabel}`
@@ -1406,8 +1434,8 @@ function StatisticsPage() {
                 })()}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline w-4 h-4 align-middle" /> 按钮设置目标</p>
+              <div className="text-center py-8 text-gray-400 font-sans">
+                <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline w-4 h-4 align-middle opacity-80" /> 按钮设置目标</p>
               </div>
             )}
           </>
@@ -1416,8 +1444,8 @@ function StatisticsPage() {
 
       {/* 持仓分布 */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">持仓分布</h2>
-        <div className="space-y-4">
+        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">持仓分布</h2>
+        <div className="space-y-6">
           {(() => {
             const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
             const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
@@ -1428,30 +1456,30 @@ function StatisticsPage() {
             return (
               <>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">股票</span>
-                    <span className="text-sm font-semibold text-gray-600">{stockRatio.toFixed(1)}%</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-sans font-semibold text-gray-300">股票</span>
+                    <span className="text-sm font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div className="w-full bg-dark-border rounded-full h-2.5 mb-3 overflow-hidden">
                     <div 
-                      className="bg-red-500 h-2 rounded-full transition-all" 
+                      className="bg-gradient-to-r from-danger-base to-danger-light h-full rounded-full transition-all duration-500 shadow-glow-amber" 
                       style={{ width: `${stockRatio}%` }}
                     ></div>
                   </div>
-                  <div className="text-lg font-bold text-gray-800">{stats.currentStockAsset}</div>
+                  <div className="text-xl font-display font-bold text-white">{stats.currentStockAsset}</div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">基金</span>
-                    <span className="text-sm font-semibold text-gray-600">{fundRatio.toFixed(1)}%</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-sans font-semibold text-gray-300">基金</span>
+                    <span className="text-sm font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div className="w-full bg-dark-border rounded-full h-2.5 mb-3 overflow-hidden">
                     <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all" 
+                      className="bg-gradient-to-r from-amber-500 to-gold-base h-full rounded-full transition-all duration-500 shadow-glow-amber" 
                       style={{ width: `${fundRatio}%` }}
                     ></div>
                   </div>
-                  <div className="text-lg font-bold text-gray-800">{stats.currentFundAsset}</div>
+                  <div className="text-xl font-display font-bold text-white">{stats.currentFundAsset}</div>
                 </div>
               </>
             )
@@ -1463,29 +1491,29 @@ function StatisticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 账户资产统计 */}
         <Card>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">账户资产</h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-600">当前股票账户总资产</span>
-              <span className="text-lg font-semibold text-gray-800">{stats.currentStockAsset}</span>
+          <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">账户资产</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-dark-border">
+              <span className="text-sm font-sans text-gray-400">当前股票账户总资产</span>
+              <span className="text-lg font-display font-bold text-white">{stats.currentStockAsset}</span>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-gray-600">当前基金账户总资产</span>
-              <span className="text-lg font-semibold text-gray-800">{stats.currentFundAsset}</span>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm font-sans text-gray-400">当前基金账户总资产</span>
+              <span className="text-lg font-display font-bold text-white">{stats.currentFundAsset}</span>
             </div>
           </div>
         </Card>
 
         {/* 盈亏统计 */}
         <Card>
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">盈亏统计 ({startDate} 至 {endDate})</h2>
+          <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">盈亏统计 ({startDate} 至 {endDate})</h2>
           {isLoading ? (
             <SkeletonCard />
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">股票盈亏资金</span>
-                <span className="text-lg font-semibold">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-3 border-b border-dark-border">
+                <span className="text-sm font-sans text-gray-400">股票盈亏资金</span>
+                <span className="text-lg font-display font-bold">
                   <TrendIndicator 
                     value={stats.stockProfitLoss} 
                     showArrow={true} 
@@ -1493,9 +1521,9 @@ function StatisticsPage() {
                   />
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-600">基金盈亏资金</span>
-                <span className="text-lg font-semibold">
+              <div className="flex items-center justify-between py-3 border-b border-dark-border">
+                <span className="text-sm font-sans text-gray-400">基金盈亏资金</span>
+                <span className="text-lg font-display font-bold">
                   <TrendIndicator 
                     value={stats.fundProfitLoss} 
                     showArrow={true} 
@@ -1503,9 +1531,9 @@ function StatisticsPage() {
                   />
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-gray-600">总盈亏</span>
-                <span className="text-lg font-semibold">
+              <div className="flex items-center justify-between py-3">
+                <span className="text-sm font-sans text-gray-400">总盈亏</span>
+                <span className="text-lg font-display font-bold">
                   <TrendIndicator 
                     value={stats.totalProfitLoss} 
                     showArrow={true} 
@@ -1520,18 +1548,18 @@ function StatisticsPage() {
 
       {/* 月度/年度汇总统计 */}
       <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">周期汇总统计</h2>
-          <div className="flex space-x-2">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">周期汇总统计</h2>
+          <div className="flex space-x-2 bg-dark-elevated p-1.5 rounded-xl border border-dark-border">
             <button
               onClick={() => {
                 setPeriodView('month')
                 setSelectedPeriod(null)
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-5 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                 periodView === 'month'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
+                  : 'bg-transparent text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
               }`}
             >
               月度
@@ -1541,10 +1569,10 @@ function StatisticsPage() {
                 setPeriodView('year')
                 setSelectedPeriod(null)
               }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-5 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                 periodView === 'year'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
+                  : 'bg-transparent text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
               }`}
             >
               年度
@@ -1590,43 +1618,43 @@ function StatisticsPage() {
         {periodStats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <h3 className="text-md font-semibold text-gray-700 mb-3">股票统计</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">盈亏金额</span>
-                  <span className={`text-sm font-semibold ${periodStats.stock.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">股票统计</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">盈亏金额</span>
+                  <span className={`text-sm font-display font-bold ${periodStats.stock.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.stock.profitLoss, true)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">收益率</span>
-                  <span className={`text-sm font-semibold ${periodStats.stock.returnRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">收益率</span>
+                  <span className={`text-sm font-display font-bold ${periodStats.stock.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {periodStats.stock.returnRate.toFixed(2)}%
                   </span>
                 </div>
                 {periodView === 'year' && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">年化收益率</span>
-                    <span className={`text-sm font-semibold ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                    <span className="text-sm font-sans text-gray-400">年化收益率</span>
+                    <span className={`text-sm font-display font-bold ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                       {(periodStats.stock.annualizedReturn * 100).toFixed(2)}%
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">胜率</span>
-                  <span className="text-sm font-semibold text-gray-800">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">胜率</span>
+                  <span className="text-sm font-display font-bold text-white">
                     {periodStats.stock.winRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">最大回撤</span>
-                  <span className="text-sm font-semibold text-red-600">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">最大回撤</span>
+                  <span className="text-sm font-display font-bold text-danger-light">
                     {periodStats.stock.maxDrawdown.toFixed(2)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-600">交易天数</span>
-                  <span className="text-sm font-semibold text-gray-800">
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="text-sm font-sans text-gray-400">交易天数</span>
+                  <span className="text-sm font-display font-bold text-white">
                     {periodStats.stock.days} 天
                   </span>
                 </div>
@@ -1634,43 +1662,43 @@ function StatisticsPage() {
             </div>
 
             <div>
-              <h3 className="text-md font-semibold text-gray-700 mb-3">基金统计</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">盈亏金额</span>
-                  <span className={`text-sm font-semibold ${periodStats.fund.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">基金统计</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">盈亏金额</span>
+                  <span className={`text-sm font-display font-bold ${periodStats.fund.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.fund.profitLoss, true)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">收益率</span>
-                  <span className={`text-sm font-semibold ${periodStats.fund.returnRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">收益率</span>
+                  <span className={`text-sm font-display font-bold ${periodStats.fund.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {periodStats.fund.returnRate.toFixed(2)}%
                   </span>
                 </div>
                 {periodView === 'year' && (
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-sm text-gray-600">年化收益率</span>
-                    <span className={`text-sm font-semibold ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                    <span className="text-sm font-sans text-gray-400">年化收益率</span>
+                    <span className={`text-sm font-display font-bold ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                       {(periodStats.fund.annualizedReturn * 100).toFixed(2)}%
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">胜率</span>
-                  <span className="text-sm font-semibold text-gray-800">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">胜率</span>
+                  <span className="text-sm font-display font-bold text-white">
                     {periodStats.fund.winRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                  <span className="text-sm text-gray-600">最大回撤</span>
-                  <span className="text-sm font-semibold text-red-600">
+                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
+                  <span className="text-sm font-sans text-gray-400">最大回撤</span>
+                  <span className="text-sm font-display font-bold text-danger-light">
                     {periodStats.fund.maxDrawdown.toFixed(2)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-600">交易天数</span>
-                  <span className="text-sm font-semibold text-gray-800">
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="text-sm font-sans text-gray-400">交易天数</span>
+                  <span className="text-sm font-display font-bold text-white">
                     {periodStats.fund.days} 天
                   </span>
                 </div>
@@ -1678,11 +1706,11 @@ function StatisticsPage() {
             </div>
 
             <div>
-              <h3 className="text-md font-semibold text-gray-700 mb-3">合计统计</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-600">总盈亏</span>
-                  <span className={`text-sm font-semibold ${periodStats.total.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">合计统计</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="text-sm font-sans text-gray-400">总盈亏</span>
+                  <span className={`text-sm font-display font-bold ${periodStats.total.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.total.profitLoss, true)}
                   </span>
                 </div>
@@ -1692,7 +1720,7 @@ function StatisticsPage() {
         )}
 
         {!periodStats && selectedPeriod && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400 font-sans">
             该周期暂无数据
           </div>
         )}
@@ -1700,23 +1728,23 @@ function StatisticsPage() {
 
       {/* 股票与基金收益对比分析 */}
       <Card>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
+        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="border-2 border-red-200 rounded-xl p-6 bg-red-50">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="border-2 border-danger-base/30 rounded-2xl p-6 bg-danger-base/10 backdrop-blur-sm">
+            <div className="flex items-center space-x-3 mb-5">
               <img src="/assets/images/gupiao.png" alt="股票" className="w-8 h-8" />
-              <h3 className="text-lg font-semibold text-gray-800">股票</h3>
+              <h3 className="text-lg font-display font-bold text-white">股票</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <div className="text-sm text-gray-600 mb-1">累计盈亏</div>
-                <div className={`text-xl font-bold ${stats.stockProfitLoss === '--' ? 'text-gray-600' : (parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'text-green-600' : 'text-red-600')}`}>
+                <div className="text-sm font-sans text-gray-400 mb-2">累计盈亏</div>
+                <div className={`text-2xl font-display font-bold ${stats.stockProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
                   {stats.stockProfitLoss}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 mb-1">当前资产</div>
-                <div className="text-xl font-bold text-gray-800">{stats.currentStockAsset}</div>
+                <div className="text-sm font-sans text-gray-400 mb-2">当前资产</div>
+                <div className="text-2xl font-display font-bold text-white">{stats.currentStockAsset}</div>
               </div>
               {(() => {
                 const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
@@ -1725,28 +1753,28 @@ function StatisticsPage() {
                 const stockRatio = totalProfit !== 0 ? (stockProfit / totalProfit * 100) : 0
                 return (
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">占比</div>
-                    <div className="text-xl font-bold text-gray-800">{stockRatio.toFixed(1)}%</div>
+                    <div className="text-sm font-sans text-gray-400 mb-2">占比</div>
+                    <div className="text-2xl font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</div>
                   </div>
                 )
               })()}
             </div>
           </div>
-          <div className="border-2 border-blue-200 rounded-xl p-6 bg-blue-50">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="border-2 border-amber-500/30 rounded-2xl p-6 bg-amber-500/10 backdrop-blur-sm">
+            <div className="flex items-center space-x-3 mb-5">
               <img src="/assets/images/jijin.png" alt="基金" className="w-8 h-8" />
-              <h3 className="text-lg font-semibold text-gray-800">基金</h3>
+              <h3 className="text-lg font-display font-bold text-white">基金</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <div className="text-sm text-gray-600 mb-1">累计盈亏</div>
-                <div className={`text-xl font-bold ${stats.fundProfitLoss === '--' ? 'text-gray-600' : (parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'text-green-600' : 'text-red-600')}`}>
+                <div className="text-sm font-sans text-gray-400 mb-2">累计盈亏</div>
+                <div className={`text-2xl font-display font-bold ${stats.fundProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
                   {stats.fundProfitLoss}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 mb-1">当前资产</div>
-                <div className="text-xl font-bold text-gray-800">{stats.currentFundAsset}</div>
+                <div className="text-sm font-sans text-gray-400 mb-2">当前资产</div>
+                <div className="text-2xl font-display font-bold text-white">{stats.currentFundAsset}</div>
               </div>
               {(() => {
                 const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
@@ -1755,8 +1783,8 @@ function StatisticsPage() {
                 const fundRatio = totalProfit !== 0 ? (fundProfit / totalProfit * 100) : 0
                 return (
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">占比</div>
-                    <div className="text-xl font-bold text-gray-800">{fundRatio.toFixed(1)}%</div>
+                    <div className="text-sm font-sans text-gray-400 mb-2">占比</div>
+                    <div className="text-2xl font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</div>
                   </div>
                 )
               })()}
@@ -1770,7 +1798,7 @@ function StatisticsPage() {
             className={`bg-white rounded-xl p-4 sm:p-6 shadow-sm w-full max-w-full overflow-hidden ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">收益趋势对比</h3>
+              <h3 className="text-lg font-display font-bold text-amber-400">收益趋势对比</h3>
               <button
                 type="button"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1871,9 +1899,9 @@ function StatisticsPage() {
       </Card>
 
       {/* 图表区域 */}
-      <Card className={isChartFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">对比趋势图 (盈亏百分比)</h2>
+      <Card className={isChartFullScreen ? 'fixed inset-0 z-50 bg-dark-bg overflow-y-auto' : ''}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">对比趋势图 (盈亏百分比)</h2>
           <div className="flex items-center space-x-2">
             <Button
               variant="secondary"
@@ -1893,13 +1921,13 @@ function StatisticsPage() {
             </Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex space-x-1 bg-dark-elevated rounded-xl p-1.5 border border-dark-border">
             <button
               type="button"
               onClick={() => setChartType('line')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                chartType === 'line' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                chartType === 'line' ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber' : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
               }`}
             >
               📈 折线
@@ -1907,8 +1935,8 @@ function StatisticsPage() {
             <button
               type="button"
               onClick={() => setChartType('bar')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                chartType === 'bar' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                chartType === 'bar' ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber' : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
               }`}
             >
               📊 柱状
@@ -1916,8 +1944,8 @@ function StatisticsPage() {
             <button
               type="button"
               onClick={() => setChartType('pie')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                chartType === 'pie' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              className={`px-4 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                chartType === 'pie' ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber' : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
               }`}
             >
               🥧 饼图
@@ -1925,14 +1953,14 @@ function StatisticsPage() {
           </div>
           {chartType !== 'pie' && (
             <>
-              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex space-x-1 bg-dark-elevated rounded-xl p-1.5 border border-dark-border">
                 {['day', 'week', 'month', 'year'].map((period) => (
                   <button
                     key={period}
                     type="button"
                     onClick={() => setChartPeriod(period)}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      chartPeriod === period ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+                    className={`px-4 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                      chartPeriod === period ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber' : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
                     }`}
                   >
                     {period === 'day' ? '日' : period === 'week' ? '周' : period === 'month' ? '月' : '年'}
@@ -1945,9 +1973,9 @@ function StatisticsPage() {
                     type="checkbox"
                     checked={showMovingAverage}
                     onChange={(e) => setShowMovingAverage(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-amber-500 border-dark-border rounded focus:ring-amber-500 bg-dark-elevated"
                   />
-                  <span className="text-sm text-gray-700">移动平均线</span>
+                  <span className="text-sm font-sans text-gray-300">移动平均线</span>
                 </label>
               )}
             </>
@@ -1972,8 +2000,8 @@ function StatisticsPage() {
 
       {/* 历史记录列表 */}
       <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-3 sm:space-y-0">
-          <h2 className="text-lg font-semibold text-gray-800">历史记录</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
+          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">历史记录</h2>
           <div className="flex flex-wrap items-center gap-2">
             {/* 类型筛选按钮组 */}
             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
@@ -1981,10 +2009,10 @@ function StatisticsPage() {
                 <button
                   key={filter}
                   onClick={() => setHistoryFilter(filter)}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                     historyFilter === filter
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
+                      : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
                   }`}
                 >
                   {filter === 'all' ? '全部' : filter === 'stock' ? '股票' : '基金'}
@@ -2021,7 +2049,7 @@ function StatisticsPage() {
         {/* 批量操作栏 */}
         {selectedRecords.length > 0 && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-blue-50 rounded-lg mb-4 space-y-2 sm:space-y-0">
-            <span className="text-sm font-medium text-gray-700">已选择 {selectedRecords.length} 条记录</span>
+            <span className="text-sm font-sans font-semibold text-gray-300">已选择 {selectedRecords.length} 条记录</span>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
               <Button
                 variant="danger"
@@ -2047,13 +2075,13 @@ function StatisticsPage() {
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0 w-full">
             <div className="inline-block min-w-full align-middle px-4 sm:px-0 w-full">
-              <table className="min-w-full divide-y divide-gray-200 w-full">
-              <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-dark-border w-full">
+              <thead className="bg-dark-elevated border-b border-dark-border">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider w-12">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-amber-500 border-dark-border rounded focus:ring-amber-500 bg-dark-surface"
                       checked={selectedRecords.length > 0 && selectedRecords.length === (() => {
                         const filtered = historyFilter === 'all' 
                           ? historyData 
@@ -2080,18 +2108,18 @@ function StatisticsPage() {
                       }}
                     />
                   </th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">日期</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">类型</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">总资产</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">总市值</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">上证指数</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">加减仓</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">备注</th>
-                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sm:w-32 whitespace-nowrap">操作</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">日期</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">类型</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">总资产</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">总市值</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">上证指数</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">加减仓</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">备注</th>
+                  <th className="px-2 sm:px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider w-24 sm:w-32 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-dark-surface divide-y divide-dark-border">
                 {(() => {
                   const filteredData = historyFilter === 'all' 
                     ? historyData 
@@ -2107,43 +2135,45 @@ function StatisticsPage() {
                       return (
                         <tr
                           key={item.originalData.objectId || index}
-                          className={`${isSelected ? 'bg-blue-50' : ''} hover:bg-gray-50 transition-colors`}
+                          className={`${isSelected ? 'bg-amber-500/10 border-l-2 border-amber-500' : 'bg-dark-surface'} hover:bg-dark-elevated transition-colors`}
                         >
                           <td className="px-4 py-3 whitespace-nowrap">
                             <input
                               type="checkbox"
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-amber-500 border-dark-border rounded focus:ring-amber-500 bg-dark-elevated checked:bg-amber-500"
                               checked={isSelected}
                               onChange={() => toggleRecordSelection(item)}
                             />
                           </td>
-                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
-                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
-                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">{item.totalAsset}</td>
-                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{item.totalMarketValue}</td>
-                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">{item.shanghaiIndex}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-200">{item.date}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-200">{item.type}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-white hidden sm:table-cell">{item.totalAsset}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-300 hidden md:table-cell">{item.totalMarketValue}</td>
+                          <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-300 hidden lg:table-cell">{item.shanghaiIndex}</td>
                           <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm">
                             <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
                           </td>
-                          <td className={`px-2 sm:px-4 py-3 whitespace-nowrap text-sm hidden md:table-cell ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
+                          <td className={`px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-sans font-medium hidden md:table-cell ${item.adjustmentClass?.includes('positive') ? 'text-success-light' : item.adjustmentClass?.includes('negative') ? 'text-danger-light' : 'text-gray-400'}`}>
                             {item.adjustmentAmount}
                           </td>
-                          <td className="px-2 sm:px-4 py-3 text-sm text-gray-900 hidden lg:table-cell">{item.notes}</td>
+                          <td className="px-2 sm:px-4 py-3 text-sm font-sans font-medium text-gray-400 hidden lg:table-cell">{item.notes}</td>
                           <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm">
                             <div className="flex space-x-2">
                               <Button
-                                variant="ghost"
+                                variant="secondary"
                                 size="sm"
                                 onClick={() => handleEditRecord(item)}
+                                className="bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                               >
-                                编辑
+                                ✏️ 编辑
                               </Button>
                               <Button
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleDeleteRecord(item)}
+                                className="shadow-danger-base/30"
                               >
-                                删除
+                                🗑️ 删除
                               </Button>
                             </div>
                           </td>
@@ -2152,11 +2182,13 @@ function StatisticsPage() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="10" className="px-4 py-12 text-center">
-                        <EmptyState 
-                          type="history" 
-                          message={historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
-                        />
+                      <td colSpan="10" className="px-4 py-12 text-center bg-dark-surface">
+                        <div className="text-gray-400 font-sans">
+                          <EmptyState 
+                            type="history" 
+                            message={historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
+                          />
+                        </div>
                       </td>
                     </tr>
                   )
@@ -2178,9 +2210,9 @@ function StatisticsPage() {
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">历史记录详情</h2>
+          <div className="bg-dark-surface rounded-xl shadow-dark-xl w-full max-w-7xl max-h-[90vh] flex flex-col border border-dark-border">
+            <div className="flex items-center justify-between p-6 border-b border-dark-border">
+              <h2 className="text-xl font-display font-bold text-amber-400">历史记录详情</h2>
               <Button
                 variant="ghost"
                 size="sm"
@@ -2206,20 +2238,20 @@ function StatisticsPage() {
               <div className="flex-1 overflow-auto px-6 pb-6">
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50 sticky top-0 z-10">
+                    <thead className="bg-dark-elevated sticky top-0 z-10 border-b border-dark-border">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">日期</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">类型</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">总资产</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">总市值</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">上证指数</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">加减仓</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">备注</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">操作</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">日期</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">类型</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">总资产</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">总市值</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">上证指数</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">当日盈亏</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">加减仓</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap">备注</th>
+                        <th className="px-4 py-3 text-left text-xs font-sans font-semibold text-gray-300 uppercase tracking-wider whitespace-nowrap w-32">操作</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-dark-surface divide-y divide-dark-border">
                       {(() => {
                         // 根据筛选条件过滤数据
                         const filteredData = historyFilter === 'all' 
@@ -2232,34 +2264,36 @@ function StatisticsPage() {
                         
                         return filteredData.length > 0 ? (
                           filteredData.map((item, index) => (
-                            <tr key={item.originalData?.objectId || index} className="hover:bg-gray-50">
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalAsset}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.totalMarketValue}</td>
-                              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{item.shanghaiIndex}</td>
+                            <tr key={item.originalData?.objectId || index} className="bg-dark-surface hover:bg-dark-elevated transition-colors">
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-200">{item.date}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-200">{item.type}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-white">{item.totalAsset}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-300">{item.totalMarketValue}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm font-sans font-medium text-gray-300">{item.shanghaiIndex}</td>
                               <td className="px-4 py-3 whitespace-nowrap text-sm">
                                 <TrendIndicator value={item.dailyProfitLoss} showArrow={true} showSign={false} />
                               </td>
-                              <td className={`px-4 py-3 whitespace-nowrap text-sm ${item.adjustmentClass?.includes('positive') ? 'text-green-600' : item.adjustmentClass?.includes('negative') ? 'text-red-600' : 'text-gray-900'}`}>
+                              <td className={`px-4 py-3 whitespace-nowrap text-sm font-sans font-medium ${item.adjustmentClass?.includes('positive') ? 'text-success-light' : item.adjustmentClass?.includes('negative') ? 'text-danger-light' : 'text-gray-400'}`}>
                                 {item.adjustmentAmount}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">{item.notes}</td>
+                              <td className="px-4 py-3 text-sm font-sans font-medium text-gray-400">{item.notes}</td>
                               <td className="px-4 py-3 whitespace-nowrap text-sm">
                                 <div className="flex space-x-2">
                                   <Button
-                                    variant="ghost"
+                                    variant="secondary"
                                     size="sm"
                                     onClick={() => handleEditRecord(item)}
+                                    className="bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                                   >
-                                    编辑
+                                    ✏️ 编辑
                                   </Button>
                                   <Button
                                     variant="danger"
                                     size="sm"
                                     onClick={() => handleDeleteRecord(item)}
+                                    className="shadow-danger-base/30"
                                   >
-                                    删除
+                                    🗑️ 删除
                                   </Button>
                                 </div>
                               </td>
@@ -2267,7 +2301,7 @@ function StatisticsPage() {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="9" className="px-4 py-12 text-center text-gray-500">
+                            <td colSpan="9" className="px-4 py-12 text-center text-gray-400 font-sans">
                               {historyFilter === 'all' ? '暂无记录' : `暂无${historyFilter === 'stock' ? '股票' : '基金'}记录`}
                             </td>
                           </tr>
@@ -2290,12 +2324,6 @@ function StatisticsPage() {
           onCancel={() => setEditingRecord(null)}
         />
       )}
-
-      {/* 烟花动画 */}
-      <Fireworks 
-        show={showFireworks} 
-        onComplete={() => setShowFireworks(false)}
-      />
 
       {/* 目标设置弹窗 */}
       {showTargetSettings && (

@@ -6,55 +6,159 @@
 
 @layer base {
   * {
-    @apply border-gray-200;
+    @apply border-dark-border;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-dark-bg text-gray-100 antialiased;
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(251, 191, 36, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(212, 175, 55, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(251, 191, 36, 0.04) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(212, 175, 55, 0.06) 0px, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+    background-attachment: fixed;
   }
 
   #root {
     @apply min-h-screen;
   }
 
-  /* 滚动条样式 */
+  /* 滚动条样式 - 深色主题 */
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    @apply bg-dark-surface;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-dark-border rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    @apply bg-amber-600;
   }
 }
 
 @layer components {
-  /* 卡片悬停效果 */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-medium hover:-translate-y-1;
+  /* 精致卡片效果 */
+  .card-luxury {
+    @apply bg-dark-surface border border-dark-border rounded-2xl;
+    @apply shadow-dark-lg backdrop-blur-sm;
+    @apply transition-all duration-500;
+    @apply relative overflow-hidden;
   }
 
-  /* 渐变文字 */
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent;
+  .card-luxury::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-mesh opacity-0 transition-opacity duration-500;
   }
 
-  /* 玻璃态效果 */
-  .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20;
+  .card-luxury:hover::before {
+    @apply opacity-100;
+  }
+
+  .card-luxury:hover {
+    @apply shadow-dark-xl border-amber-500/30 -translate-y-1;
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  /* 渐变文字 - 金色 */
+  .gradient-text-gold {
+    @apply bg-gradient-to-r from-amber-400 via-gold-base to-amber-500 bg-clip-text text-transparent;
+    @apply font-display;
+  }
+
+  /* 玻璃态效果 - 深色 */
+  .glass-dark {
+    @apply bg-dark-surface/80 backdrop-blur-xl border border-dark-border/50;
+    @apply shadow-dark-lg;
+  }
+
+  /* 琥珀色发光效果 */
+  .glow-amber {
+    @apply shadow-glow-amber;
+  }
+
+  /* 非对称装饰线 */
+  .decorative-line {
+    @apply relative;
+  }
+
+  .decorative-line::after {
+    content: '';
+    @apply absolute -bottom-2 left-0 h-0.5 w-20 bg-gradient-to-r from-amber-500 to-transparent;
+  }
+
+  /* 数字显示样式 */
+  .number-display {
+    @apply font-display font-semibold tracking-tight;
+    @apply gradient-text-gold;
+  }
+
+  /* 日期选择器样式 - 深色主题 */
+  input[type="date"] {
+    color-scheme: dark;
+    /* 强制使用深色主题 */
+    --webkit-calendar-picker-indicator-color: rgb(251, 191, 36);
+  }
+
+  /* 日期输入框内部文本颜色定制 */
+  input[type="date"]::-webkit-datetime-edit {
+    @apply text-gray-200;
+    color: rgb(229, 231, 235) !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-year-field {
+    @apply text-gray-200;
+    color: rgb(229, 231, 235) !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-month-field {
+    @apply text-gray-200;
+    color: rgb(229, 231, 235) !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-day-field {
+    @apply text-gray-200;
+    color: rgb(229, 231, 235) !important;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-text {
+    @apply text-gray-400;
+    color: rgb(156, 163, 175) !important;
+  }
+
+  /* 日历图标颜色 - 琥珀/金色 */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply cursor-pointer;
+    filter: invert(1) brightness(0.8) sepia(1) saturate(5) hue-rotate(15deg);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    filter: invert(1) brightness(1) sepia(1) saturate(5) hue-rotate(15deg);
+  }
+
+  /* Firefox 日期选择器样式 */
+  input[type="date"]::-moz-calendar-picker-indicator {
+    filter: invert(1) brightness(0.8) sepia(1) saturate(5) hue-rotate(15deg);
+    opacity: 0.8;
+  }
+
+  /* 尝试影响日期选择器弹窗的样式（Chrome/Edge） */
+  /* 注意：浏览器原生日历弹窗的样式很难完全控制，但 color-scheme: dark 应该会应用深色主题 */
+  input[type="date"]:focus {
+    /* 确保焦点状态也使用深色主题 */
+    color-scheme: dark;
   }
 }
 

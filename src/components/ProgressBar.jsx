@@ -29,28 +29,34 @@ export function ProgressBar({
   }
   
   return (
-    <div className="progress-bar-container">
-      <div className="progress-bar-header">
-        <span className="progress-bar-label">{label}</span>
-        <span className={`progress-bar-percentage ${isAchieved ? 'achieved' : ''}`}>
+    <div className="w-full py-3">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-sans font-semibold text-gray-300">{label}</span>
+        <span className={`text-base font-display font-bold transition-colors ${isAchieved ? 'text-success-light' : 'text-amber-400'}`}>
           {clampedPercentage.toFixed(1)}%
         </span>
       </div>
-      <div className="progress-bar-wrapper">
+      <div className="w-full h-6 bg-dark-border rounded-full overflow-hidden relative shadow-inner">
         <div 
-          className={`progress-bar-fill ${isAchieved ? 'achieved' : ''} ${getProgressColorClass()}`}
+          className={`h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 relative ${
+            isAchieved 
+              ? 'bg-gradient-to-r from-success-base to-success-light shadow-glow-amber' 
+              : investmentType === 'stock' 
+                ? 'bg-gradient-to-r from-danger-base to-danger-light' 
+                : 'bg-gradient-to-r from-amber-500 to-gold-base'
+          } ${isAchieved ? 'animate-pulse' : ''}`}
           style={{ width: `${clampedPercentage}%` }}
         >
           {clampedPercentage >= 20 && (
-            <span className="progress-bar-text">
+            <span className="text-xs font-sans font-bold text-white drop-shadow-md">
               {clampedPercentage.toFixed(1)}%
             </span>
           )}
         </div>
       </div>
-      <div className="progress-bar-footer">
-        <span className="progress-bar-actual">实际: {actualValue}</span>
-        <span className="progress-bar-target">目标: {targetValue}</span>
+      <div className="flex justify-between items-center mt-2 text-xs font-sans">
+        <span className="text-gray-400">实际: <span className="text-gray-200 font-semibold">{actualValue}</span></span>
+        <span className="text-gray-400">目标: <span className="text-gray-200 font-semibold">{targetValue}</span></span>
       </div>
     </div>
   )

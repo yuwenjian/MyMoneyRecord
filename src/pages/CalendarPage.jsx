@@ -6,7 +6,7 @@ import weekOfYear from 'dayjs/plugin/weekOfYear'
 import localeData from 'dayjs/plugin/localeData'
 import 'dayjs/locale/zh-cn'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
-import { PageHeader } from '../components/ui'
+import { PageHeader, Card } from '../components/ui'
 import { getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
 import toast from 'react-hot-toast'
@@ -277,7 +277,8 @@ export default function CalendarPage() {
     }
   }
 
-  // 根据总收益获取背景颜色强度（使用内联样式）
+  // 根据总收益获取背景颜色强度（使用内联样式）- 深色主题优化
+  // 盈利越大越红，亏损越多越绿
   const getBackgroundStyle = (totalProfit) => {
     if (totalProfit === 0 || totalProfit === undefined) return {}
     
@@ -295,13 +296,13 @@ export default function CalendarPage() {
     const intensity = Math.min(Math.max(normalized, 0), 1)
     
     if (totalProfit >= 0) {
-      // 盈利：红色系，盈利越多颜色越深
-      const opacity = 0.1 + (intensity * 0.3) // 0.1 到 0.4 的透明度
-      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` } // red-500
+      // 盈利：红色系，盈利越多红色越深
+      const opacity = 0.15 + (intensity * 0.3) // 0.15 到 0.45 的透明度
+      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` } // danger-500 (红色)
     } else {
-      // 亏损：绿色系，亏损越多颜色越深
-      const opacity = 0.1 + (intensity * 0.3) // 0.1 到 0.4 的透明度
-      return { backgroundColor: `rgba(34, 197, 94, ${opacity})` } // green-500
+      // 亏损：绿色系，亏损越多绿色越深
+      const opacity = 0.15 + (intensity * 0.3) // 0.15 到 0.45 的透明度
+      return { backgroundColor: `rgba(16, 185, 129, ${opacity})` } // success-500 (绿色)
     }
   }
 
@@ -330,26 +331,36 @@ export default function CalendarPage() {
               }}
               style={bgStyle}
               className={`
-                relative p-4 border rounded-lg cursor-pointer
-                transition-all hover:opacity-80 flex flex-col items-center justify-center
-                min-h-[100px] sm:min-h-[120px]
-                ${isCurrentMonth ? 'border-blue-500 border-2' : 'border-gray-200'}
+                relative p-4 border-2 rounded-xl cursor-pointer
+                transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center
+                min-h-[100px] sm:min-h-[120px] bg-dark-surface
+                ${isCurrentMonth ? 'border-amber-500/50 ring-2 ring-amber-500/20' : 'border-dark-border'}
               `}
             >
-              <div className="text-sm sm:text-base font-semibold text-gray-800 mb-2">
+              <div className="text-sm sm:text-base font-display font-bold text-amber-400 mb-3">
                 {month.format('MM月')}
               </div>
               {monthData && (
                 <div className="text-center">
-                  <div className={`text-lg sm:text-xl font-bold ${monthData.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  <div className={`text-lg sm:text-xl font-display font-bold ${monthData.totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(monthData.totalProfit, false)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">
+                  <div className="text-xs font-sans text-gray-400 mt-2 space-y-0.5">
                     {monthData.stockProfit !== 0 && (
-                      <div>股: {formatCurrency(monthData.stockProfit, false)}</div>
+                      <div>
+                        <span className="text-gray-500">股: </span>
+                        <span className={`font-semibold ${monthData.stockProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(monthData.stockProfit, false)}
+                        </span>
+                      </div>
                     )}
                     {monthData.fundProfit !== 0 && (
-                      <div>基: {formatCurrency(monthData.fundProfit, false)}</div>
+                      <div>
+                        <span className="text-gray-500">基: </span>
+                        <span className={`font-semibold ${monthData.fundProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(monthData.fundProfit, false)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -385,11 +396,13 @@ export default function CalendarPage() {
     const intensity = Math.min(Math.max(normalized, 0), 1)
     
     if (totalProfit >= 0) {
-      const opacity = 0.1 + (intensity * 0.3)
-      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` }
+      // 盈利：红色系，盈利越多红色越深
+      const opacity = 0.15 + (intensity * 0.3)
+      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` } // 红色
     } else {
-      const opacity = 0.1 + (intensity * 0.3)
-      return { backgroundColor: `rgba(34, 197, 94, ${opacity})` }
+      // 亏损：绿色系，亏损越多绿色越深
+      const opacity = 0.15 + (intensity * 0.3)
+      return { backgroundColor: `rgba(16, 185, 129, ${opacity})` } // 绿色
     }
   }
 
@@ -410,26 +423,36 @@ export default function CalendarPage() {
               key={yearKey}
               style={bgStyle}
               className={`
-                relative p-6 border rounded-lg
+                relative p-6 border-2 rounded-xl
                 flex flex-col items-center justify-center
-                min-h-[120px] sm:min-h-[150px]
-                ${isCurrentYear ? 'border-blue-500 border-2' : 'border-gray-200'}
+                min-h-[120px] sm:min-h-[150px] bg-dark-surface
+                ${isCurrentYear ? 'border-amber-500/50 ring-2 ring-amber-500/20' : 'border-dark-border'}
               `}
             >
-              <div className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
+              <div className="text-lg sm:text-xl font-display font-bold text-amber-400 mb-4">
                 {yearKey}年
               </div>
               {yearData && (
                 <div className="text-center">
-                  <div className={`text-2xl sm:text-3xl font-bold ${yearData.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  <div className={`text-2xl sm:text-3xl font-display font-bold ${yearData.totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(yearData.totalProfit, false)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-2">
+                  <div className="text-sm font-sans text-gray-400 mt-3 space-y-1">
                     {yearData.stockProfit !== 0 && (
-                      <div>股票: {formatCurrency(yearData.stockProfit, false)}</div>
+                      <div>
+                        <span className="text-gray-500">股票: </span>
+                        <span className={`font-semibold ${yearData.stockProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(yearData.stockProfit, false)}
+                        </span>
+                      </div>
                     )}
                     {yearData.fundProfit !== 0 && (
-                      <div>基金: {formatCurrency(yearData.fundProfit, false)}</div>
+                      <div>
+                        <span className="text-gray-500">基金: </span>
+                        <span className={`font-semibold ${yearData.fundProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(yearData.fundProfit, false)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -465,11 +488,13 @@ export default function CalendarPage() {
     const intensity = Math.min(Math.max(normalized, 0), 1)
     
     if (totalProfit >= 0) {
-      const opacity = 0.1 + (intensity * 0.3)
-      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` }
+      // 盈利：红色系，盈利越多红色越深
+      const opacity = 0.15 + (intensity * 0.3)
+      return { backgroundColor: `rgba(239, 68, 68, ${opacity})` } // 红色
     } else {
-      const opacity = 0.1 + (intensity * 0.3)
-      return { backgroundColor: `rgba(34, 197, 94, ${opacity})` }
+      // 亏损：绿色系，亏损越多绿色越深
+      const opacity = 0.15 + (intensity * 0.3)
+      return { backgroundColor: `rgba(16, 185, 129, ${opacity})` } // 绿色
     }
   }
 
@@ -500,10 +525,10 @@ export default function CalendarPage() {
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
     
     return (
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {/* 星期标题 */}
         {weekDays.map((day, index) => (
-          <div key={`${day}-${index}`} className="text-center text-xs sm:text-sm font-semibold text-gray-600 py-1 sm:py-2">
+          <div key={`${day}-${index}`} className="text-center text-xs sm:text-sm font-sans font-semibold text-gray-400 py-2 sm:py-3 bg-dark-elevated rounded-lg">
             {day}
           </div>
         ))}
@@ -523,36 +548,42 @@ export default function CalendarPage() {
               onClick={() => handleDateClick(date)}
               style={bgStyle}
               className={`
-                relative p-0.5 sm:p-2 min-h-[60px] sm:min-h-[60px] border rounded sm:rounded-lg cursor-pointer
-                transition-all hover:opacity-80 flex flex-col
-                ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-800'}
-                ${isToday ? 'border-blue-500 border-2' : 'border-gray-200'}
-                ${isSelected ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                relative p-1 sm:p-2 min-h-[70px] sm:min-h-[90px] border-2 rounded-lg cursor-pointer
+                transition-all duration-300 hover:scale-105 flex flex-col
+                ${!isCurrentMonth ? 'bg-dark-elevated/50 border-dark-border text-gray-500' : 'bg-dark-surface border-dark-border'}
+                ${isToday ? 'border-amber-500 ring-2 ring-amber-500/30' : ''}
+                ${isSelected ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-dark-bg border-amber-500' : ''}
               `}
             >
-              <div className={`text-xs sm:text-sm font-medium mb-0.5 sm:mb-1 flex-shrink-0 ${isCurrentMonth ? '' : 'opacity-50'}`}>
+              <div className={`text-xs sm:text-sm font-sans font-semibold mb-1 flex-shrink-0 ${isCurrentMonth ? 'text-gray-300' : 'text-gray-600'}`}>
                 {date.date()}
               </div>
               
               {dayData && isCurrentMonth && (
-                <div className="flex-1 flex flex-col justify-center min-h-0">
-                  {/* 移动端：只显示总收益 */}
-                  <div className={`font-semibold text-[8px] sm:text-xs leading-tight text-center ${dayData.totalProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                    <span className="hidden sm:inline">总: </span>
-                    <span className="block truncate px-0.5">
+                <div className="flex-1 flex flex-col justify-center min-h-0 space-y-0.5 sm:space-y-1">
+                  {/* 总收益 - 使用白色文字确保在任何背景上都清晰 */}
+                  <div className="font-display font-bold text-[9px] sm:text-xs leading-tight text-center">
+                    <span className="text-gray-400 text-[8px] sm:text-[10px] font-sans font-medium hidden sm:inline">总: </span>
+                    <span className={`block truncate px-0.5 font-bold ${dayData.totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                       {formatCurrency(dayData.totalProfit, false)}
                     </span>
                   </div>
-                  {/* 桌面端：显示所有收益 */}
-                  <div className="hidden sm:block space-y-0.5 text-xs leading-tight">
+                  {/* 股票和基金收益 - 使用白色文字 */}
+                  <div className="hidden sm:block space-y-0.5 text-[10px] leading-tight">
                     {dayData.stockProfit !== 0 && (
-                      <div className={`truncate ${dayData.stockProfit >= 0 ? 'text-red-600' : 'text-red-400'}`}>
-                        股: {formatCurrency(dayData.stockProfit, false)}
+                      <div className="truncate">
+                        <span className="text-gray-400 font-sans font-medium">股: </span>
+                        <span className={`font-sans font-semibold ${dayData.stockProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(dayData.stockProfit, false)}
+                        </span>
                       </div>
                     )}
                     {dayData.fundProfit !== 0 && (
-                      <div className={`truncate ${dayData.fundProfit >= 0 ? 'text-blue-600' : 'text-blue-400'}`}>
-                        基: {formatCurrency(dayData.fundProfit, false)}
+                      <div className="truncate">
+                        <span className="text-gray-400 font-sans font-medium">基: </span>
+                        <span className={`font-sans font-semibold ${dayData.fundProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                          {formatCurrency(dayData.fundProfit, false)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -572,16 +603,16 @@ export default function CalendarPage() {
         subtitle="查看每日收益情况"
         actions={
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="flex items-center space-x-1 sm:space-x-2 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-1 sm:space-x-2 bg-dark-elevated rounded-xl p-1.5 border border-dark-border">
               {['日', '月', '年'].map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`
-                    px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-colors
+                    px-4 sm:px-5 py-2 text-xs sm:text-sm font-sans font-semibold rounded-lg transition-all duration-300
                     ${viewMode === mode 
-                      ? 'bg-blue-600 text-white' 
-                      : 'text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber' 
+                      : 'text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
                     }
                   `}
                 >
@@ -593,7 +624,7 @@ export default function CalendarPage() {
               {viewMode !== '年' && (
                 <button
                   onClick={handlePrevMonth}
-                  className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors flex items-center justify-center"
+                  className="p-2 rounded-xl hover:bg-dark-elevated active:bg-dark-surface transition-all duration-300 flex items-center justify-center border border-dark-border hover:border-amber-500/30"
                   style={{ 
                     width: '44px', 
                     height: '44px',
@@ -602,10 +633,10 @@ export default function CalendarPage() {
                   }}
                   aria-label={viewMode === '月' ? '上一年' : '上一月'}
                 >
-                  <FiChevronLeft size={18} className="sm:w-5 sm:h-5 text-gray-800" />
+                  <FiChevronLeft size={18} className="sm:w-5 sm:h-5 text-amber-400" />
                 </button>
               )}
-              <h2 className="text-base sm:text-xl font-semibold text-gray-800 px-2">
+              <h2 className="text-base sm:text-xl font-display font-bold text-amber-400 px-2">
                 {viewMode === '日' 
                   ? currentMonth.format('YYYY年MM月')
                   : viewMode === '月'
@@ -616,7 +647,7 @@ export default function CalendarPage() {
               {viewMode !== '年' && (
                 <button
                   onClick={handleNextMonth}
-                  className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors flex items-center justify-center"
+                  className="p-2 rounded-xl hover:bg-dark-elevated active:bg-dark-surface transition-all duration-300 flex items-center justify-center border border-dark-border hover:border-amber-500/30"
                   style={{ 
                     width: '44px', 
                     height: '44px',
@@ -625,7 +656,7 @@ export default function CalendarPage() {
                   }}
                   aria-label={viewMode === '月' ? '下一年' : '下一月'}
                 >
-                  <FiChevronRight size={18} className="sm:w-5 sm:h-5 text-gray-800" />
+                  <FiChevronRight size={18} className="sm:w-5 sm:h-5 text-amber-400" />
                 </button>
               )}
             </div>
@@ -634,28 +665,28 @@ export default function CalendarPage() {
       />
 
       {/* 日历内容 */}
-      <div className="bg-white rounded-xl shadow-sm p-1 sm:p-4">
+      <Card>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           viewMode === '日' ? renderCalendar() :
           viewMode === '月' ? renderMonthView() :
           renderYearView()
         )}
-      </div>
+      </Card>
       
       {/* 选中日期的详情显示 */}
       {selectedDate && dailyData[selectedDate] && (
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border-2 border-blue-500">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
+        <Card className="border-2 border-amber-500/50 ring-2 ring-amber-500/20">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-display font-bold text-amber-400">
               {dayjs(selectedDate).format('YYYY年MM月DD日')} 收益详情
             </h3>
             <button
               onClick={() => setSelectedDate(null)}
-              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors flex items-center justify-center"
+              className="p-2 rounded-xl hover:bg-dark-elevated active:bg-dark-surface transition-all duration-300 flex items-center justify-center border border-dark-border hover:border-amber-500/30"
               style={{ 
                 width: '44px', 
                 height: '44px',
@@ -664,61 +695,61 @@ export default function CalendarPage() {
               }}
               aria-label="关闭"
             >
-              <span className="text-xl text-gray-800">×</span>
+              <span className="text-xl text-gray-400 hover:text-amber-400">×</span>
             </button>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <span className="text-sm font-medium text-gray-700">股票收益</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3 border-b border-dark-border">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 rounded-full bg-danger-base shadow-glow-amber"></div>
+                <span className="text-sm font-sans font-semibold text-gray-300">股票收益</span>
               </div>
-              <span className={`text-lg font-semibold ${dailyData[selectedDate].stockProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-lg font-display font-bold ${dailyData[selectedDate].stockProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                 {formatCurrency(dailyData[selectedDate].stockProfit, true)}
               </span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-sm font-medium text-gray-700">基金收益</span>
+            <div className="flex items-center justify-between py-3 border-b border-dark-border">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 rounded-full bg-amber-500 shadow-glow-amber"></div>
+                <span className="text-sm font-sans font-semibold text-gray-300">基金收益</span>
               </div>
-              <span className={`text-lg font-semibold ${dailyData[selectedDate].fundProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-lg font-display font-bold ${dailyData[selectedDate].fundProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                 {formatCurrency(dailyData[selectedDate].fundProfit, true)}
               </span>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium text-gray-700">总收益</span>
+            <div className="flex items-center justify-between py-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 rounded-full bg-success-base shadow-glow-amber"></div>
+                <span className="text-sm font-sans font-semibold text-gray-300">总收益</span>
               </div>
-              <span className={`text-xl font-bold ${dailyData[selectedDate].totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-xl font-display font-bold ${dailyData[selectedDate].totalProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                 {formatCurrency(dailyData[selectedDate].totalProfit, true)}
               </span>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* 底部说明 */}
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-        <div className="flex items-center justify-center flex-wrap gap-3 sm:gap-6 text-xs text-gray-600">
-          <div className="flex items-center space-x-1">
-            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500"></div>
-            <span>股票收益</span>
+      <Card>
+        <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 text-xs font-sans">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-danger-base shadow-glow-amber"></div>
+            <span className="text-gray-300 font-semibold">股票收益</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500"></div>
-            <span>基金收益</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-amber-500 shadow-glow-amber"></div>
+            <span className="text-gray-300 font-semibold">基金收益</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500"></div>
-            <span>总收益</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-success-base shadow-glow-amber"></div>
+            <span className="text-gray-300 font-semibold">总收益</span>
           </div>
         </div>
-        <div className="mt-3 text-center text-xs text-gray-500">
+        <div className="mt-4 text-center text-xs font-sans text-gray-400">
           <span className="sm:hidden">点击日期查看详细收益</span>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

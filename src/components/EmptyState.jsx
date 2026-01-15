@@ -40,12 +40,14 @@ export function EmptyState({ type = 'default', message, icon, action }) {
   }
 
   return (
-    <div className="empty-state">
-      <div className="empty-state-icon">{config.icon}</div>
-      <h3 className="empty-state-title">{config.title}</h3>
-      <p className="empty-state-message">{config.message}</p>
+    <div className="flex flex-col items-center justify-center py-12 px-4">
+      <div className="w-16 h-16 rounded-full bg-dark-elevated flex items-center justify-center mb-4 text-amber-400 text-3xl border border-amber-500/20">
+        {config.icon}
+      </div>
+      <h3 className="text-lg font-display font-bold text-amber-400 mb-2">{config.title}</h3>
+      <p className="text-sm font-sans text-gray-400 text-center max-w-md">{config.message}</p>
       {action && (
-        <div className="empty-state-action">
+        <div className="mt-6">
           {action}
         </div>
       )}

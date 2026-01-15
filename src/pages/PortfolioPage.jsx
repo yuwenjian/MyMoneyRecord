@@ -368,7 +368,7 @@ export default function PortfolioPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <img src="/assets/images/gupiao.png" alt="股票" className="w-5 h-5 sm:w-6 sm:h-6" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800">股票持仓</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-200">股票持仓</h3>
           </div>
           {!editingItem && (
             <Button
@@ -385,13 +385,13 @@ export default function PortfolioPage() {
           <Card className="mb-4">
             <div className="space-y-4">
               {/* 图片识别功能 */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <div className="border-2 border-dashed border-dark-border rounded-lg p-4 bg-dark-elevated/50">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">📷 图片识别</label>
+                  <label className="text-sm font-medium text-gray-300">📷 图片识别</label>
                   {imagePreview && (
                     <button
                       onClick={handleClearImage}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      className="text-danger-500 hover:text-danger-400 text-sm font-sans"
                     >
                       清除
                     </button>
@@ -408,11 +408,11 @@ export default function PortfolioPage() {
                   />
                   <label
                     htmlFor="stock-image-upload"
-                    className="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 text-center text-sm text-gray-700"
+                    className="flex-1 px-4 py-2 bg-dark-surface border border-dark-border rounded-lg cursor-pointer hover:bg-dark-elevated hover:border-amber-500/40 text-center text-sm text-gray-200 transition-colors"
                   >
                     {isRecognizing ? '识别中...' : '选择图片'}
                   </label>
-                  <div className="text-xs text-gray-500 flex items-center">
+                  <div className="text-xs text-gray-400 flex items-center">
                     或直接粘贴图片 (Ctrl+V)
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export default function PortfolioPage() {
                     <img
                       src={imagePreview}
                       alt="预览"
-                      className="max-w-full h-auto rounded-lg border border-gray-300"
+                      className="max-w-full h-auto rounded-lg border border-dark-border"
                     />
                   </div>
                 )}
@@ -496,7 +496,7 @@ export default function PortfolioPage() {
         {holdings.stock.length > 0 ? (
           <div className="space-y-2">
             {/* 表头 - 桌面端 */}
-            <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
+            <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-dark-elevated rounded-lg text-xs sm:text-sm font-medium text-gray-300">
               <div className="truncate">名称</div>
               <div className="text-right">数量</div>
               <div className="text-right hidden md:block">成本价</div>
@@ -520,25 +520,25 @@ export default function PortfolioPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-400">
                         {item.amount.toLocaleString()} 股
                       </div>
                       <div className="flex space-x-2">
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={() => handleEdit(item, 'stock')}
-                          className="text-xs px-3 py-1.5"
+                          className="text-xs px-3 py-1.5 bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                         >
-                          编辑
+                          ✏️ 编辑
                         </Button>
                         <Button
                           variant="danger"
                           size="sm"
                           onClick={() => handleDelete(item, 'stock')}
-                          className="text-xs px-3 py-1.5"
+                          className="text-xs px-3 py-1.5 shadow-danger-base/30"
                         >
-                          删除
+                          🗑️ 删除
                         </Button>
                       </div>
                     </div>
@@ -555,29 +555,29 @@ export default function PortfolioPage() {
                     </div>
                     <div className="flex justify-end space-x-1 sm:space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleEdit(item, 'stock')}
-                        className="text-xs px-2"
+                        className="text-xs px-2 bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                       >
-                        编辑
+                        ✏️ 编辑
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
                         onClick={() => handleDelete(item, 'stock')}
-                        className="text-xs px-2"
+                        className="text-xs px-2 shadow-danger-base/30"
                       >
-                        删除
+                        🗑️ 删除
                       </Button>
                     </div>
                   </div>
                 </div>
               )
             })}
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-dark-elevated rounded-lg">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 text-sm">
-                <span className="font-medium text-gray-700">合计：</span>
+                <span className="font-medium text-gray-300">合计：</span>
                 <div className="text-left sm:text-right w-full sm:w-auto">
                   <div className="flex justify-between sm:block">
                     <span className="sm:hidden text-gray-600">总市值：</span>
@@ -610,7 +610,7 @@ export default function PortfolioPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <img src="/assets/images/jijin.png" alt="基金" className="w-5 h-5 sm:w-6 sm:h-6" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800">基金持仓</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-200">基金持仓</h3>
           </div>
           {!editingItem && (
             <Button
@@ -627,13 +627,13 @@ export default function PortfolioPage() {
           <Card className="mb-4">
             <div className="space-y-4">
               {/* 图片识别功能 */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <div className="border-2 border-dashed border-dark-border rounded-lg p-4 bg-dark-elevated/50">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">📷 图片识别</label>
+                  <label className="text-sm font-medium text-gray-300">📷 图片识别</label>
                   {imagePreview && (
                     <button
                       onClick={handleClearImage}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      className="text-danger-500 hover:text-danger-400 text-sm font-sans"
                     >
                       清除
                     </button>
@@ -650,11 +650,11 @@ export default function PortfolioPage() {
                   />
                   <label
                     htmlFor="fund-image-upload"
-                    className="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 text-center text-sm text-gray-700"
+                    className="flex-1 px-4 py-2 bg-dark-surface border border-dark-border rounded-lg cursor-pointer hover:bg-dark-elevated hover:border-amber-500/40 text-center text-sm text-gray-200 transition-colors"
                   >
                     {isRecognizing ? '识别中...' : '选择图片'}
                   </label>
-                  <div className="text-xs text-gray-500 flex items-center">
+                  <div className="text-xs text-gray-400 flex items-center">
                     或直接粘贴图片 (Ctrl+V)
                   </div>
                 </div>
@@ -663,7 +663,7 @@ export default function PortfolioPage() {
                     <img
                       src={imagePreview}
                       alt="预览"
-                      className="max-w-full h-auto rounded-lg border border-gray-300"
+                      className="max-w-full h-auto rounded-lg border border-dark-border"
                     />
                   </div>
                 )}
@@ -738,7 +738,7 @@ export default function PortfolioPage() {
         {holdings.fund.length > 0 ? (
           <div className="space-y-2">
             {/* 表头 - 桌面端 */}
-            <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-gray-50 rounded-lg text-xs sm:text-sm font-medium text-gray-700">
+            <div className="hidden sm:grid grid-cols-6 gap-2 sm:gap-4 p-3 bg-dark-elevated rounded-lg text-xs sm:text-sm font-medium text-gray-300">
               <div className="truncate">名称</div>
               <div className="text-right">份额</div>
               <div className="text-right hidden md:block">成本价</div>
@@ -762,25 +762,25 @@ export default function PortfolioPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-400">
                         {item.amount.toLocaleString()} 份
                       </div>
                       <div className="flex space-x-2">
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           onClick={() => handleEdit(item, 'fund')}
-                          className="text-xs px-3 py-1.5"
+                          className="text-xs px-3 py-1.5 bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                         >
-                          编辑
+                          ✏️ 编辑
                         </Button>
                         <Button
                           variant="danger"
                           size="sm"
                           onClick={() => handleDelete(item, 'fund')}
-                          className="text-xs px-3 py-1.5"
+                          className="text-xs px-3 py-1.5 shadow-danger-base/30"
                         >
-                          删除
+                          🗑️ 删除
                         </Button>
                       </div>
                     </div>
@@ -797,29 +797,29 @@ export default function PortfolioPage() {
                     </div>
                     <div className="flex justify-end space-x-1 sm:space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleEdit(item, 'fund')}
-                        className="text-xs px-2"
+                        className="text-xs px-2 bg-amber-500/20 border-amber-500/40 text-amber-400 hover:bg-amber-500/30 hover:border-amber-500/60 hover:text-amber-300"
                       >
-                        编辑
+                        ✏️ 编辑
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
                         onClick={() => handleDelete(item, 'fund')}
-                        className="text-xs px-2"
+                        className="text-xs px-2 shadow-danger-base/30"
                       >
-                        删除
+                        🗑️ 删除
                       </Button>
                     </div>
                   </div>
                 </div>
               )
             })}
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-dark-elevated rounded-lg">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 text-sm">
-                <span className="font-medium text-gray-700">合计：</span>
+                <span className="font-medium text-gray-300">合计：</span>
                 <div className="text-left sm:text-right w-full sm:w-auto">
                   <div className="flex justify-between sm:block">
                     <span className="sm:hidden text-gray-600">总市值：</span>

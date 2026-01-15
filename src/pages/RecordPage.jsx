@@ -342,16 +342,16 @@ function RecordPage() {
         {/* 图片上传区域 */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <label className="text-base font-semibold text-gray-800">
+            <label className="text-base font-semibold text-gray-300">
               智能识别 {imagePreviews.length > 0 && `(已上传 ${imagePreviews.length} 张)`}
             </label>
-            <span className="text-sm text-gray-500">可上传多张图片分别识别</span>
+            <span className="text-sm text-gray-400">可上传多张图片分别识别</span>
           </div>
           
           {imagePreviews.length === 0 ? (
             <label
               htmlFor="image-upload"
-              className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-all duration-200 group"
+              className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-dark-border rounded-2xl cursor-pointer hover:border-amber-500/50 hover:bg-dark-elevated/50 transition-all duration-200 group bg-dark-surface/30"
             >
               <input
                 type="file"
@@ -361,11 +361,11 @@ function RecordPage() {
                 className="hidden"
                 multiple
               />
-              <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-gold-base/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
                 <span className="text-4xl">📷</span>
               </div>
-              <div className="text-base font-semibold text-gray-700 mb-1">点击上传或拍照</div>
-              <div className="text-sm text-gray-500">支持多张图片，JPG、PNG 等格式</div>
+              <div className="text-base font-semibold text-gray-200 mb-1">点击上传或拍照</div>
+              <div className="text-sm text-gray-400">支持多张图片，JPG、PNG 等格式</div>
             </label>
           ) : (
             <div className="space-y-4">
@@ -395,7 +395,7 @@ function RecordPage() {
                 {/* 添加更多按钮 */}
                 <label
                   htmlFor="image-upload"
-                  className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+                  className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-dark-border rounded-lg cursor-pointer hover:border-amber-500/50 hover:bg-dark-elevated/30 transition-colors bg-dark-surface/30"
                 >
                   <input
                     type="file"
@@ -406,7 +406,7 @@ function RecordPage() {
                     multiple
                   />
                   <span className="text-2xl mb-1">➕</span>
-                  <span className="text-xs text-gray-500">添加</span>
+                  <span className="text-xs text-gray-400">添加</span>
                 </label>
               </div>
 
@@ -431,9 +431,9 @@ function RecordPage() {
               </div>
 
               {isRecognizing && (
-                <div className="flex items-center justify-center space-x-2 text-blue-600">
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>正在识别图片数据...</span>
+                <div className="flex items-center justify-center space-x-2 text-amber-400">
+                  <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-gray-300">正在识别图片数据...</span>
                 </div>
               )}
             </div>
@@ -452,7 +452,7 @@ function RecordPage() {
 
         {/* 投资类型 */}
         <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">投资类型</label>
+          <label className="block text-sm font-semibold text-gray-300 mb-3">投资类型</label>
           <div className="grid grid-cols-2 gap-4">
             <label className="cursor-pointer group">
               <input
@@ -467,7 +467,7 @@ function RecordPage() {
                 flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-200
                 ${formData.investmentType === 'stock'
                   ? 'border-red-500 bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30 scale-105'
-                  : 'border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 active:scale-95'
+                  : 'border-dark-border bg-dark-elevated hover:border-red-500/50 hover:bg-dark-surface active:scale-95'
                 }
               `}>
                 <img
@@ -475,7 +475,7 @@ function RecordPage() {
                   alt="股票"
                   className="w-10 h-10 mb-2 transition-transform group-hover:scale-110"
                 />
-                <span className={`text-base font-semibold ${formData.investmentType === 'stock' ? 'text-white' : 'text-gray-800'}`}>
+                <span className={`text-base font-semibold ${formData.investmentType === 'stock' ? 'text-white' : 'text-gray-200'}`}>
                   股票
                 </span>
               </div>
@@ -493,7 +493,7 @@ function RecordPage() {
                 flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-200
                 ${formData.investmentType === 'fund'
                   ? 'border-primary-500 bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105'
-                  : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 active:scale-95'
+                  : 'border-dark-border bg-dark-elevated hover:border-primary-500/50 hover:bg-dark-surface active:scale-95'
                 }
               `}>
                 <img
@@ -501,7 +501,7 @@ function RecordPage() {
                   alt="基金"
                   className="w-10 h-10 mb-2 transition-transform group-hover:scale-110"
                 />
-                <span className={`text-base font-semibold ${formData.investmentType === 'fund' ? 'text-white' : 'text-gray-800'}`}>
+                <span className={`text-base font-semibold ${formData.investmentType === 'fund' ? 'text-white' : 'text-gray-200'}`}>
                   基金
                 </span>
               </div>
@@ -539,7 +539,7 @@ function RecordPage() {
 
         {/* 加减仓操作 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">加减仓操作</label>
+          <label className="block text-sm font-medium text-gray-300 mb-3">加减仓操作</label>
           <div className="space-y-3">
             <label className="flex items-center cursor-pointer">
               <input
@@ -548,9 +548,9 @@ function RecordPage() {
                 value="none"
                 checked={formData.adjustmentType === 'none'}
                 onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
               />
-              <span className="ml-2 text-base text-gray-800">无操作</span>
+              <span className="ml-2 text-base text-gray-200">无操作</span>
             </label>
             <div className="space-y-2">
               <label className="flex items-center cursor-pointer">
@@ -560,9 +560,9 @@ function RecordPage() {
                   value="add"
                   checked={formData.adjustmentType === 'add'}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
+                  className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
                 />
-                <span className="ml-2 text-base text-gray-800">+ 加仓</span>
+                <span className="ml-2 text-base text-gray-200">+ 加仓</span>
               </label>
               {formData.adjustmentType === 'add' && (
                 <Input
@@ -584,9 +584,9 @@ function RecordPage() {
                   value="reduce"
                   checked={formData.adjustmentType === 'reduce'}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
                 />
-                <span className="ml-2 text-base text-gray-800">- 减仓</span>
+                <span className="ml-2 text-base text-gray-200">- 减仓</span>
               </label>
               {formData.adjustmentType === 'reduce' && (
                 <Input
@@ -605,7 +605,7 @@ function RecordPage() {
 
         {/* 其他信息 */}
         <div className="mb-6">
-          <h3 className="text-base font-semibold text-gray-800 mb-4">其他信息</h3>
+          <h3 className="text-base font-semibold text-gray-300 mb-4">其他信息</h3>
           <div className="space-y-4">
             <Input
               type="number"
@@ -634,7 +634,7 @@ function RecordPage() {
         size="lg"
         className="mt-2"
       >
-        💾 保存记录
+保存记录
       </Button>
     </div>
   )
