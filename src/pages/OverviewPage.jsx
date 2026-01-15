@@ -372,44 +372,51 @@ function OverviewPage() {
     <div className="space-y-6">
       <PageHeader
         title="概览"
-        subtitle="欢迎回来, AI 实时监测中..."
+        subtitle="欢迎回来，AI 实时监测中..."
       />
 
       {/* 总资产卡片 */}
-      <GradientCard className="relative">
+      <GradientCard className="relative mb-6">
         {/* 日历图标 - 右上角 */}
         <button
           onClick={() => navigate('/calendar')}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-blue-500/20 transition-colors text-white/90 hover:text-white"
+          className="absolute top-5 right-5 p-2.5 rounded-xl hover:bg-white/20 active:scale-95 transition-all duration-200 text-white/90 hover:text-white backdrop-blur-sm"
           title="查看日历"
         >
-          <FiCalendar size={20} />
+          <FiCalendar size={22} />
         </button>
         
         <div className="mb-6">
-          <h2 className="text-lg font-medium text-blue-100 mb-1">当前总资产 (CNY)</h2>
-          <div className="text-4xl lg:text-5xl font-bold">
-            {isLoading ? '加载中...' : formatCurrency(overviewData.totalAsset)}
+          <h2 className="text-base font-medium text-white/90 mb-2 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-white/60 rounded-full"></span>
+            当前总资产 (CNY)
+          </h2>
+          <div className="text-5xl lg:text-6xl font-bold text-white tracking-tight">
+            {isLoading ? (
+              <span className="inline-block animate-pulse">加载中...</span>
+            ) : (
+              formatCurrency(overviewData.totalAsset)
+            )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <div className="text-sm text-blue-100 mb-1">今日盈亏</div>
+        <div className="grid grid-cols-2 gap-5">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="text-sm text-white/80 mb-2 font-medium">今日盈亏</div>
             <div className="flex items-center space-x-2">
-              <span className={`text-xl font-semibold ${overviewData.todayProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+              <span className={`text-2xl font-bold ${overviewData.todayProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
                 {formatCurrency(overviewData.todayProfit, true)}
               </span>
               {overviewData.todayProfitPercent !== 0 && (
-                <span className={`text-sm ${overviewData.todayProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                  ({overviewData.todayProfitPercent >= 0 ? '+' : ''}{overviewData.todayProfitPercent.toFixed(2)}%)
+                <span className={`text-sm font-semibold px-2 py-0.5 rounded-lg ${overviewData.todayProfit >= 0 ? 'bg-green-500/30 text-green-100' : 'bg-red-500/30 text-red-100'}`}>
+                  {overviewData.todayProfitPercent >= 0 ? '+' : ''}{overviewData.todayProfitPercent.toFixed(2)}%
                 </span>
               )}
             </div>
           </div>
-          <div>
-            <div className="text-sm text-blue-100 mb-1">本月收益</div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="text-sm text-white/80 mb-2 font-medium">本月收益</div>
             <div className="flex items-center space-x-2">
-              <span className={`text-xl font-semibold ${overviewData.monthProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+              <span className={`text-2xl font-bold ${overviewData.monthProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
                 {formatCurrency(overviewData.monthProfit, true)}
               </span>
             </div>
@@ -420,57 +427,76 @@ function OverviewPage() {
       {/* 资产构成和图表 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 资产构成 */}
-        <div className="lg:col-span-1 bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">资产构成</h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span className="text-gray-700 font-medium">股票</span>
+        <Card hover className="lg:col-span-1">
+          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+            资产构成
+          </h3>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl p-5 border border-red-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
+                  <span className="text-gray-700 font-semibold">股票</span>
                 </div>
-                <span className="text-gray-600 font-semibold">{stockPercent}%</span>
+                <span className="text-gray-600 font-bold text-lg">{stockPercent}%</span>
               </div>
-              <div className="text-2xl font-bold text-gray-800">
+              <div className="text-3xl font-bold text-gray-800">
                 {formatCurrency(overviewData.stockAsset)}
               </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-gray-700 font-medium">基金</span>
-                </div>
-                <span className="text-gray-600 font-semibold">{fundPercent}%</span>
+              <div className="mt-3 w-full bg-red-200 rounded-full h-2.5 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-red-500 to-red-600 h-full rounded-full transition-all duration-500 shadow-sm"
+                  style={{ width: `${stockPercent}%` }}
+                ></div>
               </div>
-              <div className="text-2xl font-bold text-gray-800">
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-5 border border-blue-200/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 rounded-full bg-blue-500 shadow-sm"></div>
+                  <span className="text-gray-700 font-semibold">基金</span>
+                </div>
+                <span className="text-gray-600 font-bold text-lg">{fundPercent}%</span>
+              </div>
+              <div className="text-3xl font-bold text-gray-800">
                 {formatCurrency(overviewData.fundAsset)}
+              </div>
+              <div className="mt-3 w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-500 shadow-sm"
+                  style={{ width: `${fundPercent}%` }}
+                ></div>
               </div>
             </div>
           </div>
           <div className="mt-6 pt-6 border-t border-gray-200">
             <button
               onClick={() => navigate('/portfolio')}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center gap-1 group transition-colors"
             >
-              查看详细配置 →
+              查看详细配置
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
             </button>
           </div>
-        </div>
+        </Card>
 
         {/* 净值增长曲线 */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">净值增长曲线</h3>
-            <div className="flex space-x-2">
+        <Card hover className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+              净值增长曲线
+            </h3>
+            <div className="flex space-x-2 bg-gray-100 p-1 rounded-xl">
               {['7d', '1m', 'year'].map((period) => (
                 <button
                   key={period}
                   onClick={() => setChartPeriod(period)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                     chartPeriod === period
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-white/50'
                   }`}
                 >
                   {period === '7d' ? '7日' : period === '1m' ? '1月' : '今年'}
@@ -511,29 +537,34 @@ function OverviewPage() {
               暂无数据
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* AI 智能分析 */}
-      <Card>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-          <div className="flex items-center space-x-2">
-            <h3 className="text-lg font-semibold text-gray-800">AI 智能分析</h3>
-            <span className="text-xs text-gray-500 bg-blue-50 text-blue-600 px-2 py-1 rounded">DeepSeek Powered</span>
+      <Card hover>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-3">
+            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-1 h-6 bg-gradient-to-b from-primary-500 to-primary-600 rounded-full"></span>
+              AI 智能分析
+            </h3>
+            <span className="text-xs font-semibold bg-gradient-to-r from-primary-100 to-primary-50 text-primary-700 px-3 py-1.5 rounded-full border border-primary-200">
+              🤖 DeepSeek Powered
+            </span>
             {todayAnalysisCount > 0 && (
-              <span className="text-xs text-gray-500">
-                （今日已用 {todayAnalysisCount}/3 次）
+              <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                今日已用 {todayAnalysisCount}/3 次
               </span>
             )}
           </div>
           <button 
             onClick={handleRegenerateAI}
             disabled={isGeneratingAI || todayAnalysisCount >= 3}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 rounded-xl hover:from-primary-100 hover:to-primary-200 transition-all duration-200 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-200 active:scale-95"
           >
             {isGeneratingAI ? (
               <>
-                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
                 <span>生成中...</span>
               </>
             ) : todayAnalysisCount >= 3 ? (

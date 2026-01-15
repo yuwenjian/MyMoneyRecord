@@ -11,26 +11,31 @@ export function Input({ label, error, className = '', ...props }) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-base font-semibold text-gray-800 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-2.5">
           {label}
         </label>
       )}
       <input
         className={`
-          w-full px-4 py-2.5 text-base
-          border rounded-lg
-          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-          transition-colors
+          w-full px-4 py-3 text-base
+          border-2 rounded-xl
+          bg-white
+          focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
+          transition-all duration-200
+          placeholder:text-gray-400
           ${error 
-            ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
-            : 'border-gray-300'
+            ? 'border-danger-300 focus:border-danger-500 focus:ring-danger-500/20' 
+            : 'border-gray-200 hover:border-gray-300'
           }
           ${className}
         `}
         {...props}
       />
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="mt-2 text-sm text-danger-600 font-medium flex items-center gap-1">
+          <span>⚠️</span>
+          {error}
+        </p>
       )}
     </div>
   )

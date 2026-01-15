@@ -8,7 +8,7 @@ import 'dayjs/locale/zh-cn'
 import { saveRecord, saveAdjustment, deleteAdjustmentByDate, getRecords, getAdjustments, formatCurrency } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
 import { recognizeAccountData, recognizeMultipleImages } from '../utils/ocr'
-import { PageHeader, Card, Button, Input } from '../components/ui'
+import { PageHeader, Card, GradientCard, Button, Input } from '../components/ui'
 // import '../styles/RecordPage.css' // 已迁移到 Tailwind CSS
 
 // 配置 dayjs
@@ -311,19 +311,31 @@ function RecordPage() {
       />
 
       {/* 今日概览卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <GradientCard className="from-primary-600 to-primary-700">
           <div>
-            <div className="text-sm text-blue-100 mb-1">总资产</div>
-            <div className="text-4xl lg:text-5xl font-bold">{todayOverview.totalAsset}</div>
+            <div className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-white/60 rounded-full"></span>
+              总资产
+            </div>
+            <div className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              {todayOverview.totalAsset}
+            </div>
           </div>
-        </Card>
-        <Card className={`${parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? 'bg-gradient-to-br from-green-600 to-green-700' : 'bg-gradient-to-br from-red-600 to-red-700'} text-white`}>
+        </GradientCard>
+        <GradientCard 
+          className={`${parseFloat(todayOverview.todayProfit.replace(/,/g, '')) >= 0 ? 'from-success-600 to-success-700' : 'from-danger-600 to-danger-700'}`}
+        >
           <div>
-            <div className="text-sm text-white/80 mb-1">今日盈亏</div>
-            <div className="text-4xl lg:text-5xl font-bold">{todayOverview.todayProfit}</div>
+            <div className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-white/60 rounded-full"></span>
+              今日盈亏
+            </div>
+            <div className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
+              {todayOverview.todayProfit}
+            </div>
           </div>
-        </Card>
+        </GradientCard>
       </div>
 
       <Card>
@@ -339,7 +351,7 @@ function RecordPage() {
           {imagePreviews.length === 0 ? (
             <label
               htmlFor="image-upload"
-              className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition-colors"
+              className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-all duration-200 group"
             >
               <input
                 type="file"
@@ -349,10 +361,10 @@ function RecordPage() {
                 className="hidden"
                 multiple
               />
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-3xl">📷</span>
+              <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
+                <span className="text-4xl">📷</span>
               </div>
-              <div className="text-base font-medium text-gray-700 mb-1">点击上传或拍照</div>
+              <div className="text-base font-semibold text-gray-700 mb-1">点击上传或拍照</div>
               <div className="text-sm text-gray-500">支持多张图片，JPG、PNG 等格式</div>
             </label>
           ) : (
@@ -440,9 +452,9 @@ function RecordPage() {
 
         {/* 投资类型 */}
         <div className="mb-6">
-          <label className="block text-base font-semibold text-gray-800 mb-3">投资类型</label>
-          <div className="flex space-x-4">
-            <label className="flex-1 cursor-pointer">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">投资类型</label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="cursor-pointer group">
               <input
                 type="radio"
                 name="investmentType"
@@ -452,23 +464,23 @@ function RecordPage() {
                 className="hidden"
               />
               <div className={`
-                flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all
+                flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-200
                 ${formData.investmentType === 'stock'
-                  ? 'border-red-500 bg-red-500 text-white'
-                  : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-red-500 bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg shadow-red-500/30 scale-105'
+                  : 'border-gray-200 bg-white hover:border-red-300 hover:bg-red-50 active:scale-95'
                 }
               `}>
                 <img
                   src={formData.investmentType === 'stock' ? '/assets/images/gupiao_white.png' : '/assets/images/gupiao.png'}
                   alt="股票"
-                  className="w-8 h-8 mb-2"
+                  className="w-10 h-10 mb-2 transition-transform group-hover:scale-110"
                 />
-                <span className={`text-base font-medium ${formData.investmentType === 'stock' ? 'text-white' : 'text-gray-800'}`}>
+                <span className={`text-base font-semibold ${formData.investmentType === 'stock' ? 'text-white' : 'text-gray-800'}`}>
                   股票
                 </span>
               </div>
             </label>
-            <label className="flex-1 cursor-pointer">
+            <label className="cursor-pointer group">
               <input
                 type="radio"
                 name="investmentType"
@@ -478,18 +490,18 @@ function RecordPage() {
                 className="hidden"
               />
               <div className={`
-                flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all
+                flex flex-col items-center justify-center p-5 rounded-2xl border-2 transition-all duration-200
                 ${formData.investmentType === 'fund'
-                  ? 'border-blue-500 bg-blue-500 text-white'
-                  : 'border-gray-300 bg-white hover:border-gray-400'
+                  ? 'border-primary-500 bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105'
+                  : 'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50 active:scale-95'
                 }
               `}>
                 <img
                   src={formData.investmentType === 'fund' ? '/assets/images/jijin_white.png' : '/assets/images/jijin.png'}
                   alt="基金"
-                  className="w-8 h-8 mb-2"
+                  className="w-10 h-10 mb-2 transition-transform group-hover:scale-110"
                 />
-                <span className={`text-base font-medium ${formData.investmentType === 'fund' ? 'text-white' : 'text-gray-800'}`}>
+                <span className={`text-base font-semibold ${formData.investmentType === 'fund' ? 'text-white' : 'text-gray-800'}`}>
                   基金
                 </span>
               </div>
@@ -620,8 +632,9 @@ function RecordPage() {
         onClick={handleSave}
         fullWidth
         size="lg"
+        className="mt-2"
       >
-        保存记录
+        💾 保存记录
       </Button>
     </div>
   )
