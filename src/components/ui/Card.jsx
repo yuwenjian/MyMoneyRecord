@@ -14,7 +14,7 @@ export function Card({ children, className = '', shadow = true, padding = true, 
     <div
       className={`
         card-luxury w-full max-w-full overflow-hidden
-        ${padding ? 'p-6 sm:p-8 lg:p-10' : ''}
+        ${padding ? 'p-4 sm:p-6 lg:p-8 xl:p-10' : ''}
         ${shadow ? 'shadow-dark-lg' : ''}
         ${hover ? '' : 'hover:transform-none hover:shadow-dark-lg'}
         ${className}
@@ -45,7 +45,7 @@ export function GradientCard({
     <div
       className={`
         bg-gradient-to-br ${fromColor} ${toColor}
-        rounded-3xl p-8 lg:p-10 text-white
+        rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 xl:p-10 text-white
         relative overflow-hidden
         transition-all duration-500 hover:scale-[1.02] hover:shadow-glow-gold
         border border-amber-400/20

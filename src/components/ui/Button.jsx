@@ -22,7 +22,7 @@ export function Button({
   type = 'button',
   ...props
 }) {
-  const baseClasses = 'font-sans font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-dark-bg active:scale-95'
+  const baseClasses = 'font-sans font-semibold rounded-lg sm:rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-dark-bg active:scale-95'
   
   const variantClasses = {
     primary: 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg hover:from-amber-400 hover:to-amber-500 focus:ring-amber-500 shadow-glow-amber hover:shadow-glow-gold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-glow-amber',
@@ -32,9 +32,9 @@ export function Button({
   }
   
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-5 py-2.5 text-base',
-    lg: 'px-7 py-3.5 text-lg'
+    sm: 'px-3 py-1.5 text-xs sm:text-sm',
+    md: 'px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base',
+    lg: 'px-5 py-2.5 sm:px-7 sm:py-3.5 text-base sm:text-lg'
   }
   
   return (

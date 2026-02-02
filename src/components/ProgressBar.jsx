@@ -29,14 +29,14 @@ export function ProgressBar({
   }
   
   return (
-    <div className="w-full py-3">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-sans font-semibold text-gray-300">{label}</span>
-        <span className={`text-base font-display font-bold transition-colors ${isAchieved ? 'text-success-light' : 'text-amber-400'}`}>
+    <div className="w-full py-2 sm:py-3">
+      <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+        <span className="text-xs sm:text-sm font-sans font-semibold text-gray-300">{label}</span>
+        <span className={`text-sm sm:text-base font-display font-bold transition-colors ${isAchieved ? 'text-success-light' : 'text-amber-400'}`}>
           {clampedPercentage.toFixed(1)}%
         </span>
       </div>
-      <div className="w-full h-6 bg-dark-border rounded-full overflow-hidden relative shadow-inner">
+      <div className="w-full h-5 sm:h-6 bg-dark-border rounded-full overflow-hidden relative shadow-inner">
         <div 
           className={`h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 relative ${
             isAchieved 
@@ -48,13 +48,13 @@ export function ProgressBar({
           style={{ width: `${clampedPercentage}%` }}
         >
           {clampedPercentage >= 20 && (
-            <span className="text-xs font-sans font-bold text-white drop-shadow-md">
+            <span className="text-[10px] sm:text-xs font-sans font-bold text-white drop-shadow-md">
               {clampedPercentage.toFixed(1)}%
             </span>
           )}
         </div>
       </div>
-      <div className="flex justify-between items-center mt-2 text-xs font-sans">
+      <div className="flex justify-between items-center mt-1.5 sm:mt-2 text-[10px] sm:text-xs font-sans">
         <span className="text-gray-400">实际: <span className="text-gray-200 font-semibold">{actualValue}</span></span>
         <span className="text-gray-400">目标: <span className="text-gray-200 font-semibold">{targetValue}</span></span>
       </div>

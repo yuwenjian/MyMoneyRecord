@@ -16,6 +16,7 @@ import {
 import zoomPlugin from 'chartjs-plugin-zoom'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
 import 'dayjs/locale/zh-cn'
 import { getRecords, getAdjustments, formatDate, formatCurrency, saveRecord, deleteRecord, getProfitTargets } from '../utils/storage'
 import { calculateDailyProfitLoss } from '../utils/calculations'
@@ -48,6 +49,7 @@ ChartJS.register(
 
 // 配置 dayjs
 dayjs.extend(customParseFormat)
+dayjs.extend(weekOfYear)
 dayjs.locale('zh-cn')
 
 function StatisticsPage() {
@@ -1288,51 +1290,90 @@ function StatisticsPage() {
   }
 
   return (
-    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-3 sm:space-y-4 lg:space-y-6 w-full max-w-full overflow-x-hidden">
       <PageHeader
         title="统计分析"
         subtitle="欢迎回来, AI 实时监测中..."
       />
 
       {/* 日期范围选择 */}
-      <Card>
-        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">日期范围</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-sans font-semibold text-gray-300 mb-2">开始日期</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
-              aria-label="选择开始日期"
-            />
+      <Card className="!p-3 sm:!p-4 lg:!p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            日期范围
+          </h2>
+          {/* 快捷选择按钮 */}
+          <div className="flex gap-1.5 sm:gap-2">
+            <button
+              onClick={() => {
+                const start = dayjs().startOf('week').format('YYYY-MM-DD')
+                const end = dayjs().endOf('week').format('YYYY-MM-DD')
+                setStartDate(start)
+                setEndDate(end)
+                toast.success(`已切换至本周（${start} ~ ${end}）`)
+              }}
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-300 bg-dark-elevated border border-dark-border rounded-lg hover:border-amber-500/50 hover:text-amber-400 active:scale-95 transition-all"
+            >
+              本周
+            </button>
+            <button
+              onClick={() => {
+                const start = dayjs().startOf('month').format('YYYY-MM-DD')
+                const end = dayjs().endOf('month').format('YYYY-MM-DD')
+                setStartDate(start)
+                setEndDate(end)
+                toast.success(`已切换至本月（${start} ~ ${end}）`)
+              }}
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-300 bg-dark-elevated border border-dark-border rounded-lg hover:border-amber-500/50 hover:text-amber-400 active:scale-95 transition-all"
+            >
+              本月
+            </button>
+            <button
+              onClick={() => {
+                const start = dayjs().startOf('year').format('YYYY-MM-DD')
+                const end = dayjs().endOf('year').format('YYYY-MM-DD')
+                setStartDate(start)
+                setEndDate(end)
+                toast.success(`已切换至本年（${start} ~ ${end}）`)
+              }}
+              className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-gray-300 bg-dark-elevated border border-dark-border rounded-lg hover:border-amber-500/50 hover:text-amber-400 active:scale-95 transition-all"
+            >
+              本年
+            </button>
           </div>
-          <div>
-            <label className="block text-sm font-sans font-semibold text-gray-300 mb-2">结束日期</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
-              aria-label="选择结束日期"
-            />
-          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="flex-1 px-2.5 py-1.5 sm:px-4 sm:py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 text-xs sm:text-sm rounded-lg sm:rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
+            aria-label="选择开始日期"
+          />
+          <span className="text-gray-400 text-sm sm:text-base font-semibold">--</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="flex-1 px-2.5 py-1.5 sm:px-4 sm:py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 text-xs sm:text-sm rounded-lg sm:rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
+            aria-label="选择结束日期"
+          />
         </div>
       </Card>
 
       {/* 仪表盘 */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
           <SkeletonStatCard />
           <SkeletonStatCard />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GradientCard>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-6">
+          <GradientCard className="!p-2 sm:!p-3 lg:!p-6">
             <div>
-              <div className="text-sm text-blue-100 mb-1">总资产</div>
-              <div className="text-3xl font-bold">
+              <div className="text-[10px] sm:text-xs lg:text-sm text-blue-100 mb-0.5 sm:mb-1">总资产</div>
+              <div className="text-base sm:text-xl lg:text-3xl font-bold leading-tight">
                 {(() => {
                   const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
                   const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
@@ -1342,10 +1383,10 @@ function StatisticsPage() {
             </div>
           </GradientCard>
           
-          <GradientCard fromColor="from-green-600" toColor="to-green-700">
+          <GradientCard fromColor="from-green-600" toColor="to-green-700" className="!p-2 sm:!p-3 lg:!p-6">
             <div>
-              <div className="text-sm text-white mb-1">总盈亏</div>
-              <div className="text-3xl font-bold text-white [&_.trend-indicator]:!text-white [&_.trend-icon]:!text-white">
+              <div className="text-[10px] sm:text-xs lg:text-sm text-white mb-0.5 sm:mb-1">总盈亏</div>
+              <div className="text-base sm:text-xl lg:text-3xl font-bold text-white leading-tight [&_.trend-indicator]:!text-white [&_.trend-icon]:!text-white">
                 <TrendIndicator 
                   value={stats.totalProfitLoss} 
                   showArrow={true} 
@@ -1357,32 +1398,85 @@ function StatisticsPage() {
         </div>
       )}
 
-      {/* 收益目标进度 */}
-      <Card>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
-          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">收益目标进度</h2>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <button
-              onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
-              className="flex items-center space-x-2 px-4 py-2 bg-dark-elevated text-gray-300 rounded-xl hover:bg-dark-surface hover:text-amber-400 transition-all duration-300 text-sm font-sans font-semibold border border-dark-border hover:border-amber-500/30"
-              title={isTargetProgressExpanded ? "收起" : "展开"}
-            >
-              <span>{isTargetProgressExpanded ? '▼' : '▶'}</span>
-              <span>{isTargetProgressExpanded ? '收起' : '展开'}</span>
-            </button>
-            <button
-              onClick={() => setShowTargetSettings(true)}
-              className="p-2.5 hover:bg-dark-elevated rounded-xl transition-all duration-300 border border-transparent hover:border-amber-500/30"
-              title="设置目标"
-            >
-              <img src="/assets/images/shezhi.png" alt="设置" className="w-5 h-5 opacity-80 hover:opacity-100" />
-            </button>
+      {/* 收益目标进度和持仓分布 - 网格布局 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+        {/* 持仓分布 - 左侧 */}
+        <Card className="!p-3 sm:!p-4 lg:!p-6">
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 mb-4 sm:mb-6 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            持仓分布
+          </h2>
+          <div className="space-y-4 sm:space-y-6">
+            {(() => {
+              const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
+              const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
+              const total = stock + fund
+              const stockRatio = total > 0 ? (stock / total * 100) : 0
+              const fundRatio = total > 0 ? (fund / total * 100) : 0
+              
+              return (
+                <>
+                  <div>
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <span className="text-xs sm:text-sm font-sans font-semibold text-gray-300">股票</span>
+                      <span className="text-xs sm:text-sm font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-dark-border rounded-full h-2 sm:h-2.5 mb-2 sm:mb-3 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-danger-base to-danger-light h-full rounded-full transition-all duration-500 shadow-glow-amber" 
+                        style={{ width: `${stockRatio}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-base sm:text-lg lg:text-xl font-display font-bold text-white">{stats.currentStockAsset}</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                      <span className="text-xs sm:text-sm font-sans font-semibold text-gray-300">基金</span>
+                      <span className="text-xs sm:text-sm font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-dark-border rounded-full h-2 sm:h-2.5 mb-2 sm:mb-3 overflow-hidden">
+                      <div 
+                        className="bg-gradient-to-r from-amber-500 to-gold-base h-full rounded-full transition-all duration-500 shadow-glow-amber" 
+                        style={{ width: `${fundRatio}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-base sm:text-lg lg:text-xl font-display font-bold text-white">{stats.currentFundAsset}</div>
+                  </div>
+                </>
+              )
+            })()}
           </div>
-        </div>
+        </Card>
+
+        {/* 收益目标进度 - 右侧 */}
+        <Card className="!p-3 sm:!p-4 lg:!p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 flex items-center gap-2">
+              <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+              收益目标进度
+            </h2>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                onClick={() => setIsTargetProgressExpanded(!isTargetProgressExpanded)}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 bg-dark-elevated text-gray-300 rounded-lg hover:bg-dark-surface hover:text-amber-400 transition-all duration-300 text-xs font-sans font-semibold border border-dark-border hover:border-amber-500/30"
+                title={isTargetProgressExpanded ? "收起" : "展开"}
+              >
+                <span className="text-xs">{isTargetProgressExpanded ? '▼' : '▶'}</span>
+                <span className="hidden sm:inline">{isTargetProgressExpanded ? '收起' : '展开'}</span>
+              </button>
+              <button
+                onClick={() => setShowTargetSettings(true)}
+                className="p-1.5 sm:p-2 hover:bg-dark-elevated rounded-lg transition-all duration-300 border border-transparent hover:border-amber-500/30"
+                title="设置目标"
+              >
+                <img src="/assets/images/shezhi.png" alt="设置" className="w-4 h-4 sm:w-5 sm:h-5 opacity-80 hover:opacity-100" />
+              </button>
+            </div>
+          </div>
         {isTargetProgressExpanded && (
           <>
             {targetProgresses.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {(() => {
                   const periodOrder = { 'week': 1, 'month': 2, 'year': 3 }
                   const groupedByPeriod = targetProgresses.reduce((acc, progress) => {
@@ -1409,14 +1503,14 @@ function StatisticsPage() {
                         })
                       
                       return (
-                        <div key={period} className="space-y-3">
-                          <h3 className="text-md font-sans font-semibold text-gray-300">{periodLabel}</h3>
+                        <div key={period} className="space-y-2 sm:space-y-3">
+                          <h3 className="text-xs sm:text-sm font-sans font-semibold text-gray-300">{periodLabel}</h3>
                           {sortedProgresses.map((progress) => {
                             const typeLabel = progress.investmentType === 'stock' ? '股票' : '基金'
                             const label = `${typeLabel} - ${periodLabel}`
                             
                             return (
-                              <div key={`${progress.investmentType}-${progress.period}`} className="mb-4">
+                              <div key={`${progress.investmentType}-${progress.period}`} className="mb-3 sm:mb-4">
                                 <ProgressBar
                                   percentage={progress.percentage}
                                   isAchieved={progress.isAchieved}
@@ -1434,64 +1528,23 @@ function StatisticsPage() {
                 })()}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-400 font-sans">
-                <p>暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline w-4 h-4 align-middle opacity-80" /> 按钮设置目标</p>
+              <div className="text-center py-6 sm:py-8 text-gray-400 font-sans">
+                <p className="text-xs sm:text-sm">暂无收益目标，点击右上角 <img src="/assets/images/shezhi.png" alt="设置" className="inline w-3 h-3 sm:w-4 sm:h-4 align-middle opacity-80" /> 按钮设置目标</p>
               </div>
             )}
           </>
         )}
-      </Card>
-
-      {/* 持仓分布 */}
-      <Card>
-        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">持仓分布</h2>
-        <div className="space-y-6">
-          {(() => {
-            const stock = stats.currentStockAsset === '--' ? 0 : parseFloat(stats.currentStockAsset.replace(/,/g, '')) || 0
-            const fund = stats.currentFundAsset === '--' ? 0 : parseFloat(stats.currentFundAsset.replace(/,/g, '')) || 0
-            const total = stock + fund
-            const stockRatio = total > 0 ? (stock / total * 100) : 0
-            const fundRatio = total > 0 ? (fund / total * 100) : 0
-            
-            return (
-              <>
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-sans font-semibold text-gray-300">股票</span>
-                    <span className="text-sm font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-dark-border rounded-full h-2.5 mb-3 overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-danger-base to-danger-light h-full rounded-full transition-all duration-500 shadow-glow-amber" 
-                      style={{ width: `${stockRatio}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xl font-display font-bold text-white">{stats.currentStockAsset}</div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-sans font-semibold text-gray-300">基金</span>
-                    <span className="text-sm font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full bg-dark-border rounded-full h-2.5 mb-3 overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-amber-500 to-gold-base h-full rounded-full transition-all duration-500 shadow-glow-amber" 
-                      style={{ width: `${fundRatio}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xl font-display font-bold text-white">{stats.currentFundAsset}</div>
-                </div>
-              </>
-            )
-          })()}
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* 账户资产和盈亏统计 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 账户资产统计 */}
         <Card>
-          <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">账户资产</h2>
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 mb-3 sm:mb-4 lg:mb-6 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            账户资产
+          </h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-dark-border">
               <span className="text-sm font-sans text-gray-400">当前股票账户总资产</span>
@@ -1506,7 +1559,10 @@ function StatisticsPage() {
 
         {/* 盈亏统计 */}
         <Card>
-          <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">盈亏统计 ({startDate} 至 {endDate})</h2>
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 mb-3 sm:mb-4 lg:mb-6 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            盈亏统计 ({startDate} 至 {endDate})
+          </h2>
           {isLoading ? (
             <SkeletonCard />
           ) : (
@@ -1547,16 +1603,19 @@ function StatisticsPage() {
       </div>
 
       {/* 月度/年度汇总统计 */}
-      <Card>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">周期汇总统计</h2>
-          <div className="flex space-x-2 bg-dark-elevated p-1.5 rounded-xl border border-dark-border">
+      <Card className="!p-3 sm:!p-4 lg:!p-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            周期汇总统计
+          </h2>
+          <div className="flex gap-1.5 sm:gap-2 bg-dark-elevated p-1 sm:p-1.5 rounded-lg sm:rounded-xl border border-dark-border">
             <button
               onClick={() => {
                 setPeriodView('month')
                 setSelectedPeriod(null)
               }}
-              className={`px-5 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+              className={`px-3 py-1.5 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-sans font-semibold transition-all duration-300 ${
                 periodView === 'month'
                   ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
                   : 'bg-transparent text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
@@ -1569,7 +1628,7 @@ function StatisticsPage() {
                 setPeriodView('year')
                 setSelectedPeriod(null)
               }}
-              className={`px-5 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+              className={`px-3 py-1.5 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-sans font-semibold transition-all duration-300 ${
                 periodView === 'year'
                   ? 'bg-gradient-to-r from-amber-500 to-gold-base text-dark-bg shadow-glow-amber'
                   : 'bg-transparent text-gray-400 hover:text-amber-400 hover:bg-dark-surface'
@@ -1581,18 +1640,18 @@ function StatisticsPage() {
         </div>
         
         {/* 周期选择器 */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           {periodView === 'month' ? (
             <select
               value={selectedPeriod || ''}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 text-xs sm:text-sm rounded-lg sm:rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
             >
-              <option value="">请选择月份</option>
+              <option value="" className="bg-dark-elevated text-gray-400">请选择月份</option>
               {availablePeriods.months.map(month => {
                 const [year, mon] = month.split('-')
                 return (
-                  <option key={month} value={month}>
+                  <option key={month} value={month} className="bg-dark-elevated text-gray-200">
                     {year}年{mon}月
                   </option>
                 )
@@ -1602,11 +1661,11 @@ function StatisticsPage() {
             <select
               value={selectedPeriod || ''}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-dark-elevated border-2 border-dark-border text-gray-200 text-xs sm:text-sm rounded-lg sm:rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 font-sans"
             >
-              <option value="">请选择年份</option>
+              <option value="" className="bg-dark-elevated text-gray-400">请选择年份</option>
               {availablePeriods.years.map(year => (
-                <option key={year} value={year.toString()}>
+                <option key={year} value={year.toString()} className="bg-dark-elevated text-gray-200">
                   {year}年
                 </option>
               ))}
@@ -1616,45 +1675,45 @@ function StatisticsPage() {
 
         {/* 统计结果 */}
         {periodStats && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
             <div>
-              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">股票统计</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">盈亏金额</span>
-                  <span className={`text-sm font-display font-bold ${periodStats.stock.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+              <h3 className="text-sm sm:text-base font-sans font-semibold text-gray-200 mb-2 sm:mb-3 lg:mb-4">股票统计</h3>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">盈亏金额</span>
+                  <span className={`text-xs sm:text-sm font-display font-bold ${periodStats.stock.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.stock.profitLoss, true)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">收益率</span>
-                  <span className={`text-sm font-display font-bold ${periodStats.stock.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">收益率</span>
+                  <span className={`text-xs sm:text-sm font-display font-bold ${periodStats.stock.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {periodStats.stock.returnRate.toFixed(2)}%
                   </span>
                 </div>
                 {periodView === 'year' && (
-                  <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                    <span className="text-sm font-sans text-gray-400">年化收益率</span>
-                    <span className={`text-sm font-display font-bold ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                  <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                    <span className="text-xs sm:text-sm font-sans text-gray-400">年化收益率</span>
+                    <span className={`text-xs sm:text-sm font-display font-bold ${(periodStats.stock.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                       {(periodStats.stock.annualizedReturn * 100).toFixed(2)}%
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">胜率</span>
-                  <span className="text-sm font-display font-bold text-white">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">胜率</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-white">
                     {periodStats.stock.winRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">最大回撤</span>
-                  <span className="text-sm font-display font-bold text-danger-light">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">最大回撤</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-danger-light">
                     {periodStats.stock.maxDrawdown.toFixed(2)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="text-sm font-sans text-gray-400">交易天数</span>
-                  <span className="text-sm font-display font-bold text-white">
+                <div className="flex items-center justify-between py-2 sm:py-2.5">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">交易天数</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-white">
                     {periodStats.stock.days} 天
                   </span>
                 </div>
@@ -1662,43 +1721,43 @@ function StatisticsPage() {
             </div>
 
             <div>
-              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">基金统计</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">盈亏金额</span>
-                  <span className={`text-sm font-display font-bold ${periodStats.fund.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+              <h3 className="text-sm sm:text-base font-sans font-semibold text-gray-200 mb-2 sm:mb-3 lg:mb-4">基金统计</h3>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">盈亏金额</span>
+                  <span className={`text-xs sm:text-sm font-display font-bold ${periodStats.fund.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.fund.profitLoss, true)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">收益率</span>
-                  <span className={`text-sm font-display font-bold ${periodStats.fund.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">收益率</span>
+                  <span className={`text-xs sm:text-sm font-display font-bold ${periodStats.fund.returnRate >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {periodStats.fund.returnRate.toFixed(2)}%
                   </span>
                 </div>
                 {periodView === 'year' && (
-                  <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                    <span className="text-sm font-sans text-gray-400">年化收益率</span>
-                    <span className={`text-sm font-display font-bold ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                  <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                    <span className="text-xs sm:text-sm font-sans text-gray-400">年化收益率</span>
+                    <span className={`text-xs sm:text-sm font-display font-bold ${(periodStats.fund.annualizedReturn * 100) >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                       {(periodStats.fund.annualizedReturn * 100).toFixed(2)}%
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">胜率</span>
-                  <span className="text-sm font-display font-bold text-white">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">胜率</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-white">
                     {periodStats.fund.winRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5 border-b border-dark-border">
-                  <span className="text-sm font-sans text-gray-400">最大回撤</span>
-                  <span className="text-sm font-display font-bold text-danger-light">
+                <div className="flex items-center justify-between py-2 sm:py-2.5 border-b border-dark-border">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">最大回撤</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-danger-light">
                     {periodStats.fund.maxDrawdown.toFixed(2)}%
                   </span>
                 </div>
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="text-sm font-sans text-gray-400">交易天数</span>
-                  <span className="text-sm font-display font-bold text-white">
+                <div className="flex items-center justify-between py-2 sm:py-2.5">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">交易天数</span>
+                  <span className="text-xs sm:text-sm font-display font-bold text-white">
                     {periodStats.fund.days} 天
                   </span>
                 </div>
@@ -1706,11 +1765,11 @@ function StatisticsPage() {
             </div>
 
             <div>
-              <h3 className="text-md font-sans font-semibold text-gray-300 mb-4">合计统计</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2.5">
-                  <span className="text-sm font-sans text-gray-400">总盈亏</span>
-                  <span className={`text-sm font-display font-bold ${periodStats.total.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+              <h3 className="text-sm sm:text-base font-sans font-semibold text-gray-200 mb-2 sm:mb-3 lg:mb-4">合计统计</h3>
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between py-2 sm:py-2.5">
+                  <span className="text-xs sm:text-sm font-sans text-gray-400">总盈亏</span>
+                  <span className={`text-xs sm:text-sm font-display font-bold ${periodStats.total.profitLoss >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(periodStats.total.profitLoss, true)}
                   </span>
                 </div>
@@ -1727,24 +1786,27 @@ function StatisticsPage() {
       </Card>
 
       {/* 股票与基金收益对比分析 */}
-      <Card>
-        <h2 className="text-lg font-display font-bold text-amber-400 mb-6 flex items-center gap-3 decorative-line">股票与基金收益对比 ({startDate} 至 {endDate})</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="border-2 border-danger-base/30 rounded-2xl p-6 bg-danger-base/10 backdrop-blur-sm">
-            <div className="flex items-center space-x-3 mb-5">
-              <img src="/assets/images/gupiao.png" alt="股票" className="w-8 h-8" />
-              <h3 className="text-lg font-display font-bold text-white">股票</h3>
+      <Card className="!p-3 sm:!p-4 lg:!p-6">
+        <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 mb-3 sm:mb-4 lg:mb-6 flex items-center gap-2">
+          <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+          股票与基金收益对比 ({startDate} 至 {endDate})
+        </h2>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-6 mb-3 sm:mb-4 lg:mb-6">
+          <div className="border-2 border-danger-base/30 rounded-lg sm:rounded-xl lg:rounded-2xl p-2 sm:p-3 lg:p-6 bg-danger-base/10 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-2 sm:mb-3 lg:mb-5">
+              <img src="/assets/images/gupiao.png" alt="股票" className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-display font-bold text-white">股票</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-2.5 lg:space-y-4">
               <div>
-                <div className="text-sm font-sans text-gray-400 mb-2">累计盈亏</div>
-                <div className={`text-2xl font-display font-bold ${stats.stockProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
+                <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">累计盈亏</div>
+                <div className={`text-base sm:text-lg lg:text-2xl font-display font-bold ${stats.stockProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.stockProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
                   {stats.stockProfitLoss}
                 </div>
               </div>
               <div>
-                <div className="text-sm font-sans text-gray-400 mb-2">当前资产</div>
-                <div className="text-2xl font-display font-bold text-white">{stats.currentStockAsset}</div>
+                <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">当前资产</div>
+                <div className="text-base sm:text-lg lg:text-2xl font-display font-bold text-white">{stats.currentStockAsset}</div>
               </div>
               {(() => {
                 const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
@@ -1753,28 +1815,28 @@ function StatisticsPage() {
                 const stockRatio = totalProfit !== 0 ? (stockProfit / totalProfit * 100) : 0
                 return (
                   <div>
-                    <div className="text-sm font-sans text-gray-400 mb-2">占比</div>
-                    <div className="text-2xl font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</div>
+                    <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">占比</div>
+                    <div className="text-base sm:text-lg lg:text-2xl font-display font-bold text-amber-400">{stockRatio.toFixed(1)}%</div>
                   </div>
                 )
               })()}
             </div>
           </div>
-          <div className="border-2 border-amber-500/30 rounded-2xl p-6 bg-amber-500/10 backdrop-blur-sm">
-            <div className="flex items-center space-x-3 mb-5">
-              <img src="/assets/images/jijin.png" alt="基金" className="w-8 h-8" />
-              <h3 className="text-lg font-display font-bold text-white">基金</h3>
+          <div className="border-2 border-amber-500/30 rounded-lg sm:rounded-xl lg:rounded-2xl p-2 sm:p-3 lg:p-6 bg-amber-500/10 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 mb-2 sm:mb-3 lg:mb-5">
+              <img src="/assets/images/jijin.png" alt="基金" className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8" />
+              <h3 className="text-sm sm:text-base lg:text-lg font-display font-bold text-white">基金</h3>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-2.5 lg:space-y-4">
               <div>
-                <div className="text-sm font-sans text-gray-400 mb-2">累计盈亏</div>
-                <div className={`text-2xl font-display font-bold ${stats.fundProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
+                <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">累计盈亏</div>
+                <div className={`text-base sm:text-lg lg:text-2xl font-display font-bold ${stats.fundProfitLoss === '--' ? 'text-gray-400' : (parseFloat(stats.fundProfitLoss.replace(/,/g, '')) >= 0 ? 'text-success-light' : 'text-danger-light')}`}>
                   {stats.fundProfitLoss}
                 </div>
               </div>
               <div>
-                <div className="text-sm font-sans text-gray-400 mb-2">当前资产</div>
-                <div className="text-2xl font-display font-bold text-white">{stats.currentFundAsset}</div>
+                <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">当前资产</div>
+                <div className="text-base sm:text-lg lg:text-2xl font-display font-bold text-white">{stats.currentFundAsset}</div>
               </div>
               {(() => {
                 const stockProfit = stats.stockProfitLoss === '--' ? 0 : parseFloat(stats.stockProfitLoss.replace(/,/g, '')) || 0
@@ -1783,8 +1845,8 @@ function StatisticsPage() {
                 const fundRatio = totalProfit !== 0 ? (fundProfit / totalProfit * 100) : 0
                 return (
                   <div>
-                    <div className="text-sm font-sans text-gray-400 mb-2">占比</div>
-                    <div className="text-2xl font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</div>
+                    <div className="text-[10px] sm:text-xs lg:text-sm font-sans text-gray-400 mb-0.5 sm:mb-1">占比</div>
+                    <div className="text-base sm:text-lg lg:text-2xl font-display font-bold text-amber-400">{fundRatio.toFixed(1)}%</div>
                   </div>
                 )
               })()}
@@ -1795,10 +1857,10 @@ function StatisticsPage() {
         {chartData && (
           <div 
             id="comparison-chart-fullscreen-container"
-            className={`bg-white rounded-xl p-4 sm:p-6 shadow-sm w-full max-w-full overflow-hidden ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
+            className={`bg-white rounded-lg lg:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm w-full max-w-full overflow-hidden ${isComparisonFullScreen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''}`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-display font-bold text-amber-400">收益趋势对比</h3>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400">收益趋势对比</h3>
               <button
                 type="button"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1900,8 +1962,11 @@ function StatisticsPage() {
 
       {/* 图表区域 */}
       <Card className={isChartFullScreen ? 'fixed inset-0 z-50 bg-dark-bg overflow-y-auto' : ''}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">对比趋势图 (盈亏百分比)</h2>
+        <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-6">
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            对比趋势图 (盈亏百分比)
+          </h2>
           <div className="flex items-center space-x-2">
             <Button
               variant="secondary"
@@ -1999,9 +2064,12 @@ function StatisticsPage() {
       </Card>
 
       {/* 历史记录列表 */}
-      <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
-          <h2 className="text-lg font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">历史记录</h2>
+      <Card className="!p-3 sm:!p-4 lg:!p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6 space-y-2 sm:space-y-0">
+          <h2 className="text-sm sm:text-base lg:text-lg font-display font-bold text-amber-400 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
+            历史记录
+          </h2>
           <div className="flex flex-wrap items-center gap-2">
             {/* 类型筛选按钮组 */}
             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">

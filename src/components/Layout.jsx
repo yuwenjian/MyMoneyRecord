@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   FiHome, 
@@ -6,7 +6,8 @@ import {
   FiClock, 
   FiSettings,
   FiMenu,
-  FiX
+  FiX,
+  FiPlusCircle
 } from 'react-icons/fi'
 
 const Layout = ({ children }) => {
@@ -15,9 +16,9 @@ const Layout = ({ children }) => {
 
   const menuItems = [
     { path: '/', label: '概览', icon: FiHome },
-    { path: '/statistics', label: '统计分析', icon: FiBarChart2 },
-    { path: '/records', label: '创建记录', icon: FiClock },
-    { path: '/settings', label: '系统设置', icon: FiSettings },
+    { path: '/statistics', label: '统计', icon: FiBarChart2 },
+    { path: '/records', label: '创建', icon: FiPlusCircle },
+    { path: '/settings', label: '设置', icon: FiSettings },
   ]
 
   const isActive = (path) => {
@@ -35,33 +36,8 @@ const Layout = ({ children }) => {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gold-base/5 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* 移动端顶部栏 */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-dark border-b border-dark-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-xl hover:bg-dark-elevated active:scale-95 transition-all duration-200 text-amber-400"
-            >
-              {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-            </button>
-            <img 
-              src="/assets/images/logo.jpg" 
-              alt="财智追踪" 
-              className="w-9 h-9 rounded-xl object-cover shadow-glow-amber ring-2 ring-amber-500/30"
-              onError={(e) => {
-                e.target.style.display = 'none'
-              }}
-            />
-            <h1 className="text-xl font-display font-bold gradient-text-gold">
-              财智追踪
-            </h1>
-          </div>
-        </div>
-      </div>
-
       <div className="flex relative z-10">
-        {/* 侧边栏 - 重叠设计 */}
+        {/* 桌面端侧边栏 */}
         <aside
           className={`
             fixed lg:static inset-y-0 left-0 z-40
@@ -69,10 +45,10 @@ const Layout = ({ children }) => {
             shadow-dark-xl lg:shadow-none
             transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             transition-transform duration-500 ease-out
-            pt-16 lg:pt-0
+            hidden lg:flex
           `}
         >
-          <div className="h-full flex flex-col relative">
+          <div className="h-full flex flex-col relative w-full">
             {/* 装饰性渐变 */}
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-gold-base/5 pointer-events-none"></div>
             
@@ -102,7 +78,7 @@ const Layout = ({ children }) => {
               </div>
             </div>
 
-            {/* 导航菜单 */}
+            {/* 导航菜单 - 桌面端 */}
             <nav className="flex-1 p-6 space-y-3 relative z-10">
               {menuItems.map((item, index) => {
                 const Icon = item.icon
@@ -111,7 +87,6 @@ const Layout = ({ children }) => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    onClick={() => setSidebarOpen(false)}
                     className={`
                       flex items-center space-x-4 px-5 py-4 rounded-xl
                       transition-all duration-300
@@ -135,23 +110,62 @@ const Layout = ({ children }) => {
           </div>
         </aside>
 
-        {/* 遮罩层（移动端） */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* 主内容区 - 非对称布局 */}
-        <main className="flex-1 min-h-screen pt-16 lg:pt-0 overflow-x-hidden relative">
-          <div className="p-6 lg:p-10 w-full max-w-full overflow-x-hidden">
+        {/* 主内容区 */}
+        <main className="flex-1 min-h-screen overflow-x-hidden relative">
+          <div className="pt-safe-top px-4 pb-20 sm:px-6 lg:p-10 w-full max-w-full overflow-x-hidden">
             <div className="animate-fade-in">
               {children}
             </div>
           </div>
         </main>
       </div>
+
+      {/* 移动端底部导航栏 */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-dark border-t border-dark-border/30">
+        <div className="flex items-center justify-around">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.path)
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`
+                  flex flex-col items-center justify-center
+                  flex-1 py-3 px-3
+                  transition-all duration-300
+                  relative
+                  active:scale-95
+                  ${active ? 'text-amber-400' : 'text-gray-400'}
+                `}
+              >
+                {/* 顶部激活指示器 - 下划线效果 */}
+                {active && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full"></div>
+                )}
+                
+                {/* 图标 */}
+                <div className="mb-0.5">
+                  <Icon 
+                    size={24} 
+                    className={`transition-all duration-300 ${active ? 'text-amber-400' : 'text-gray-400'}`}
+                    strokeWidth={active ? 2.5 : 2}
+                  />
+                </div>
+                
+                {/* 文字标签 */}
+                <span className={`
+                  text-xs font-sans font-medium
+                  transition-all duration-300
+                  ${active ? 'text-amber-400 font-semibold' : 'text-gray-400'}
+                `}>
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

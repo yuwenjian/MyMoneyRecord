@@ -1,0 +1,59 @@
+---
+description: 项目开发流程约束规则 - 编码标准和项目约定
+alwaysApply: true
+---
+
+# 项目开发流程约束规则
+
+## 编码标准
+
+### 技术栈规范
+
+**前端技术栈：**
+- Next.js 14 (App Router) + React + TypeScript + Tailwind CSS
+- 优势：SSR/SSG 利于 SEO，开发效率高，生态成熟
+
+**后端技术栈：**
+- Next.js API Routes 或独立 Node.js (Express/Fastify)
+- 优势：前后端同栈，部署简单
+
+**数据库：**
+- PostgreSQL + Prisma ORM
+- 优势：关系型数据，类型安全，迁移方便
+
+**文件存储：**
+- 阿里云 OSS / 腾讯云 COS / AWS S3
+- 优势：CDN 加速，成本可控
+
+**视频处理：**
+- FFmpeg (自建) 或 云服务（阿里云 MPS / 腾讯云 VOD）
+
+**部署：**
+- Vercel / Railway / 自建服务器
+
+## 项目约定
+
+### 文档管理
+- 所有项目说明文档统一放在 `project_docs` 文件夹下
+- 前端项目所有的代码统一放在 `ClientProject` 文件夹下
+- 服务端项目所有的代码统一放在 `ServerProject` 文件夹下
+- 编写代码的功能严格按照 `project_docs` 文件夹下的说明文档要求
+
+
+### 技能使用规范
+
+**UI/UX 设计：**
+- 设计 UI/UX 时，默认使用 `.cursor/skills/UI_skills/SKILL.md` 路径中的 `frontend-design` 技能
+
+**文档编写：**
+- 编写文档时，默认使用 `.cursor/skills/doc_skill/SKILL.md` 路径中的 `doc-writer` 技能
+
+**项目开发：**
+- 项目开始编写代码前，请使用 `.cursor/skills/workflow_skill/SKILL.md` 路径中的 `project-workflow` 技能
+
+## 开发原则
+
+1. **类型安全优先**：充分利用 TypeScript 的类型系统
+2. **SEO 友好**：利用 Next.js SSR/SSG 特性优化搜索引擎收录
+3. **性能优化**：关注首屏加载、视频流优化、CDN 加速
+4. **代码质量**：遵循最佳实践，保持代码可维护性

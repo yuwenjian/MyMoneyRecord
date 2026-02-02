@@ -160,5 +160,38 @@
     /* 确保焦点状态也使用深色主题 */
     color-scheme: dark;
   }
+
+  /* 移动端安全区域适配 */
+  .pt-safe-top {
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+  }
+
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* 底部导航栏样式优化 */
+  @supports (backdrop-filter: blur(20px)) {
+    .glass-dark {
+      backdrop-filter: blur(20px);
+    }
+  }
+
+  /* 底部导航栏特殊样式 */
+  nav.glass-dark {
+    background: rgba(13, 11, 18, 0.95);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* 移动端底部导航栏动画 */
+  @keyframes tab-scale {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(0.95);
+    }
+  }
 }
 

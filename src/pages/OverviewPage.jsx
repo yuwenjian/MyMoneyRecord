@@ -369,7 +369,7 @@ function OverviewPage() {
     : 0
 
   return (
-    <div className="space-y-8 lg:space-y-12">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8 xl:space-y-12">
       <PageHeader
         title="概览"
         subtitle="欢迎回来，AI 实时监测中..."
@@ -377,27 +377,27 @@ function OverviewPage() {
 
       {/* 总资产卡片 - 非对称重叠设计 */}
       <div className="relative animate-stagger-1">
-        <GradientCard className="relative overflow-visible">
+        <GradientCard className="relative overflow-visible !p-4 sm:!p-6 lg:!p-8 xl:!p-10">
           {/* 日历图标 - 调整位置避免遮挡数字 */}
           <button
             onClick={() => navigate('/calendar')}
-            className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 sm:p-3 rounded-xl bg-dark-surface/90 backdrop-blur-md border-2 border-amber-500/50 hover:border-amber-400 hover:bg-dark-elevated active:scale-95 transition-all duration-300 text-amber-400 shadow-glow-amber z-30"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 lg:top-6 lg:right-6 p-2 rounded-lg sm:rounded-xl bg-dark-surface/90 backdrop-blur-md border-2 border-amber-500/50 hover:border-amber-400 hover:bg-dark-elevated active:scale-95 transition-all duration-300 text-amber-400 shadow-glow-amber z-30"
             title="查看日历"
           >
-            <FiCalendar size={18} className="sm:w-5 sm:h-5" />
+            <FiCalendar size={16} className="sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" />
           </button>
           
           {/* 非对称布局 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-end">
             {/* 主数字 - 左侧大号显示 */}
-            <div className="lg:col-span-7 pr-16 sm:pr-20 lg:pr-6">
-              <div className="mb-2">
-                <span className="text-sm font-sans font-medium text-white/70 uppercase tracking-wider">
+            <div className="lg:col-span-7 pr-12 sm:pr-16 lg:pr-6">
+              <div className="mb-1.5 sm:mb-2">
+                <span className="text-xs sm:text-sm font-sans font-medium text-white/70 uppercase tracking-wider">
                   当前总资产
                 </span>
-                <span className="text-xs text-white/50 ml-2">CNY</span>
+                <span className="text-[10px] sm:text-xs text-white/50 ml-1.5 sm:ml-2">CNY</span>
               </div>
-              <div className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white tracking-tighter leading-none mb-6 break-all">
+              <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white tracking-tighter leading-none mb-4 sm:mb-6 break-all">
                 {isLoading ? (
                   <span className="inline-block animate-pulse text-white/50">加载中...</span>
                 ) : (
@@ -409,28 +409,28 @@ function OverviewPage() {
             </div>
 
             {/* 收益指标 - 右侧小卡片，向左移动 */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-2">
-                <div className="text-xs font-sans font-medium text-amber-400/80 mb-2 uppercase tracking-wider">
+            <div className="lg:col-span-5 space-y-3 sm:space-y-4">
+              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-2">
+                <div className="text-[10px] sm:text-xs font-sans font-medium text-amber-400/80 mb-1.5 sm:mb-2 uppercase tracking-wider">
                   今日盈亏
                 </div>
-                <div className="flex items-baseline space-x-2">
-                  <span className={`text-3xl font-display font-bold ${overviewData.todayProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                <div className="flex items-baseline space-x-1.5 sm:space-x-2">
+                  <span className={`text-xl sm:text-2xl lg:text-3xl font-display font-bold ${overviewData.todayProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(overviewData.todayProfit, true)}
                   </span>
                   {overviewData.todayProfitPercent !== 0 && (
-                    <span className={`text-sm font-sans font-semibold px-2 py-1 rounded-lg ${overviewData.todayProfit >= 0 ? 'bg-success-base/20 text-success-light border border-success-base/30' : 'bg-danger-base/20 text-danger-light border border-danger-base/30'}`}>
+                    <span className={`text-xs sm:text-sm font-sans font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg ${overviewData.todayProfit >= 0 ? 'bg-success-base/20 text-success-light border border-success-base/30' : 'bg-danger-base/20 text-danger-light border border-danger-base/30'}`}>
                       {overviewData.todayProfitPercent >= 0 ? '+' : ''}{overviewData.todayProfitPercent.toFixed(2)}%
                     </span>
                   )}
                 </div>
               </div>
-              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-2xl p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-3">
-                <div className="text-xs font-sans font-medium text-amber-400/80 mb-2 uppercase tracking-wider">
+              <div className="bg-dark-surface/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 border border-amber-500/20 shadow-dark-lg animate-stagger-3">
+                <div className="text-[10px] sm:text-xs font-sans font-medium text-amber-400/80 mb-1.5 sm:mb-2 uppercase tracking-wider">
                   本月收益
                 </div>
                 <div className="flex items-baseline">
-                  <span className={`text-3xl font-display font-bold ${overviewData.monthProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
+                  <span className={`text-xl sm:text-2xl lg:text-3xl font-display font-bold ${overviewData.monthProfit >= 0 ? 'text-success-light' : 'text-danger-light'}`}>
                     {formatCurrency(overviewData.monthProfit, true)}
                   </span>
                 </div>
@@ -441,11 +441,11 @@ function OverviewPage() {
       </div>
 
       {/* 资产构成和图表 - 非对称网格布局 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* 资产构成 - 左侧窄列 */}
         <Card hover className="lg:col-span-4 animate-stagger-2">
-          <h3 className="text-xl font-display font-bold text-amber-400 mb-8 flex items-center gap-3 decorative-line">
-            <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
+          <h3 className="text-base sm:text-lg lg:text-xl font-display font-bold text-amber-400 mb-4 sm:mb-6 lg:mb-8 flex items-center gap-2">
+            <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
             资产构成
           </h3>
           <div className="space-y-6">
@@ -508,9 +508,9 @@ function OverviewPage() {
 
         {/* 净值增长曲线 - 右侧宽列 */}
         <Card hover className="lg:col-span-8 animate-stagger-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-            <h3 className="text-xl font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">
-              <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 lg:mb-8 gap-3 sm:gap-4">
+            <h3 className="text-base sm:text-lg lg:text-xl font-display font-bold text-amber-400 flex items-center gap-2">
+              <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
               净值增长曲线
             </h3>
             <div className="flex space-x-2 bg-dark-elevated p-1.5 rounded-xl border border-dark-border">
@@ -581,10 +581,10 @@ function OverviewPage() {
 
       {/* AI 智能分析 - 全宽编辑风格 */}
       <Card hover className="animate-stagger-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 lg:mb-8 space-y-3 sm:space-y-0">
           <div className="flex flex-wrap items-center gap-4">
-            <h3 className="text-xl font-display font-bold text-amber-400 flex items-center gap-3 decorative-line">
-              <span className="w-1 h-8 bg-gradient-to-b from-amber-500 to-gold-base rounded-full"></span>
+            <h3 className="text-base sm:text-lg lg:text-xl font-display font-bold text-amber-400 flex items-center gap-2">
+              <span className="w-0.5 h-4 sm:h-5 bg-amber-400 rounded-full"></span>
               AI 智能分析
             </h3>
             <span className="text-xs font-sans font-semibold bg-amber-500/20 text-amber-400 px-4 py-2 rounded-full border border-amber-500/30 backdrop-blur-sm">

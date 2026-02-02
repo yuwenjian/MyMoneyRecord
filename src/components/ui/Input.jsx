@@ -11,14 +11,14 @@ export function Input({ label, error, className = '', ...props }) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-semibold text-gray-300 mb-2.5">
+        <label className="block text-xs sm:text-sm font-sans font-semibold text-gray-200 mb-1.5 sm:mb-2">
           {label}
         </label>
       )}
       <input
         className={`
-          w-full px-5 py-3.5 text-base font-sans
-          border-2 rounded-xl
+          w-full px-3 py-2.5 sm:px-4 sm:py-3 lg:px-5 lg:py-3.5 text-sm sm:text-base font-sans
+          border-2 rounded-lg sm:rounded-xl
           bg-dark-elevated text-gray-100
           focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500
           transition-all duration-300
