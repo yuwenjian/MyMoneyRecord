@@ -338,11 +338,11 @@ function RecordPage() {
         </GradientCard>
       </div>
 
-      <Card className="!p-3 sm:!p-4 lg:!p-6">
+      <Card className="!p-4 sm:!p-5 lg:!p-8">
         {/* 图片上传区域 */}
-        <div className="mb-3 sm:mb-4 lg:mb-6">
-          <div className="flex items-center justify-between mb-2 sm:mb-3 lg:mb-4">
-            <label className="text-xs sm:text-sm lg:text-base font-sans font-semibold text-gray-200 flex items-center gap-2">
+        <div className="mb-5 sm:mb-6 lg:mb-8">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 lg:mb-5">
+            <label className="text-xs sm:text-sm lg:text-base font-sans font-semibold text-amber-400 flex items-center gap-2">
               <span className="w-0.5 h-3 sm:h-4 bg-amber-400 rounded-full"></span>
               智能识别 {imagePreviews.length > 0 && `(已上传 ${imagePreviews.length} 张)`}
             </label>
@@ -442,7 +442,7 @@ function RecordPage() {
         </div>
 
         {/* 日期选择 */}
-        <div className="mb-3 sm:mb-4 lg:mb-6">
+        <div className="mb-5 sm:mb-6 lg:mb-8">
           <Input
             type="date"
             label="日期"
@@ -452,8 +452,8 @@ function RecordPage() {
         </div>
 
         {/* 投资类型 */}
-        <div className="mb-3 sm:mb-4 lg:mb-6">
-          <label className="block text-xs sm:text-sm font-sans font-semibold text-gray-200 mb-2 flex items-center gap-2">
+        <div className="mb-5 sm:mb-6 lg:mb-8">
+          <label className="block text-xs sm:text-sm font-sans font-semibold text-amber-400 mb-3 sm:mb-4 flex items-center gap-2">
             <span className="w-0.5 h-3 sm:h-4 bg-amber-400 rounded-full"></span>
             投资类型
           </label>
@@ -514,7 +514,7 @@ function RecordPage() {
         </div>
 
         {/* 总资产 */}
-        <div className="mb-3 sm:mb-4 lg:mb-6">
+        <div className="mb-5 sm:mb-6 lg:mb-8">
           <Input
             type="number"
             name="totalAsset"
@@ -528,7 +528,7 @@ function RecordPage() {
 
         {/* 总市值（仅股票显示） */}
         {formData.investmentType === 'stock' && (
-          <div className="mb-3 sm:mb-4 lg:mb-6">
+          <div className="mb-5 sm:mb-6 lg:mb-8">
             <Input
               type="number"
               name="totalMarketValue"
@@ -542,37 +542,38 @@ function RecordPage() {
         )}
 
         {/* 加减仓操作 */}
-        <div className="mb-3 sm:mb-4 lg:mb-6">
-          <label className="block text-xs sm:text-sm font-sans font-semibold text-gray-200 mb-2 flex items-center gap-2">
+        <div className="mb-5 sm:mb-6 lg:mb-8">
+          <label className="block text-xs sm:text-sm font-sans font-semibold text-amber-400 mb-3 sm:mb-4 flex items-center gap-2">
             <span className="w-0.5 h-3 sm:h-4 bg-amber-400 rounded-full"></span>
             加减仓操作
           </label>
-          <div className="space-y-2.5">
-            <label className="flex items-center cursor-pointer">
+          <div className="space-y-3 sm:space-y-4">
+            <label className="flex items-center cursor-pointer py-1">
               <input
                 type="radio"
                 name="adjustmentType"
                 value="none"
                 checked={formData.adjustmentType === 'none'}
                 onChange={handleInputChange}
-                className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
               />
-              <span className="ml-2 text-sm lg:text-base text-gray-200">无操作</span>
+              <span className="ml-3 text-sm sm:text-base text-gray-200">无操作</span>
             </label>
-            <div className="space-y-2">
-              <label className="flex items-center cursor-pointer">
+            
+            <div className="space-y-2 sm:space-y-3">
+              <label className="flex items-center cursor-pointer py-1">
                 <input
                   type="radio"
                   name="adjustmentType"
                   value="add"
                   checked={formData.adjustmentType === 'add'}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
                 />
-                <span className="ml-2 text-sm lg:text-base text-gray-200">+ 加仓</span>
+                <span className="ml-3 text-sm sm:text-base text-gray-200">+ 加仓</span>
               </label>
               {formData.adjustmentType === 'add' && (
-                <div className="pl-6">
+                <div className="pl-7 sm:pl-8 pt-1">
                   <Input
                     type="number"
                     name="adjustmentAmountAdd"
@@ -584,20 +585,21 @@ function RecordPage() {
                 </div>
               )}
             </div>
-            <div className="space-y-2">
-              <label className="flex items-center cursor-pointer">
+            
+            <div className="space-y-2 sm:space-y-3">
+              <label className="flex items-center cursor-pointer py-1">
                 <input
                   type="radio"
                   name="adjustmentType"
                   value="reduce"
                   checked={formData.adjustmentType === 'reduce'}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 border-dark-border focus:ring-amber-500 bg-dark-elevated"
                 />
-                <span className="ml-2 text-sm lg:text-base text-gray-200">- 减仓</span>
+                <span className="ml-3 text-sm sm:text-base text-gray-200">- 减仓</span>
               </label>
               {formData.adjustmentType === 'reduce' && (
-                <div className="pl-6">
+                <div className="pl-7 sm:pl-8 pt-1">
                   <Input
                     type="number"
                     name="adjustmentAmountReduce"
@@ -614,11 +616,11 @@ function RecordPage() {
 
         {/* 其他信息 */}
         <div className="mb-0">
-          <h3 className="text-xs sm:text-sm lg:text-base font-sans font-semibold text-gray-200 mb-2 sm:mb-3 lg:mb-4 flex items-center gap-2">
+          <h3 className="text-xs sm:text-sm lg:text-base font-sans font-semibold text-amber-400 mb-3 sm:mb-4 lg:mb-5 flex items-center gap-2">
             <span className="w-0.5 h-3 sm:h-4 bg-amber-400 rounded-full"></span>
             其他信息
           </h3>
-          <div className="space-y-2.5 sm:space-y-3 lg:space-y-4">
+          <div className="space-y-4 sm:space-y-5 lg:space-y-6">
             <Input
               type="number"
               name="shanghaiIndex"
@@ -644,9 +646,9 @@ function RecordPage() {
         onClick={handleSave}
         fullWidth
         size="lg"
-        className="mt-3 lg:mt-6"
+        className="mt-5 sm:mt-6 lg:mt-8"
       >
-保存记录
+        保存记录
       </Button>
     </div>
   )

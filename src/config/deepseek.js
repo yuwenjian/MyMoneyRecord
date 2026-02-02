@@ -1,14 +1,8 @@
 // DeepSeek API 配置
-// 优先从 localStorage 读取（用户设置），其次从环境变量读取
-// 用户可以在设置页面配置 API Key
+// 从环境变量读取 API Key
+// 在 Vercel 部署时，请在 Vercel 后台设置 VITE_DEEPSEEK_API_KEY 环境变量
 
 function getDeepSeekAPIKey() {
-  // 优先从 localStorage 读取用户设置的 API Key
-  const userApiKey = localStorage.getItem('deepseek_api_key')
-  if (userApiKey && userApiKey.trim()) {
-    return userApiKey.trim()
-  }
-  // 如果没有用户设置，则从环境变量读取
   return import.meta.env.VITE_DEEPSEEK_API_KEY || ''
 }
 
