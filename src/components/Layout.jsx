@@ -7,7 +7,8 @@ import {
   FiSettings,
   FiMenu,
   FiX,
-  FiPlusCircle
+  FiPlusCircle,
+  FiTrendingUp
 } from 'react-icons/fi'
 
 const Layout = ({ children }) => {
@@ -17,6 +18,7 @@ const Layout = ({ children }) => {
   const menuItems = [
     { path: '/', label: '概览', icon: FiHome },
     { path: '/statistics', label: '统计', icon: FiBarChart2 },
+    { path: '/jijing', label: '基金', icon: FiTrendingUp },
     { path: '/records', label: '创建', icon: FiPlusCircle },
     { path: '/settings', label: '设置', icon: FiSettings },
   ]

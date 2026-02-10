@@ -259,6 +259,7 @@ export async function getHoldings(investmentType = null) {
       currentPrice: parseFloat(item.get('currentPrice')) || 0,
       notes: item.get('notes') || '',
       investmentType: item.get('investmentType'),
+      fundCode: item.get('fundCode') || '', // 基金代码，用于实时估值与今日预估收益
       createdAt: item.createdAt,
       updatedAt: item.updatedAt
     }))
@@ -275,7 +276,7 @@ export async function saveHolding(holding) {
       throw new Error('LeanCloud 未正确初始化，AV 对象不存在')
     }
 
-    const { id, name, amount, cost, currentPrice, notes, investmentType } = holding
+    const { id, name, amount, cost, currentPrice, notes, investmentType, fundCode } = holding
     
     // 验证必填字段
     if (!name || !investmentType) {
@@ -302,6 +303,9 @@ export async function saveHolding(holding) {
     HoldingRecord.set('currentPrice', parseFloat(currentPrice) || 0)
     HoldingRecord.set('notes', notes || '')
     HoldingRecord.set('investmentType', investmentType)
+    if (investmentType === 'fund') {
+      HoldingRecord.set('fundCode', (fundCode != null && String(fundCode).trim()) ? String(fundCode).trim() : '')
+    }
     
     const savedRecord = await HoldingRecord.save()
     
@@ -313,6 +317,7 @@ export async function saveHolding(holding) {
       currentPrice: parseFloat(currentPrice) || 0,
       notes: notes || '',
       investmentType,
+      fundCode: investmentType === 'fund' ? (String(fundCode || '').trim()) : undefined,
       createdAt: savedRecord.createdAt,
       updatedAt: savedRecord.updatedAt
     }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, Button, Input, PageHeader } from '../components/ui'
 import { getHoldings, saveHolding, deleteHolding, formatCurrency } from '../utils/storage'
 import { recognizeHoldingsList } from '../utils/ocr'
+import { fetchFundEstimation } from './jijing/fundApi'
 import toast from 'react-hot-toast'
 
 /**
@@ -21,11 +22,13 @@ export default function PortfolioPage() {
     amount: '',
     cost: '',
     currentPrice: '',
-    notes: ''
+    notes: '',
+    fundCode: ''
   })
   const [isRecognizing, setIsRecognizing] = useState(false)
   const [imagePreview, setImagePreview] = useState(null)
   const fileInputRef = useRef(null)
+  const [fundCodeLoading, setFundCodeLoading] = useState(false)
 
   useEffect(() => {
     loadHoldings()
@@ -80,7 +83,8 @@ export default function PortfolioPage() {
       amount: '',
       cost: '',
       currentPrice: '',
-      notes: ''
+      notes: '',
+      fundCode: ''
     })
   }
 
@@ -91,7 +95,8 @@ export default function PortfolioPage() {
       amount: item.amount || '',
       cost: item.cost || '',
       currentPrice: item.currentPrice || '',
-      notes: item.notes || ''
+      notes: item.notes || '',
+      fundCode: item.fundCode || ''
     })
   }
 
@@ -102,26 +107,61 @@ export default function PortfolioPage() {
       amount: '',
       cost: '',
       currentPrice: '',
-      notes: ''
+      notes: '',
+      fundCode: ''
     })
+  }
+
+  // 根据基金代码查询并填充名称、当前净值
+  const handleFetchFundByCode = async () => {
+    const code = String(formData.fundCode || '').trim()
+    if (!code) {
+      toast.error('请先输入基金代码')
+      return
+    }
+    setFundCodeLoading(true)
+    try {
+      const data = await fetchFundEstimation(code)
+      setFormData(prev => ({
+        ...prev,
+        name: data.name || prev.name || `基金 ${code}`,
+        currentPrice: data.dwjz && data.dwjz !== '—' ? data.dwjz : prev.currentPrice
+      }))
+      toast.success('已根据基金代码填充名称与最新净值')
+    } catch (e) {
+      toast.error(e.message || '查询失败，请检查基金代码或网络')
+    } finally {
+      setFundCodeLoading(false)
+    }
   }
 
   const handleSave = async (type) => {
     try {
-      if (!formData.name || !formData.amount) {
+      if (type === 'fund') {
+        if (!formData.fundCode?.trim() || !formData.amount) {
+          toast.error('请填写基金代码和持仓份额')
+          return
+        }
+        // 基金名称可为空，用「基金+代码」作为默认
+      } else if (!formData.name || !formData.amount) {
         toast.error('请填写名称和数量')
         return
       }
 
+      const fundName = type === 'fund'
+        ? (formData.name?.trim() || `基金 ${formData.fundCode.trim()}`)
+        : formData.name
+
       // 保存到 LeanCloud
       const savedHolding = await saveHolding({
         id: editingItem?.id || null,
-        name: formData.name,
+        name: fundName,
         amount: parseFloat(formData.amount) || 0,
         cost: parseFloat(formData.cost) || 0,
         currentPrice: parseFloat(formData.currentPrice) || 0,
         notes: formData.notes || '',
-        investmentType: type
+        investmentType: type,
+        ...(type === 'fund' ? { fundCode: (formData.fundCode || '').trim() } : {})
       })
 
       // 更新本地状态
@@ -149,7 +189,8 @@ export default function PortfolioPage() {
         amount: '',
         cost: '',
         currentPrice: '',
-        notes: ''
+        notes: '',
+        fundCode: ''
       })
 
       toast.success(editingItem?.id ? '更新成功' : '添加成功')
@@ -332,7 +373,8 @@ export default function PortfolioPage() {
             amount: firstHolding.amount || '',
             cost: firstHolding.cost || '',
             currentPrice: firstHolding.currentPrice || '',
-            notes: firstHolding.notes || ''
+            notes: firstHolding.notes || '',
+            fundCode: firstHolding.fundCode || ''
           })
           toast.success(`识别成功！已填充 ${result.holdings.length} 个持仓信息`)
         }
@@ -669,12 +711,36 @@ export default function PortfolioPage() {
                 )}
               </div>
               
+              <div>
+                <label className="block text-xs sm:text-sm font-sans font-semibold text-gray-200 mb-1.5 sm:mb-2">
+                  基金代码 <span className="text-amber-400 font-normal">（必填，用于实时估值与今日预估收益）</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base font-sans border-2 rounded-lg sm:rounded-xl bg-dark-elevated text-gray-100 border-dark-border hover:border-amber-500/30 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 placeholder:text-gray-500 transition-all"
+                    value={formData.fundCode}
+                    onChange={(e) => handleInputChange({ target: { name: 'fundCode', value: e.target.value } })}
+                    placeholder="6位数字，如 005827"
+                    maxLength={6}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleFetchFundByCode}
+                    disabled={fundCodeLoading || !formData.fundCode?.trim()}
+                    className="shrink-0"
+                  >
+                    {fundCodeLoading ? '查询中…' : '查询并填充'}
+                  </Button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">输入代码后点击「查询并填充」，将自动填写基金名称与最新净值</p>
+              </div>
               <Input
-                label="基金名称/代码"
+                label="基金名称"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="例如：易方达蓝筹精选 (005827)"
+                placeholder="根据基金代码自动填充，可留空或修改"
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input
@@ -696,24 +762,22 @@ export default function PortfolioPage() {
                   step="0.01"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  type="number"
-                  label="当前净值"
-                  name="currentPrice"
-                  value={formData.currentPrice}
-                  onChange={handleInputChange}
-                  placeholder="元/份（可选）"
-                  step="0.01"
-                />
-                <Input
-                  label="备注"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  placeholder="可选"
-                />
-              </div>
+              <Input
+                type="number"
+                label="当前净值"
+                name="currentPrice"
+                value={formData.currentPrice}
+                onChange={handleInputChange}
+                placeholder="根据基金代码自动填充，可留空或修改"
+                step="0.01"
+              />
+              <Input
+                label="备注"
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                placeholder="可选"
+              />
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <Button
                   onClick={() => handleSave('fund')}

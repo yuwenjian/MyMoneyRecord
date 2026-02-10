@@ -10,6 +10,7 @@ import SettingsPage from './pages/SettingsPage'
 import PortfolioPage from './pages/PortfolioPage'
 import CalendarPage from './pages/CalendarPage'
 import TestPage from './pages/TestPage'
+import JijingPage from './pages/jijing'
 import './App.css'
 
 function App() {
@@ -73,6 +74,7 @@ function App() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/jijing" element={<JijingPage />} />
           </Routes>
         </Layout>
       </Router>
