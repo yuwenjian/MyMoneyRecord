@@ -221,7 +221,69 @@ export default function JijingPage() {
                 刷新
               </Button>
             </div>
-            <div className="overflow-x-auto -mx-2">
+            {/* 移动端：卡片布局 */}
+            <div className="md:hidden space-y-3">
+              {holdingsWithEstimate.map((h) => (
+                <div
+                  key={h.id}
+                  className="bg-dark-surface/80 border border-dark-border/60 rounded-xl p-4 hover:bg-dark-elevated transition-colors"
+                >
+                  {/* 基金名称 */}
+                  <div className="mb-3 pb-3 border-b border-dark-border/40">
+                    <div className="font-sans font-semibold text-white text-base">{h.name}</div>
+                    <div className="text-sm text-gray-400 mt-1">{h.fundCode}</div>
+                  </div>
+                  
+                  {/* 关键指标：今日预估收益 + 涨幅 */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-gray-300">今日预估收益</span>
+                    <div className="flex items-center gap-2">
+                      {h.todayEstimate != null ? (
+                        <span
+                          className={`font-sans font-bold text-lg ${
+                            h.todayEstimate >= 0 ? 'text-success-light' : 'text-danger-light'
+                          }`}
+                        >
+                          {formatCurrency(h.todayEstimate, true)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                      {h.estimation?.gszzl != null && (
+                        <span
+                          className={`font-sans font-semibold text-sm px-2 py-0.5 rounded ${
+                            h.estimation.gszzl >= 0 
+                              ? 'bg-success-base/20 text-success-light' 
+                              : 'bg-danger-base/20 text-danger-light'
+                          }`}
+                        >
+                          {h.estimation.gszzl >= 0 ? '+' : ''}{h.estimation.gszzl}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* 详细信息网格 */}
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">份额</span>
+                      <span className="text-white font-medium">{h.amount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">单位净值</span>
+                      <span className="text-white font-medium">{h.estimation?.dwjz ?? '—'}</span>
+                    </div>
+                    <div className="flex justify-between col-span-2">
+                      <span className="text-gray-400">估值</span>
+                      <span className="text-amber-400 font-semibold">{h.estimation?.gsz ?? '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 桌面端：表格布局 */}
+            <div className="hidden md:block overflow-x-auto -mx-2">
               <table className="w-full min-w-[560px] border-collapse">
                 <thead>
                   <tr className="text-left text-sm sm:text-base text-gray-200 border-b-2 border-dark-border">
@@ -343,61 +405,128 @@ export default function JijingPage() {
             <p className="text-sm mt-1">在上方输入基金代码添加后即可查看实时估值与今日预估涨幅</p>
           </div>
         ) : (
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full min-w-[520px] border-collapse">
-              <thead>
-                <tr className="text-left text-sm sm:text-base text-gray-200 border-b-2 border-dark-border">
-                  <th className="pb-3 pr-2 font-sans font-semibold">基金</th>
-                  <th className="pb-3 pr-2 font-sans font-semibold">单位净值</th>
-                  <th className="pb-3 pr-2 font-sans font-semibold">估值</th>
-                  <th className="pb-3 pr-2 font-sans font-semibold">今日预估涨幅</th>
-                  <th className="pb-3 pr-2 font-sans font-semibold">估值时间</th>
-                  <th className="pb-3 w-12" />
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((item) => (
-                  <tr
-                    key={item.fundcode}
-                    className="border-b border-dark-border/60 bg-dark-surface/80 hover:bg-dark-elevated transition-colors"
+          <>
+            {/* 移动端：卡片布局 */}
+            <div className="md:hidden space-y-3">
+              {list.map((item) => (
+                <div
+                  key={item.fundcode}
+                  className="bg-dark-surface/80 border border-dark-border/60 rounded-xl p-4 hover:bg-dark-elevated transition-colors relative"
+                >
+                  {/* 删除按钮 */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(item.fundcode)}
+                    className="absolute top-3 right-3 p-2 rounded-lg text-gray-400 hover:text-danger-light hover:bg-danger-base/10 transition-colors"
+                    title="移除"
                   >
-                    <td className="py-4 pr-2">
-                      <div className="font-sans font-semibold text-white text-sm sm:text-base">{item.name || `基金 ${item.fundcode}`}</div>
-                      <div className="text-sm text-gray-400 mt-0.5">{item.fundcode}</div>
-                    </td>
-                    <td className="py-4 pr-2 font-sans text-white font-semibold text-sm sm:text-base">{item.dwjz}</td>
-                    <td className="py-4 pr-2 font-sans text-amber-400 font-semibold text-sm sm:text-base">{item.gsz}</td>
-                    <td className="py-4 pr-2 text-sm sm:text-base">
-                      {item.error ? (
-                        <span className="text-gray-400">{item.error}</span>
-                      ) : item.gszzl !== null ? (
-                        <span
-                          className={`font-sans font-semibold ${
-                            item.gszzl >= 0 ? 'text-success-light' : 'text-danger-light'
-                          }`}
-                        >
-                          {item.gszzl >= 0 ? '+' : ''}{item.gszzl}%
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-4 pr-2 text-sm text-gray-300 font-sans">{item.gztime || '—'}</td>
-                    <td className="py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(item.fundcode)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-danger-light hover:bg-danger-base/10 transition-colors"
-                        title="移除"
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
+
+                  {/* 基金名称 */}
+                  <div className="mb-3 pb-3 border-b border-dark-border/40 pr-10">
+                    <div className="font-sans font-semibold text-white text-base">
+                      {item.name || `基金 ${item.fundcode}`}
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">{item.fundcode}</div>
+                  </div>
+
+                  {/* 今日涨幅（醒目显示） */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-gray-300">今日预估涨幅</span>
+                    {item.error ? (
+                      <span className="text-gray-400 text-sm">{item.error}</span>
+                    ) : item.gszzl !== null ? (
+                      <span
+                        className={`font-sans font-bold text-lg px-3 py-1 rounded ${
+                          item.gszzl >= 0
+                            ? 'bg-success-base/20 text-success-light'
+                            : 'bg-danger-base/20 text-danger-light'
+                        }`}
                       >
-                        <FiTrash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+                        {item.gszzl >= 0 ? '+' : ''}{item.gszzl}%
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </div>
+
+                  {/* 详细信息网格 */}
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">单位净值</span>
+                      <span className="text-white font-medium">{item.dwjz}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">估值</span>
+                      <span className="text-amber-400 font-semibold">{item.gsz}</span>
+                    </div>
+                    <div className="flex justify-between col-span-2">
+                      <span className="text-gray-400">估值时间</span>
+                      <span className="text-gray-300">{item.gztime || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 桌面端：表格布局 */}
+            <div className="hidden md:block overflow-x-auto -mx-2">
+              <table className="w-full min-w-[520px] border-collapse">
+                <thead>
+                  <tr className="text-left text-sm sm:text-base text-gray-200 border-b-2 border-dark-border">
+                    <th className="pb-3 pr-2 font-sans font-semibold">基金</th>
+                    <th className="pb-3 pr-2 font-sans font-semibold">单位净值</th>
+                    <th className="pb-3 pr-2 font-sans font-semibold">估值</th>
+                    <th className="pb-3 pr-2 font-sans font-semibold">今日预估涨幅</th>
+                    <th className="pb-3 pr-2 font-sans font-semibold">估值时间</th>
+                    <th className="pb-3 w-12" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {list.map((item) => (
+                    <tr
+                      key={item.fundcode}
+                      className="border-b border-dark-border/60 bg-dark-surface/80 hover:bg-dark-elevated transition-colors"
+                    >
+                      <td className="py-4 pr-2">
+                        <div className="font-sans font-semibold text-white text-sm sm:text-base">{item.name || `基金 ${item.fundcode}`}</div>
+                        <div className="text-sm text-gray-400 mt-0.5">{item.fundcode}</div>
+                      </td>
+                      <td className="py-4 pr-2 font-sans text-white font-semibold text-sm sm:text-base">{item.dwjz}</td>
+                      <td className="py-4 pr-2 font-sans text-amber-400 font-semibold text-sm sm:text-base">{item.gsz}</td>
+                      <td className="py-4 pr-2 text-sm sm:text-base">
+                        {item.error ? (
+                          <span className="text-gray-400">{item.error}</span>
+                        ) : item.gszzl !== null ? (
+                          <span
+                            className={`font-sans font-semibold ${
+                              item.gszzl >= 0 ? 'text-success-light' : 'text-danger-light'
+                            }`}
+                          >
+                            {item.gszzl >= 0 ? '+' : ''}{item.gszzl}%
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-4 pr-2 text-sm text-gray-300 font-sans">{item.gztime || '—'}</td>
+                      <td className="py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(item.fundcode)}
+                          className="p-2 rounded-lg text-gray-400 hover:text-danger-light hover:bg-danger-base/10 transition-colors"
+                          title="移除"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
     </div>
