@@ -241,7 +241,7 @@ export default function JijingPage() {
                       {h.todayEstimate != null ? (
                         <span
                           className={`font-sans font-bold text-lg ${
-                            h.todayEstimate >= 0 ? 'text-success-light' : 'text-danger-light'
+                            h.todayEstimate >= 0 ? 'text-danger-light' : 'text-success-light'
                           }`}
                         >
                           {formatCurrency(h.todayEstimate, true)}
@@ -253,8 +253,8 @@ export default function JijingPage() {
                         <span
                           className={`font-sans font-semibold text-sm px-2 py-0.5 rounded ${
                             h.estimation.gszzl >= 0 
-                              ? 'bg-success-base/20 text-success-light' 
-                              : 'bg-danger-base/20 text-danger-light'
+                              ? 'bg-danger-base/20 text-danger-light' 
+                              : 'bg-success-base/20 text-success-light'
                           }`}
                         >
                           {h.estimation.gszzl >= 0 ? '+' : ''}{h.estimation.gszzl}%
@@ -318,7 +318,7 @@ export default function JijingPage() {
                         ) : h.estimation?.gszzl != null ? (
                           <span
                             className={`font-sans font-semibold ${
-                              h.estimation.gszzl >= 0 ? 'text-success-light' : 'text-danger-light'
+                              h.estimation.gszzl >= 0 ? 'text-danger-light' : 'text-success-light'
                             }`}
                           >
                             {h.estimation.gszzl >= 0 ? '+' : ''}{h.estimation.gszzl}%
@@ -331,7 +331,7 @@ export default function JijingPage() {
                         {h.todayEstimate != null ? (
                           <span
                             className={`font-sans font-semibold ${
-                              h.todayEstimate >= 0 ? 'text-success-light' : 'text-danger-light'
+                              h.todayEstimate >= 0 ? 'text-danger-light' : 'text-success-light'
                             }`}
                           >
                             {formatCurrency(h.todayEstimate, true)}
@@ -351,8 +351,8 @@ export default function JijingPage() {
                 <span
                   className={`font-display font-bold text-xl ${
                     holdingsWithEstimate.reduce((s, h) => s + (h.todayEstimate ?? 0), 0) >= 0
-                      ? 'text-success-light'
-                      : 'text-danger-light'
+                      ? 'text-danger-light'
+                      : 'text-success-light'
                   }`}
                 >
                   {formatCurrency(
@@ -440,8 +440,8 @@ export default function JijingPage() {
                       <span
                         className={`font-sans font-bold text-lg px-3 py-1 rounded ${
                           item.gszzl >= 0
-                            ? 'bg-success-base/20 text-success-light'
-                            : 'bg-danger-base/20 text-danger-light'
+                            ? 'bg-danger-base/20 text-danger-light'
+                            : 'bg-success-base/20 text-success-light'
                         }`}
                       >
                         {item.gszzl >= 0 ? '+' : ''}{item.gszzl}%
@@ -501,7 +501,7 @@ export default function JijingPage() {
                         ) : item.gszzl !== null ? (
                           <span
                             className={`font-sans font-semibold ${
-                              item.gszzl >= 0 ? 'text-success-light' : 'text-danger-light'
+                              item.gszzl >= 0 ? 'text-danger-light' : 'text-success-light'
                             }`}
                           >
                             {item.gszzl >= 0 ? '+' : ''}{item.gszzl}%
