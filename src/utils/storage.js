@@ -33,7 +33,8 @@ export async function getRecords() {
       }
     })
   } catch (error) {
-    return []
+    console.error('获取资产记录失败:', error)
+    throw new Error(`获取资产记录失败: ${error.message || error.toString()}`)
   }
 }
 
@@ -136,7 +137,8 @@ export async function getAdjustments() {
       }
     })
   } catch (error) {
-    return []
+    console.error('获取加减仓记录失败:', error)
+    throw new Error(`获取加减仓记录失败: ${error.message || error.toString()}`)
   }
 }
 
@@ -265,7 +267,7 @@ export async function getHoldings(investmentType = null) {
     }))
   } catch (error) {
     console.error('获取持仓失败:', error)
-    return []
+    throw new Error(`获取持仓失败: ${error.message || error.toString()}`)
   }
 }
 
@@ -362,7 +364,7 @@ export async function getProfitTargets() {
     }))
   } catch (error) {
     console.error('获取收益目标失败:', error)
-    return []
+    throw new Error(`获取收益目标失败: ${error.message || error.toString()}`)
   }
 }
 

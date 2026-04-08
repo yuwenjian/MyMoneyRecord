@@ -110,16 +110,42 @@ export default function JijingPage() {
   }
 
   const handleRefresh = async () => {
-    if (fundCodes.length === 0) return
+    // 同时刷新持仓估值和自选基金
+    const hasHoldings = holdingsWithEstimate.length > 0
+    const hasWatchlist = fundCodes.length > 0
+    
+    if (!hasHoldings && !hasWatchlist) {
+      toast.error('暂无数据可刷新')
+      return
+    }
+    
     setRefreshing(true)
+    setHoldingsRefreshing(true)
+    
     try {
-      const data = await fetchFundEstimations(fundCodes)
-      setList(data)
-      toast.success('已刷新估值')
+      const promises = []
+      
+      // 刷新持仓估值
+      if (hasHoldings) {
+        promises.push(loadHoldingsEstimate())
+      }
+      
+      // 刷新自选基金
+      if (hasWatchlist) {
+        promises.push(
+          fetchFundEstimations(fundCodes).then(data => {
+            setList(data)
+          })
+        )
+      }
+      
+      await Promise.all(promises)
+      toast.success('所有数据已刷新')
     } catch (e) {
       toast.error(e.message || '刷新失败')
     } finally {
       setRefreshing(false)
+      setHoldingsRefreshing(false)
     }
   }
 
@@ -159,7 +185,7 @@ export default function JijingPage() {
         actions={
           <Button
             onClick={handleRefresh}
-            disabled={loading || refreshing || fundCodes.length === 0}
+            disabled={loading || refreshing || (fundCodes.length === 0 && holdingsWithEstimate.length === 0)}
             className="inline-flex items-center gap-2"
           >
             {refreshing ? (
